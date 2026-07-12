@@ -22,6 +22,10 @@ const MAX_ATTEMPTS = 5; // lossless pass plus at most 4 rungs (binary search ove
 
 const $ = (id) => document.getElementById(id);
 
+// API base: empty for same origin, set in config.js when the frontend is
+// hosted apart from the backend (Vercel in front of Render).
+const API = (window.FITPDF_API || "").replace(/\/+$/, "");
+
 /* ---------- motion: small rises, soft easing, quick stagger ---------- */
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -64,7 +68,7 @@ function showPanel(id) {
 }
 
 async function api(path, opts) {
-  const res = await fetch(path, opts);
+  const res = await fetch(API + path, opts);
   if (!res.ok) {
     let msg = "request failed (" + res.status + ")";
     try {
@@ -289,7 +293,7 @@ function openStream() {
   closeStream();
   attemptCount = 0;
   currentRungLi = null;
-  const es = new EventSource("/api/jobs/" + state.jobId + "/events");
+  const es = new EventSource(API + "/api/jobs/" + state.jobId + "/events");
   state.es = es;
 
   es.onmessage = (msg) => {
@@ -390,7 +394,7 @@ function showResult(ev) {
     wbox.appendChild(li);
   }
 
-  $("btn-download").href = "/api/jobs/" + state.jobId + "/download";
+  $("btn-download").href = API + "/api/jobs/" + state.jobId + "/download";
   startCountdown();
   showPanel("panel-result");
 }

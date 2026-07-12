@@ -7,7 +7,8 @@ RUN apt-get update \
 WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY src ./src
-RUN pip install --no-cache-dir ".[web]"
+COPY start.sh ./
+RUN pip install --no-cache-dir ".[web]" && chmod +x start.sh
 
 ENV FITPDF_DATA_DIR=/data
 RUN mkdir -p /data

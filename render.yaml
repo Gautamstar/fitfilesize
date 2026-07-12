@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: fitpdf
+    runtime: docker
+    plan: free
+    dockerCommand: ./start.sh
+    healthCheckPath: /health
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: fitpdf-redis
+          property: connectionString
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: FITPDF_MAX_UPLOAD
+        value: "26214400"
+      - key: FITPDF_GS_TIMEOUT
+        value: "120"
+
+  - type: keyvalue
+    name: fitpdf-redis
+    plan: free
+    ipAllowList: []

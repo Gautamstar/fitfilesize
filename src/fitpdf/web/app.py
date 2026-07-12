@@ -82,6 +82,20 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
 
     app = FastAPI(title="FitPDF", lifespan=lifespan)
 
+    if settings.allowed_origins:
+        from fastapi.middleware.cors import CORSMiddleware
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(settings.allowed_origins),
+            allow_methods=["GET", "POST", "DELETE"],
+            allow_headers=["*"],
+        )
+
+    @app.get("/health")
+    async def health():
+        return {"ok": True}
+
     def job_dir(job_id: str) -> Path:
         return settings.data_dir / job_id
 

@@ -190,3 +190,24 @@ def test_index_served(web):
     res = client.get("/")
     assert res.status_code == 200
     assert "FitPDF" in res.text
+
+
+def test_health(web):
+    client, _, _ = web
+    assert client.get("/health").json() == {"ok": True}
+
+
+def test_cors_for_separate_frontend(tmp_path, monkeypatch):
+    monkeypatch.setenv("ALLOWED_ORIGINS", "https://fitpdf.vercel.app, http://localhost:5173")
+    settings = Settings.from_env()
+    assert settings.allowed_origins == ("https://fitpdf.vercel.app", "http://localhost:5173")
+
+    settings = Settings(
+        data_dir=tmp_path / "data", allowed_origins=("https://fitpdf.vercel.app",)
+    )
+    r = fakeredis.FakeRedis()
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    app = create_app(settings=settings, redis_conn=r, queue=q)
+    with TestClient(app) as client:
+        res = client.get("/health", headers={"Origin": "https://fitpdf.vercel.app"})
+        assert res.headers["access-control-allow-origin"] == "https://fitpdf.vercel.app"

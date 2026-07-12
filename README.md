@@ -75,7 +75,32 @@ python -m fitpdf.web.worker
 
 Configuration (env vars): `REDIS_URL`, `FITPDF_DATA_DIR` (default `data`),
 `FITPDF_TTL_SECONDS` (default 1800), `FITPDF_MAX_UPLOAD` (bytes, default 200 MB),
-`FITPDF_GS_TIMEOUT` (seconds per Ghostscript attempt, default 180).
+`FITPDF_GS_TIMEOUT` (seconds per Ghostscript attempt, default 180),
+`ALLOWED_ORIGINS` (comma-separated CORS origins, only needed when the frontend
+is hosted separately).
+
+## Deploy
+
+Backend on Render, frontend on Vercel, both on free plans.
+
+Render (API, worker and Redis):
+
+1. Dashboard, New, Blueprint, pick this repo. `render.yaml` sets up a Docker
+   web service (Ghostscript ships in the image, and the worker runs inside the
+   same container since free plans do not include separate workers) plus a free
+   Key Value instance for the queue.
+2. Set `ALLOWED_ORIGINS` to your Vercel URL once you have it, e.g.
+   `https://fitpdf.vercel.app`.
+
+Vercel (static frontend):
+
+1. Import the repo, set the root directory to `src/fitpdf/web/static`.
+2. Add an env var `FITPDF_API_URL` with the Render URL, e.g.
+   `https://fitpdf.onrender.com`. The build writes it into `config.js`.
+
+Free tier notes: the Render service spins down after 15 minutes idle, so the
+first request after a quiet spell takes about a minute. Storage is ephemeral,
+which is fine here because every file is deleted within 30 minutes anyway.
 
 ### API
 
