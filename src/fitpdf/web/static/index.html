@@ -5,50 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>FitPDF</title>
   <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/motion@12/dist/motion.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
   <main class="shell">
     <header>
-      <h1>FitPDF</h1>
-      <p class="tagline">Shrink a PDF to fit under any upload limit.</p>
+      <h1 class="anim">FitPDF</h1>
+      <p class="tagline anim">Shrink a PDF to fit under any upload limit.</p>
     </header>
 
     <!-- 1: drop zone -->
     <section id="panel-drop" class="panel">
-      <div id="dropzone" class="dropzone" tabindex="0">
+      <div id="dropzone" class="dropzone anim" tabindex="0">
         <p class="dz-big">Drop a PDF here</p>
         <p class="dz-small">or click to choose a file</p>
         <input type="file" id="file-input" accept="application/pdf,.pdf" hidden>
       </div>
       <p id="drop-error" class="error" hidden></p>
-      <p class="privacy-note">Files are processed on this machine and deleted after 30 minutes,
+      <p class="privacy-note anim">Files are processed on this machine and deleted after 30 minutes,
         or sooner if you hit delete.</p>
     </section>
 
     <!-- 2: analyzing -->
     <section id="panel-analyze" class="panel" hidden>
-      <div class="file-line">
+      <div class="file-line anim">
         <span id="an-name" class="file-name"></span>
         <span id="an-meta" class="file-meta"></span>
       </div>
-      <div class="spinner-row"><span class="spinner"></span>
+      <div class="spinner-row anim"><span class="spinner"></span>
         <span>Checking how small this file can go...</span></div>
     </section>
 
     <!-- 3: target picker -->
     <section id="panel-target" class="panel" hidden>
-      <div class="file-line">
+      <div class="file-line anim">
         <span id="tg-name" class="file-name"></span>
         <span id="tg-meta" class="file-meta"></span>
       </div>
 
-      <div class="readout">
+      <div class="readout anim">
         <div class="readout-label">Fit it under</div>
         <div id="tg-value" class="readout-value">4.0 MB</div>
         <div id="tg-hint" class="readout-hint"></div>
       </div>
 
-      <div class="slider-wrap">
+      <div class="slider-wrap anim">
         <div class="slider-track">
           <div id="track-hatch" class="track-hatch"></div>
           <div id="track-fill" class="track-fill"></div>
@@ -56,18 +58,18 @@
         <input type="range" id="slider" min="0" max="1000" step="1" value="500"
                aria-label="target size">
       </div>
-      <div class="slider-ends">
+      <div class="slider-ends anim">
         <span id="tg-min"></span>
         <span id="tg-max"></span>
       </div>
-      <div class="floor-legend">
+      <div class="floor-legend anim">
         <span class="hatch-swatch"></span>
         <span id="tg-floor-note">below the smallest achievable size</span>
       </div>
 
-      <div id="chips" class="chips"></div>
+      <div id="chips" class="chips anim"></div>
 
-      <div class="actions">
+      <div class="actions anim">
         <button id="btn-compress" class="primary">Compress</button>
         <button id="btn-cancel-target" class="ghost">Start over</button>
       </div>
@@ -76,44 +78,43 @@
 
     <!-- 4: progress -->
     <section id="panel-progress" class="panel" hidden>
-      <div class="file-line">
+      <div class="file-line anim">
         <span id="pr-name" class="file-name"></span>
         <span id="pr-target" class="file-meta"></span>
       </div>
-      <div class="spinner-row"><span class="spinner"></span>
+      <div class="spinner-row anim"><span class="spinner"></span>
         <span id="pr-headline">Working on it...</span></div>
-      <ul id="pr-steps" class="steps"></ul>
+      <ul id="pr-steps" class="steps anim"></ul>
     </section>
 
     <!-- 5: result -->
     <section id="panel-result" class="panel" hidden>
-      <div id="rs-badge" class="badge"></div>
-      <div class="sizes">
+      <div id="rs-badge" class="badge anim"></div>
+      <div class="sizes anim">
         <div class="size-box"><div class="size-label">Before</div>
           <div id="rs-before" class="size-num"></div></div>
         <div class="size-arrow">&#8594;</div>
         <div class="size-box"><div class="size-label">After</div>
           <div id="rs-after" class="size-num"></div></div>
       </div>
-      <p id="rs-detail" class="result-detail"></p>
+      <p id="rs-detail" class="result-detail anim"></p>
       <ul id="rs-warnings" class="warnings"></ul>
-      <div class="actions">
+      <div class="actions anim">
         <a id="btn-download" class="primary button-link" href="#" download>Download</a>
         <button id="btn-retry" class="ghost">Try another size</button>
         <button id="btn-delete" class="danger">Delete now</button>
       </div>
-      <p class="countdown">Auto-deletes in <span id="rs-countdown">30:00</span></p>
+      <p class="countdown anim">Auto-deletes in <span id="rs-countdown">30:00</span></p>
     </section>
 
     <!-- error -->
     <section id="panel-error" class="panel" hidden>
-      <div class="badge badge-error">Something went wrong</div>
-      <p id="er-message" class="result-detail"></p>
-      <div class="actions">
+      <div class="badge badge-error anim">Something went wrong</div>
+      <p id="er-message" class="result-detail anim"></p>
+      <div class="actions anim">
         <button id="btn-error-restart" class="primary">Start over</button>
       </div>
     </section>
   </main>
-  <script src="app.js"></script>
 </body>
 </html>

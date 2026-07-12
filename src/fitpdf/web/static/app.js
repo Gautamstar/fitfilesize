@@ -22,6 +22,28 @@ const MAX_ATTEMPTS = 5; // lossless pass plus at most 4 rungs (binary search ove
 
 const $ = (id) => document.getElementById(id);
 
+/* ---------- motion: small rises, soft easing, quick stagger ---------- */
+
+const EASE = [0.22, 1, 0.36, 1];
+const REDUCE_MOTION = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function reveal(root) {
+  if (REDUCE_MOTION || !window.Motion) return;
+  const { animate, stagger } = window.Motion;
+  const items = [...root.querySelectorAll(".anim")].filter((el) => !el.closest("[hidden]"));
+  if (!items.length) return;
+  animate(
+    items,
+    { opacity: [0, 1], y: [14, 0] },
+    { duration: 0.55, ease: EASE, delay: stagger(0.07) }
+  );
+}
+
+function revealOne(el) {
+  if (REDUCE_MOTION || !window.Motion) return;
+  window.Motion.animate(el, { opacity: [0, 1], y: [8, 0] }, { duration: 0.35, ease: EASE });
+}
+
 /* ---------- helpers ---------- */
 
 function fmt(bytes) {
@@ -36,7 +58,9 @@ function fmt(bytes) {
 
 function showPanel(id) {
   for (const p of document.querySelectorAll(".panel")) p.hidden = true;
-  $(id).hidden = false;
+  const panel = $(id);
+  panel.hidden = false;
+  reveal(panel);
 }
 
 async function api(path, opts) {
@@ -257,6 +281,7 @@ function addStep(text, cls) {
   li.textContent = text;
   if (cls) li.className = cls;
   $("pr-steps").appendChild(li);
+  revealOne(li);
   return li;
 }
 
@@ -418,3 +443,7 @@ function resetToDrop() {
   $("drop-error").hidden = true;
   showPanel("panel-drop");
 }
+
+/* ---------- first paint ---------- */
+
+reveal(document.querySelector(".shell"));
