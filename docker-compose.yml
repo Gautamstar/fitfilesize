@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      FITPDF_DATA_DIR: /data
+    volumes:
+      - fitpdf-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: python -m fitpdf.web.worker
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      FITPDF_DATA_DIR: /data
+    volumes:
+      - fitpdf-data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  fitpdf-data:

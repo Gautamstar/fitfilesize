@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fitpdf"
+version = "0.1.0"
+description = "Compress PDFs to fit under a target file size"
+requires-python = ">=3.10"
+dependencies = ["pikepdf>=8.0"]
+
+[project.optional-dependencies]
+web = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "redis>=5",
+    "rq>=1.16",
+]
+dev = [
+    "pytest>=8",
+    "ruff>=0.4",
+    "Pillow>=10",
+    "httpx>=0.27",
+    "fakeredis>=2.23",
+    # web deps repeated here so `pip install -e .[dev]` alone can run the web tests
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "redis>=5",
+    "rq>=1.16",
+]
+
+[project.scripts]
+fitpdf = "fitpdf.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"fitpdf.web" = ["static/*"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
