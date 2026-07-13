@@ -10,3 +10,4 @@ corpus/*
 *.fit.pdf
 data/
 .claude/
+FitPDF-Overview.pdf
