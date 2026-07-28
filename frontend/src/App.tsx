@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { fadeUp } from './anim'
 import { Dropzone } from './components/Dropzone'
 import { ErrorPanel } from './components/ErrorPanel'
+import { Landing } from './components/Landing'
 import { ProgressPanel } from './components/ProgressPanel'
 import { ResultPanel } from './components/ResultPanel'
 import { TargetPicker } from './components/TargetPicker'
@@ -176,10 +177,11 @@ function App() {
   return (
     <div className="shell">
       <motion.header className="site-head" variants={fadeUp} initial="hidden" animate="show">
-        <h1>FitPDF</h1>
+        <p className="eyebrow">PDF and image compression</p>
+        <h1>Make it fit.</h1>
         <p className="tagline">
-          Compress a PDF or image to fit under a target size, or find out honestly that it
-          cannot.
+          Pick a size. Get a file that actually fits under it, or an honest answer that it
+          cannot go that small.
         </p>
       </motion.header>
 
@@ -197,14 +199,22 @@ function App() {
             {panel()}
           </motion.div>
         </AnimatePresence>
+
+        {/* Pitch belongs on a fresh page only. Once a file is in flight the
+            page should be about that file. */}
+        {phase === 'drop' ? <Landing /> : null}
       </main>
 
-      <footer className="site-foot">
-        <p>
-          Your original is deleted 5 minutes after compression finishes, the compressed file
-          after 10.
-        </p>
-      </footer>
+      {/* On the landing page the retention promise already has its own section,
+          so only repeat it once a file is actually in play. */}
+      {phase !== 'drop' ? (
+        <footer className="site-foot">
+          <p>
+            Your original is deleted 5 minutes after compression finishes, the compressed
+            file after 10.
+          </p>
+        </footer>
+      ) : null}
     </div>
   )
 }

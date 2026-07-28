@@ -17,3 +17,10 @@ export const stagger: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.07 } },
 }
+
+/** Reveal a section the first time it scrolls into view, then leave it alone. */
+export const inViewProps = {
+  initial: 'hidden' as const,
+  whileInView: 'show' as const,
+  viewport: { once: true, margin: '-60px' },
+}
