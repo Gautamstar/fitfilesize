@@ -17,7 +17,13 @@ requires_gs = pytest.mark.skipif(not gs_available(), reason="ghostscript not ins
 
 @pytest.fixture()
 def web(tmp_path):
-    settings = Settings(data_dir=tmp_path / "data", ttl_seconds=1800, gs_timeout=120)
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        ttl_seconds=600,
+        pending_ttl_seconds=1800,
+        input_grace_seconds=300,
+        gs_timeout=120,
+    )
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
     app = create_app(settings=settings, redis_conn=r, queue=q)
@@ -167,29 +173,98 @@ def test_delete_removes_everything(web, image_pdf):
     assert store.get_job(r, job_id) is None
 
 
-def test_sweeper_deletes_expired_files(web, image_pdf):
+def test_sweeper_holds_unfinished_job_until_pending_ttl(web, image_pdf):
     client, r, settings = web
     job_id = _upload(client, image_pdf).json()["job_id"]
     job_path = settings.data_dir / job_id
     assert job_path.exists()
 
-    # fresh file survives a sweep
-    assert sweep_expired(settings.data_dir, settings.ttl_seconds, r) == 0
+    # fresh upload survives a sweep
+    assert sweep_expired(settings.data_dir, settings, r) == 0
     assert job_path.exists()
 
-    # backdate the upload past the TTL and sweep again
-    old = time.time() - settings.ttl_seconds - 60
-    os.utime(job_path / "input.pdf", (old, old))
-    assert sweep_expired(settings.data_dir, settings.ttl_seconds, r) == 1
+    # an unfinished job is still held well past the (short) completion TTL,
+    # because a long compression can legitimately still be running
+    store.update_job(r, job_id, created_at=int(time.time()) - settings.ttl_seconds - 60)
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert job_path.exists()
+
+    # only the pending ceiling removes it
+    store.update_job(r, job_id, created_at=int(time.time()) - settings.pending_ttl_seconds - 60)
+    assert sweep_expired(settings.data_dir, settings, r) == 1
     assert not job_path.exists()
     assert store.get_job(r, job_id) is None
 
 
-def test_index_served(web):
-    client, _, _ = web
-    res = client.get("/")
-    assert res.status_code == 200
-    assert "FitPDF" in res.text
+def test_sweeper_measures_finished_jobs_from_completion(web, image_pdf):
+    client, r, settings = web
+    job_id = _upload(client, image_pdf).json()["job_id"]
+    job_path = settings.data_dir / job_id
+
+    # A slow job: uploaded long ago, finished just now. The download window
+    # starts at completion, so it must survive.
+    store.update_job(r, job_id, created_at=int(time.time()) - settings.pending_ttl_seconds - 60)
+    store.mark_completed(r, job_id, settings.ttl_seconds)
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert job_path.exists()
+
+    # and it goes once the completion window elapses
+    store.update_job(r, job_id, completed_at=int(time.time()) - settings.ttl_seconds - 60)
+    assert sweep_expired(settings.data_dir, settings, r) == 1
+    assert not job_path.exists()
+    assert store.get_job(r, job_id) is None
+
+
+def test_sweeper_deletes_input_before_output(web, image_pdf):
+    client, r, settings = web
+    job_id = _upload(client, image_pdf).json()["job_id"]
+    job_path = settings.data_dir / job_id
+    (job_path / "output.pdf").write_bytes(b"%PDF-1.4 pretend output")
+
+    store.mark_completed(r, job_id, settings.ttl_seconds)
+
+    # inside the grace window both halves survive, so "try another size" works
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert (job_path / "input.pdf").exists()
+
+    # past the grace window the original upload is unlinked, but the compressed
+    # output stays downloadable for the rest of the completion TTL
+    store.update_job(
+        r, job_id, completed_at=int(time.time()) - settings.input_grace_seconds - 60
+    )
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert not (job_path / "input.pdf").exists()
+    assert (job_path / "output.pdf").exists()
+
+
+def test_sweeper_removes_orphan_dirs(web, tmp_path):
+    _, r, settings = web
+    orphan = settings.data_dir / "deadbeef"
+    orphan.mkdir(parents=True)
+    (orphan / "input.pdf").write_bytes(b"%PDF-1.4 orphan")
+
+    # no Redis record, so the filesystem clock applies
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert orphan.exists()
+
+    old = time.time() - settings.pending_ttl_seconds - 60
+    os.utime(orphan / "input.pdf", (old, old))
+    assert sweep_expired(settings.data_dir, settings, r) == 1
+    assert not orphan.exists()
+
+
+def test_expires_in_restarts_at_completion(web, image_pdf):
+    client, r, settings = web
+    job_id = _upload(client, image_pdf).json()["job_id"]
+
+    # an old, unfinished job is near the end of its pending window
+    store.update_job(r, job_id, created_at=int(time.time()) - settings.pending_ttl_seconds + 30)
+    assert client.get(f"/api/jobs/{job_id}").json()["expires_in"] <= 30
+
+    # finishing it resets the clock to the full completion TTL
+    store.mark_completed(r, job_id, settings.ttl_seconds)
+    expires_in = client.get(f"/api/jobs/{job_id}").json()["expires_in"]
+    assert settings.ttl_seconds - 5 <= expires_in <= settings.ttl_seconds
 
 
 def test_health(web):

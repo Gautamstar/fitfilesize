@@ -1,4 +1,0 @@
-{
-  "buildCommand": "echo \"window.FITPDF_API = '$FITPDF_API_URL';\" > config.js",
-  "outputDirectory": "."
-}

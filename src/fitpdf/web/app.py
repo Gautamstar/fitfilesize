@@ -7,7 +7,6 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
@@ -17,7 +16,6 @@ from . import store
 from .config import Settings
 from .jobs import run_compress
 
-STATIC_DIR = Path(__file__).parent / "static"
 SWEEP_INTERVAL = 60
 UPLOAD_CHUNK = 1024 * 1024
 
@@ -26,8 +24,19 @@ class CompressRequest(BaseModel):
     target_bytes: int = Field(gt=0)
 
 
-def sweep_expired(data_dir: Path, ttl: int, r) -> int:
-    """Delete job dirs older than ttl (by upload time) plus their Redis keys."""
+def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
+    """Delete expired job dirs plus their Redis keys. Returns dirs removed.
+
+    Two clocks, because a job's risk profile changes once it finishes:
+
+    * Finished jobs expire at completion + ttl_seconds, so the download window
+      is the same length for everyone. Their input.pdf is unlinked earlier, at
+      completion + input_grace_seconds, since the original upload is the
+      sensitive half and is only needed for "try another size".
+    * Unfinished jobs expire at upload + pending_ttl_seconds, which has to stay
+      above the queue's per-job timeout or this would delete files out from
+      under a running compression.
+    """
     if not data_dir.exists():
         return 0
     removed = 0
@@ -35,9 +44,28 @@ def sweep_expired(data_dir: Path, ttl: int, r) -> int:
     for d in data_dir.iterdir():
         if not d.is_dir():
             continue
-        marker = d / "input.pdf"
-        stamp = marker.stat().st_mtime if marker.exists() else d.stat().st_mtime
-        if now - stamp > ttl:
+
+        job = store.get_job(r, d.name)
+        if job is None:
+            # No Redis record: an orphan from a crash or a flushed store. Fall
+            # back to filesystem age so these cannot accumulate forever.
+            marker = d / "input.pdf"
+            stamp = marker.stat().st_mtime if marker.exists() else d.stat().st_mtime
+            if now - stamp > settings.pending_ttl_seconds:
+                shutil.rmtree(d, ignore_errors=True)
+                removed += 1
+            continue
+
+        completed_at = int(job["completed_at"]) if "completed_at" in job else None
+        if completed_at is None:
+            expire_at = int(job.get("created_at", "0")) + settings.pending_ttl_seconds
+        else:
+            expire_at = completed_at + settings.ttl_seconds
+            src = d / "input.pdf"
+            if src.exists() and now - completed_at > settings.input_grace_seconds:
+                src.unlink(missing_ok=True)
+
+        if now > expire_at:
             shutil.rmtree(d, ignore_errors=True)
             store.delete_job(r, d.name)
             removed += 1
@@ -71,7 +99,7 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         async def sweep_loop():
             while True:
                 try:
-                    await run_in_threadpool(sweep_expired, settings.data_dir, settings.ttl_seconds, r)
+                    await run_in_threadpool(sweep_expired, settings.data_dir, settings, r)
                 except Exception:
                     pass
                 await asyncio.sleep(SWEEP_INTERVAL)
@@ -106,14 +134,19 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         return job
 
     def job_state(job_id: str, job: dict) -> dict:
-        created = int(job.get("created_at", "0"))
+        # Mirrors sweep_expired: finished jobs count down from completion,
+        # unfinished ones from upload.
+        if "completed_at" in job:
+            expires_at = int(job["completed_at"]) + settings.ttl_seconds
+        else:
+            expires_at = int(job.get("created_at", "0")) + settings.pending_ttl_seconds
         state = {
             "job_id": job_id,
             "status": job.get("status", "unknown"),
             "filename": job.get("filename", "input.pdf"),
             "size_bytes": int(job.get("size_bytes", "0")),
             "pages": int(job.get("pages", "0")),
-            "expires_in": max(0, created + settings.ttl_seconds - int(time.time())),
+            "expires_in": max(0, expires_at - int(time.time())),
         }
         for key in ("floor_estimate", "target_bytes", "final_bytes", "rungs_tried"):
             if key in job:
@@ -169,7 +202,7 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
                 "size_bytes": size,
                 "pages": info.pages,
             },
-            settings.ttl_seconds,
+            settings.pending_ttl_seconds,
         )
         return {
             "job_id": job_id,
@@ -178,7 +211,8 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             "pages": info.pages,
             "image_share": round(info.image_share, 3),
             "has_forms": info.has_forms,
-            "expires_in": settings.ttl_seconds,
+            # Nothing has finished yet, so the live window is the pending one.
+            "expires_in": settings.pending_ttl_seconds,
         }
 
     @app.post("/api/jobs/{job_id}/analyze")
@@ -205,6 +239,9 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             raise HTTPException(410, "stored file is gone (expired)")
         dst = job_dir(job_id) / "output.pdf"
         store.clear_events(r, job_id)
+        # A re-run ("try another size") is no longer a finished job, so drop the
+        # completion stamp and put the key back on the pending clock.
+        store.clear_completion(r, job_id, settings.pending_ttl_seconds)
         store.update_job(r, job_id, status="queued", target_bytes=req.target_bytes)
         q.enqueue(
             run_compress,
@@ -213,6 +250,7 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             str(dst),
             req.target_bytes,
             settings.ttl_seconds,
+            settings.pending_ttl_seconds,
             settings.gs_timeout,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
@@ -277,5 +315,4 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         store.delete_job(r, job_id)
         return {"job_id": job_id, "deleted": True}
 
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
     return app

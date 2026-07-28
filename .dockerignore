@@ -6,6 +6,7 @@ __pycache__
 data
 corpus
 tests
+frontend
 .pytest_cache
 .ruff_cache
 *.fit.pdf

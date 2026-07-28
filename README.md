@@ -46,19 +46,58 @@ Exit codes: 0 target hit, 2 floor reached (target not possible), 1 error.
 
 ## Web service
 
-A local web UI with drag-and-drop upload, a target-size slider bounded by an
+A React UI with drag-and-drop upload, a target-size slider bounded by an
 estimated floor (the smallest the file can likely go), live progress while the
-ladder runs, and download links that self-destruct after 30 minutes.
+ladder runs, and download links that self-destruct minutes after the run
+finishes (see Retention below).
 
-The easiest way to run it is Docker Compose (API, worker, and Redis):
+### Architecture
+
+```
+browser ──▶ nginx (SPA + /api proxy) ──▶ FastAPI ──▶ Redis ──▶ RQ worker
+                                            │          │          │
+                                            └──── shared job volume ────┘
+```
+
+Four pieces, each with one job:
+
+- **`src/fitpdf/`** is the engine: pure Python, no web framework, driven either
+  by the CLI or the API. `engine.py` knows about PDFs and nothing about HTTP.
+- **`src/fitpdf/web/`** is a thin API over it. Uploads land on a shared volume,
+  work is enqueued, and nothing blocks the request thread.
+- **The worker** runs Ghostscript out-of-process. A compression can take
+  minutes and can be killed by a timeout, so it must not live inside a request.
+- **`frontend/`** is a Vite + React + TypeScript SPA. Its types are a
+  hand-maintained mirror of the API in `frontend/src/types/api.ts`.
+
+Progress reaches the browser over Server-Sent Events rather than polling.
+Events are appended to a Redis list and replayed from an offset, so a client
+that connects late, reconnects, or reloads still sees the whole run.
+
+### Running it
+
+The whole stack, including the frontend, in one command:
 
 ```
 docker compose up --build
 ```
 
-Then open http://localhost:8000.
+Then open http://localhost:5173. The API is also exposed directly on port 8000.
 
-For a quick look without Docker or Redis, inline mode runs jobs in-process:
+For frontend work you want the Vite dev server instead, with hot reload. Start
+the backend however you like, then:
+
+```
+cd frontend
+npm install
+npm run dev
+```
+
+That serves on port 5174 and proxies `/api` to `localhost:8000`, so the browser
+sees one origin and CORS never applies.
+
+For a backend-only look with no Docker and no Redis, inline mode runs jobs
+in-process against a fake Redis:
 
 ```
 pip install -e ".[dev]"
@@ -74,10 +113,33 @@ python -m fitpdf.web.worker
 ```
 
 Configuration (env vars): `REDIS_URL`, `FITPDF_DATA_DIR` (default `data`),
-`FITPDF_TTL_SECONDS` (default 1800), `FITPDF_MAX_UPLOAD` (bytes, default 200 MB),
-`FITPDF_GS_TIMEOUT` (seconds per Ghostscript attempt, default 180),
+`FITPDF_TTL_SECONDS` (default 600), `FITPDF_PENDING_TTL_SECONDS` (default 1800),
+`FITPDF_INPUT_GRACE_SECONDS` (default 300), `FITPDF_MAX_UPLOAD` (bytes, default
+50 MB), `FITPDF_GS_TIMEOUT` (seconds per Ghostscript attempt, default 180),
 `ALLOWED_ORIGINS` (comma-separated CORS origins, only needed when the frontend
 is hosted separately).
+
+### Retention
+
+Three clocks, because a job's risk profile changes once it finishes.
+
+| What | When it is deleted |
+| --- | --- |
+| `input.pdf` (your original) | `FITPDF_INPUT_GRACE_SECONDS` after the job finishes |
+| `output.pdf` and job metadata | `FITPDF_TTL_SECONDS` after the job finishes |
+| A job that never finishes | `FITPDF_PENDING_TTL_SECONDS` after upload |
+
+Retention is measured from **completion**, not upload, so a slow 40 MB scan and
+a fast 2 MB form get the same download window. The original upload is the
+sensitive half, so it goes first and is kept only long enough for the "try
+another size" button to re-run against it.
+
+`FITPDF_PENDING_TTL_SECONDS` must stay above the queue's per-job timeout
+(`FITPDF_GS_TIMEOUT * 8 + 120`, so 26 minutes at the default). Set it lower and
+the sweeper will delete a job's input while it is still compressing.
+
+The sweeper runs once a minute, so actual deletion lands within 60s of the
+times above.
 
 ## Deploy
 
@@ -92,15 +154,23 @@ Render (API, worker and Redis):
 2. Set `ALLOWED_ORIGINS` to your Vercel URL once you have it, e.g.
    `https://fitpdf.vercel.app`.
 
-Vercel (static frontend):
+Vercel (React frontend):
 
-1. Import the repo, set the root directory to `src/fitpdf/web/static`.
-2. Add an env var `FITPDF_API_URL` with the Render URL, e.g.
-   `https://fitpdf.onrender.com`. The build writes it into `config.js`.
+1. Import the repo, set the root directory to `frontend`. Vercel detects Vite;
+   the build command is `npm run build` and the output directory is `dist`.
+2. Add an env var `VITE_API_URL` with the Render URL, e.g.
+   `https://fitpdf.onrender.com`. It is read at build time (see
+   `frontend/.env.example`), so changing it needs a redeploy.
 
 Free tier notes: the Render service spins down after 15 minutes idle, so the
 first request after a quiet spell takes about a minute. Storage is ephemeral,
-which is fine here because every file is deleted within 30 minutes anyway.
+which is fine here because nothing is kept long anyway. Keep `FITPDF_MAX_UPLOAD`
+well under the 512 MB instance memory: Ghostscript needs several times the file
+size while distilling, and a large upload will get the process OOM-killed.
+
+The API serves no HTML. In production the SPA is a separate origin (Vercel), so
+`ALLOWED_ORIGINS` is required there; in Docker Compose nginx proxies `/api` and
+they share an origin, so it is not.
 
 ### API
 
@@ -114,14 +184,26 @@ which is fine here because every file is deleted within 30 minutes anyway.
 | GET | `/api/jobs/{id}/download` | the compressed file |
 | DELETE | `/api/jobs/{id}` | delete stored files right now |
 
-All stored files are deleted 30 minutes after upload, no exceptions.
+All stored files are deleted on the schedule in Retention above, no exceptions.
 
 ## Develop
+
+Backend:
 
 ```
 pytest -q          # tests skip Ghostscript-dependent cases if gs is missing
 ruff check src tests
 ```
+
+Frontend (from `frontend/`):
+
+```
+npx tsc -b         # typecheck; vite does not check types on its own
+npm run lint
+npm run build
+```
+
+CI runs both halves on every push.
 
 Web tests run against a fake Redis with the queue in synchronous mode, so they
 need neither a Redis server nor a worker process.

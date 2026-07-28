@@ -15,6 +15,7 @@ def run_compress(
     dst: str,
     target_bytes: int,
     ttl: int,
+    pending_ttl: int,
     gs_timeout: int,
 ) -> None:
     rq_job = get_current_job()
@@ -22,12 +23,16 @@ def run_compress(
         raise RuntimeError("run_compress must be executed through an RQ queue")
     r = rq_job.connection
 
+    # In-flight events carry the pending TTL, not the (much shorter) completion
+    # TTL: a long run would otherwise expire its own event list mid-job and
+    # break SSE replay for anyone who reconnects. mark_completed resets both
+    # keys to the short TTL once the job lands.
     store.update_job(r, job_id, status="compressing")
-    store.push_event(r, job_id, {"stage": "start", "target_bytes": target_bytes}, ttl)
+    store.push_event(r, job_id, {"stage": "start", "target_bytes": target_bytes}, pending_ttl)
 
     def on_progress(event: dict) -> None:
         try:
-            store.push_event(r, job_id, event, ttl)
+            store.push_event(r, job_id, event, pending_ttl)
         except Exception:
             pass  # progress is best-effort; never kill the compression over it
 
@@ -37,7 +42,8 @@ def run_compress(
         )
     except Exception as e:
         store.update_job(r, job_id, status="error", error=str(e))
-        store.push_event(r, job_id, {"stage": "error", "message": str(e)}, ttl)
+        store.push_event(r, job_id, {"stage": "error", "message": str(e)}, pending_ttl)
+        store.mark_completed(r, job_id, ttl)
         raise
 
     store.update_job(
@@ -63,5 +69,6 @@ def run_compress(
             "method": result.method,
             "warnings": result.warnings,
         },
-        ttl,
+        pending_ttl,
     )
+    store.mark_completed(r, job_id, ttl)

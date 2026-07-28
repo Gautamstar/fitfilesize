@@ -61,5 +61,23 @@ def clear_events(r, job_id: str) -> None:
     r.delete(events_key(job_id))
 
 
+def mark_completed(r, job_id: str, ttl: int) -> None:
+    """Stamp the completion time and restart both key TTLs from now.
+
+    The completion stamp is what the file sweeper and `expires_in` measure
+    against, so every user gets the same download window regardless of how
+    long their compression took.
+    """
+    r.hset(job_key(job_id), "completed_at", str(int(time.time())))
+    r.expire(job_key(job_id), ttl)
+    r.expire(events_key(job_id), ttl)
+
+
+def clear_completion(r, job_id: str, pending_ttl: int) -> None:
+    """Undo mark_completed when a finished job is re-queued ("try another size")."""
+    r.hdel(job_key(job_id), "completed_at")
+    r.expire(job_key(job_id), pending_ttl)
+
+
 def delete_job(r, job_id: str) -> None:
     r.delete(job_key(job_id), events_key(job_id))
