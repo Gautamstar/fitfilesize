@@ -75,7 +75,7 @@ def test_estimate_floor(image_pdf):
 
 
 def test_estimate_floor_without_gs(image_pdf, monkeypatch):
-    monkeypatch.setattr("fitpdf.engine.gs_available", lambda: False)
+    monkeypatch.setattr("fitpdf.strategies.gs_available", lambda: False)
     original = image_pdf.stat().st_size
     floor = estimate_floor(image_pdf)
     assert 0 < floor <= original

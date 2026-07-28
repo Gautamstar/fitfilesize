@@ -87,13 +87,17 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
           addStep(`Lossless cleanup pass: ${fmt(ev.size)}`)
           break
 
-        case 'rung_start':
+        case 'rung_start': {
           setState((s) => ({ ...s, attempts: s.attempts + 1 }))
-          addStep(
-            `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`,
-            'pending',
-          )
+          // Both media types share this stage, so `stage` cannot separate them.
+          // The `in` operator narrows the union to the right variant.
+          const label =
+            'max_edge' in ev
+              ? `Trying ${ev.max_edge}px wide, quality ${ev.quality}`
+              : `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`
+          addStep(label, 'pending')
           break
+        }
 
         case 'rung_result': {
           // Update the most recent pending step in place, the way the old code

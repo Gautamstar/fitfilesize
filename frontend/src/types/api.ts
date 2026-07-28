@@ -16,11 +16,19 @@
  *    All seven fields are always present.                              *
  * ------------------------------------------------------------------ */
 
+/** Which strategy the backend picked for this file. */
+export type MediaKind = 'pdf' | 'image'
+
 export interface UploadResponse {
   job_id: string
+  kind: MediaKind
   filename: string
   size_bytes: number
+  /** Page count for PDFs, 1 for images. */
   pages: number
+  /** Pixel dimensions for images, 0 for PDFs. */
+  width: number
+  height: number
   image_share: number
   has_forms: boolean
   expires_in: number
@@ -86,13 +94,18 @@ export type CompressMethod =
   | `rung:${number}`
 
 export interface JobState {
-  // Always present: the six keys in the initial dict at app.py:110-117.
+  // Always present: the keys in the initial dict at app.py.
   job_id: string
   status: JobStatus
+  kind: MediaKind
   filename: string
   size_bytes: number
   pages: number
   expires_in: number
+
+  // Images only.
+  width?: number
+  height?: number
 
   // Everything below is added only inside an `if`, so the key can be absent.
   // app.py:118-120, all wrapped in int()
@@ -161,19 +174,33 @@ export interface LosslessEvent {
 }
 
 /**
- * A Ghostscript rung is about to run. Source: engine.py:205
+ * A rung of the ladder is about to run. Emitted as
+ * {"stage": ..., "rung": i, **rung}, so the settings come from whichever
+ * strategy is driving: PDF_RUNGS or IMAGE_RUNGS in strategies.py.
  *
- * Emitted as {"stage": ..., "rung": i, **RUNGS[i]}, and a RUNGS entry
- * (engine.py:11-24) holds color_dpi, mono_dpi and jpeg_q. So four fields
- * arrive past the stage. The old app.js only ever read two of them.
+ * Both share `stage: 'rung_start'`, so `stage` alone cannot tell them apart.
+ * Narrow with the `in` operator on a field only one of them has:
+ *
+ *     if ('max_edge' in ev) { ev.quality } else { ev.jpeg_q }
  */
-export interface RungStartEvent {
+export interface PdfRungStartEvent {
   stage: 'rung_start'
   rung: number
   color_dpi: number
   mono_dpi: number
   jpeg_q: number
 }
+
+export interface ImageRungStartEvent {
+  stage: 'rung_start'
+  rung: number
+  /** Cap on the longest side, in pixels. */
+  max_edge: number
+  /** JPEG quality, 1-95. */
+  quality: number
+}
+
+export type RungStartEvent = PdfRungStartEvent | ImageRungStartEvent
 
 /**
  * That rung finished. Source: engine.py:213-220

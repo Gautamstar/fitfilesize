@@ -18,7 +18,8 @@ import { ResultPanel } from './components/ResultPanel'
 import { TargetPicker } from './components/TargetPicker'
 import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
-import { analyzeJob, deleteJob, startCompress, uploadPdf } from './lib/api'
+import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
+import { describeSource, isAcceptedFile } from './lib/format'
 
 type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
 
@@ -27,7 +28,8 @@ interface JobInfo {
   jobId: string
   filename: string
   originalBytes: number
-  pages: number
+  /** "2.4 MB, 3 pages" or "2.4 MB, 3000 x 2000", built once at upload. */
+  meta: string
   floor: number
 }
 
@@ -71,20 +73,20 @@ function App() {
   const handleFile = async (file: File) => {
     setDropError(null)
 
-    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') {
-      setDropError('That does not look like a PDF.')
+    if (!isAcceptedFile(file)) {
+      setDropError('That is not a PDF or a supported image.')
       return
     }
 
     setPhase('analyzing')
     try {
-      const up = await uploadPdf(file)
+      const up = await uploadFile(file)
       const an = await analyzeJob(up.job_id)
       setJob({
         jobId: up.job_id,
         filename: up.filename,
         originalBytes: up.size_bytes,
-        pages: up.pages,
+        meta: describeSource(up.kind, up.size_bytes, up.pages, up.width, up.height),
         floor: an.floor_estimate,
       })
       setPhase('target')
@@ -136,8 +138,8 @@ function App() {
         return job ? (
           <TargetPicker
             filename={job.filename}
+            meta={job.meta}
             originalBytes={job.originalBytes}
-            pages={job.pages}
             floor={job.floor}
             warning={targetWarning}
             onCompress={handleCompress}
@@ -176,7 +178,8 @@ function App() {
       <motion.header className="site-head" variants={fadeUp} initial="hidden" animate="show">
         <h1>FitPDF</h1>
         <p className="tagline">
-          Compress a PDF to fit under a target size, or find out honestly that it cannot.
+          Compress a PDF or image to fit under a target size, or find out honestly that it
+          cannot.
         </p>
       </motion.header>
 

@@ -151,6 +151,60 @@ def test_sse_replays_events_to_done(web, image_pdf):
         assert data_events[-1]["stage"] == "done"
 
 
+def test_upload_image_reports_dimensions(web, photo_jpg):
+    client, _, _ = web
+    body = _upload(client, photo_jpg, name="photo.jpg").json()
+    assert body["kind"] == "image"
+    assert (body["width"], body["height"]) == (3000, 2000)
+    assert body["pages"] == 1
+
+
+def test_upload_rejects_unsupported_type(web, tmp_path):
+    client, _, settings = web
+    doc = tmp_path / "notes.docx"
+    doc.write_bytes(b"PK\x03\x04 not really a docx")
+    assert _upload(client, doc, name="notes.docx").status_code == 415
+    assert not any(settings.data_dir.iterdir())
+
+
+def test_image_round_trip_downloads_jpeg(web, photo_jpg):
+    """Images need no Ghostscript, so this runs everywhere the suite does."""
+    client, _, _ = web
+    job_id = _upload(client, photo_jpg, name="photo.jpg").json()["job_id"]
+
+    floor = client.post(f"/api/jobs/{job_id}/analyze").json()["floor_estimate"]
+    assert 0 < floor < photo_jpg.stat().st_size
+
+    target = int(photo_jpg.stat().st_size * 0.25)
+    assert client.post(
+        f"/api/jobs/{job_id}/compress", json={"target_bytes": target}
+    ).status_code == 202
+
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["status"] == "done"
+    assert state["kind"] == "image"
+    assert state["hit_target"] is True
+    assert state["final_bytes"] <= target
+
+    dl = client.get(f"/api/jobs/{job_id}/download")
+    assert dl.status_code == 200
+    assert dl.headers["content-type"] == "image/jpeg"
+    assert "photo.fit.jpg" in dl.headers["content-disposition"]
+
+
+def test_png_upload_downloads_as_jpeg(web, transparent_png):
+    """A PNG in becomes a JPEG out, and the download name has to follow."""
+    client, _, _ = web
+    job_id = _upload(client, transparent_png, name="logo.png").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/analyze")
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 4000})
+
+    dl = client.get(f"/api/jobs/{job_id}/download")
+    assert dl.status_code == 200
+    assert dl.headers["content-type"] == "image/jpeg"
+    assert "logo.fit.jpg" in dl.headers["content-disposition"]
+
+
 def test_compress_missing_job_404(web):
     client, _, _ = web
     res = client.post("/api/jobs/nope/compress", json={"target_bytes": 1000})

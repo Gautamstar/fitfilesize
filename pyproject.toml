@@ -7,7 +7,7 @@ name = "fitpdf"
 version = "0.1.0"
 description = "Compress PDFs to fit under a target file size"
 requires-python = ">=3.10"
-dependencies = ["pikepdf>=8.0"]
+dependencies = ["pikepdf>=8.0", "Pillow>=10"]
 
 [project.optional-dependencies]
 web = [

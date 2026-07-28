@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
+from ..strategies import IMAGE_SUFFIXES, PDF_SUFFIXES
 from ..units import human_size
 from . import store
 from .config import Settings
@@ -19,9 +20,39 @@ from .jobs import run_compress
 SWEEP_INTERVAL = 60
 UPLOAD_CHUNK = 1024 * 1024
 
+ACCEPTED_SUFFIXES = PDF_SUFFIXES | IMAGE_SUFFIXES
+
+MEDIA_TYPES = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".tif": "image/tiff",
+    ".tiff": "image/tiff",
+    ".bmp": "image/bmp",
+}
+
 
 class CompressRequest(BaseModel):
     target_bytes: int = Field(gt=0)
+
+
+def remove_tree(path: Path, attempts: int = 3) -> bool:
+    """Delete a job directory, reporting whether it actually went.
+
+    shutil.rmtree(ignore_errors=True) on its own is not good enough here. On
+    Windows a virus scanner or the search indexer can hold a handle open for a
+    moment and the delete fails silently, which for this service means a user's
+    upload outliving the retention promise with nothing logged. Retry briefly,
+    and tell the caller the truth either way so the next sweep can try again.
+    """
+    for attempt in range(attempts):
+        shutil.rmtree(path, ignore_errors=True)
+        if not path.exists():
+            return True
+        time.sleep(0.05 * (attempt + 1))
+    return not path.exists()
 
 
 def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
@@ -49,10 +80,10 @@ def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
         if job is None:
             # No Redis record: an orphan from a crash or a flushed store. Fall
             # back to filesystem age so these cannot accumulate forever.
-            marker = d / "input.pdf"
-            stamp = marker.stat().st_mtime if marker.exists() else d.stat().st_mtime
-            if now - stamp > settings.pending_ttl_seconds:
-                shutil.rmtree(d, ignore_errors=True)
+            stamp = d.stat().st_mtime
+            for f in d.iterdir():
+                stamp = min(stamp, f.stat().st_mtime)
+            if now - stamp > settings.pending_ttl_seconds and remove_tree(d):
                 removed += 1
             continue
 
@@ -61,12 +92,14 @@ def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
             expire_at = int(job.get("created_at", "0")) + settings.pending_ttl_seconds
         else:
             expire_at = completed_at + settings.ttl_seconds
-            src = d / "input.pdf"
-            if src.exists() and now - completed_at > settings.input_grace_seconds:
-                src.unlink(missing_ok=True)
+            if now - completed_at > settings.input_grace_seconds:
+                for src in d.glob("input.*"):
+                    src.unlink(missing_ok=True)
 
-        if now > expire_at:
-            shutil.rmtree(d, ignore_errors=True)
+        if now > expire_at and remove_tree(d):
+            # Only forget the job once its files are actually gone, so a failed
+            # delete stays visible to the next sweep instead of becoming an
+            # orphan we have less information about.
             store.delete_job(r, d.name)
             removed += 1
     return removed
@@ -127,6 +160,16 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
     def job_dir(job_id: str) -> Path:
         return settings.data_dir / job_id
 
+    def input_path(job_id: str) -> Path | None:
+        """The stored upload, whatever extension it came in with."""
+        return next(iter(sorted(job_dir(job_id).glob("input.*"))), None)
+
+    def require_input(job_id: str) -> Path:
+        src = input_path(job_id)
+        if src is None:
+            raise HTTPException(410, "stored file is gone (deleted after the run finished)")
+        return src
+
     def require_job(job_id: str) -> dict:
         job = store.get_job(r, job_id)
         if job is None:
@@ -143,11 +186,15 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         state = {
             "job_id": job_id,
             "status": job.get("status", "unknown"),
+            "kind": job.get("kind", "pdf"),
             "filename": job.get("filename", "input.pdf"),
             "size_bytes": int(job.get("size_bytes", "0")),
             "pages": int(job.get("pages", "0")),
             "expires_in": max(0, expires_at - int(time.time())),
         }
+        for key in ("width", "height"):
+            if key in job:
+                state[key] = int(job[key])
         for key in ("floor_estimate", "target_bytes", "final_bytes", "rungs_tried"):
             if key in job:
                 state[key] = int(job[key])
@@ -163,10 +210,21 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
 
     @app.post("/api/upload")
     async def upload(file: UploadFile):
+        filename = file.filename or "input"
+        # Keep the uploader's extension so detect_strategy can use it, but never
+        # trust it as a path: only a known suffix is allowed through.
+        suffix = Path(filename).suffix.lower()
+        if suffix not in ACCEPTED_SUFFIXES:
+            raise HTTPException(
+                415,
+                "unsupported file type; upload a PDF or an image "
+                "(JPEG, PNG, WebP, TIFF, BMP)",
+            )
+
         job_id = store.new_job_id()
         d = job_dir(job_id)
         d.mkdir(parents=True)
-        dest = d / "input.pdf"
+        dest = d / f"input{suffix}"
         size = 0
         try:
             with dest.open("wb") as f:
@@ -184,13 +242,15 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             try:
                 info = await run_in_threadpool(analyze, dest)
             except Exception:
-                raise HTTPException(422, "that file does not look like a valid PDF") from None
+                raise HTTPException(
+                    422, "that file is not a readable PDF or image"
+                ) from None
             if info.encrypted:
                 raise HTTPException(
                     422, "this PDF is password protected; remove the password first"
                 )
         except HTTPException:
-            shutil.rmtree(d, ignore_errors=True)
+            remove_tree(d)
             raise
 
         store.create_job(
@@ -198,17 +258,23 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             job_id,
             {
                 "status": "uploaded",
-                "filename": file.filename or "input.pdf",
+                "kind": info.kind,
+                "filename": filename,
                 "size_bytes": size,
                 "pages": info.pages,
+                "width": info.width,
+                "height": info.height,
             },
             settings.pending_ttl_seconds,
         )
         return {
             "job_id": job_id,
-            "filename": file.filename or "input.pdf",
+            "kind": info.kind,
+            "filename": filename,
             "size_bytes": size,
             "pages": info.pages,
+            "width": info.width,
+            "height": info.height,
             "image_share": round(info.image_share, 3),
             "has_forms": info.has_forms,
             # Nothing has finished yet, so the live window is the pending one.
@@ -218,9 +284,7 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
     @app.post("/api/jobs/{job_id}/analyze")
     async def analyze_job(job_id: str):
         job = require_job(job_id)
-        src = job_dir(job_id) / "input.pdf"
-        if not src.exists():
-            raise HTTPException(410, "stored file is gone (expired)")
+        src = require_input(job_id)
         floor = await run_in_threadpool(estimate_floor, src, timeout=settings.gs_timeout)
         store.update_job(r, job_id, floor_estimate=floor, status="analyzed")
         return {
@@ -234,10 +298,14 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         job = require_job(job_id)
         if job.get("status") in ("queued", "compressing"):
             raise HTTPException(409, "a compression run is already in progress for this file")
-        src = job_dir(job_id) / "input.pdf"
-        if not src.exists():
-            raise HTTPException(410, "stored file is gone (expired)")
-        dst = job_dir(job_id) / "output.pdf"
+        src = require_input(job_id)
+        # No suffix: compress_to_target picks the right one for what it produced
+        # (a lossy image result is always JPEG) and reports it back.
+        dst = job_dir(job_id) / "output"
+        # A previous run may have left an output with a different suffix; clear
+        # it so a stale file can never be served as this run's result.
+        for stale in job_dir(job_id).glob("output.*"):
+            stale.unlink(missing_ok=True)
         store.clear_events(r, job_id)
         # A re-run ("try another size") is no longer a finished job, so drop the
         # completion stamp and put the key back on the pending clock.
@@ -302,16 +370,22 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
     @app.get("/api/jobs/{job_id}/download")
     async def download(job_id: str):
         job = require_job(job_id)
-        out = job_dir(job_id) / "output.pdf"
-        if not out.exists():
+        # The suffix depends on what the run produced: a lossy image result is
+        # JPEG even when a PNG went in.
+        out = next(iter(sorted(job_dir(job_id).glob("output.*"))), None)
+        if out is None:
             raise HTTPException(404, "no compressed file yet for this job")
-        stem = Path(job.get("filename", "input.pdf")).stem or "output"
-        return FileResponse(out, media_type="application/pdf", filename=f"{stem}.fit.pdf")
+        stem = Path(job.get("filename", "input")).stem or "output"
+        return FileResponse(
+            out,
+            media_type=MEDIA_TYPES.get(out.suffix.lower(), "application/octet-stream"),
+            filename=f"{stem}.fit{out.suffix}",
+        )
 
     @app.delete("/api/jobs/{job_id}")
     async def delete(job_id: str):
         require_job(job_id)
-        shutil.rmtree(job_dir(job_id), ignore_errors=True)
+        remove_tree(job_dir(job_id))
         store.delete_job(r, job_id)
         return {"job_id": job_id, "deleted": True}
 

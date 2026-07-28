@@ -1,22 +1,35 @@
 # fitpdf
 
-Compress a PDF to fit under a target file size. Built for the "this portal only
-accepts files under 4 MB" problem: pick a target, get a file that actually fits,
-or an honest report of the smallest achievable size.
+Compress a PDF or image to fit under a target file size. Built for the "this
+portal only accepts files under 4 MB" problem: pick a target, get a file that
+actually fits, or an honest report of the smallest achievable size.
+
+Accepts PDF, JPEG, PNG, WebP, TIFF and BMP.
 
 ## How it works
 
-1. Lossless pass first (pikepdf): object streams, stream recompression, unused
-   resource removal, optional metadata strip. Sometimes this alone is enough.
-2. If still over target, a binary search over a ladder of Ghostscript
-   downsampling rungs (image DPI + JPEG quality) finds the gentlest setting that
-   fits under the target.
-3. If even the most aggressive rung cannot fit, you get the smallest achievable
+The same three steps regardless of what you feed it:
+
+1. **Lossless pass first.** For PDFs that is object streams, stream
+   recompression and unused-resource removal (pikepdf). For JPEGs it is an
+   optimised re-encode that reuses the existing DCT coefficients, so the pixels
+   are untouched and only metadata is dropped. Sometimes this alone is enough.
+2. **If still over target, binary-search a ladder** of increasingly aggressive
+   settings for the gentlest one that fits. PDFs step down Ghostscript image
+   DPI and JPEG quality; images step down pixel dimensions and JPEG quality.
+   Twelve rungs are searched in at most four attempts.
+3. **If even the harshest rung cannot fit**, you get the smallest achievable
    file plus a clear "floor" warning instead of a silent failure.
+
+Only step 1, the ladder's contents, and "render one rung" differ per media
+type. Those live behind one protocol in `src/fitpdf/strategies.py`, so the
+search itself is written once. Adding a third media type means implementing
+four methods, not touching the search.
 
 ## Install
 
-Requires Python 3.10+ and Ghostscript.
+Requires Python 3.10+. Ghostscript is needed for the PDF path only; images work
+without it.
 
 ```
 # Windows
@@ -38,9 +51,13 @@ If Ghostscript is not on PATH, point to it with the `FITPDF_GS` env var.
 
 ```
 fitpdf scan.pdf -t 4mb            # fit under 4 MB
+fitpdf photo.jpg -t 500kb         # images work the same way
 fitpdf scan.pdf -t 500kb -o out.pdf
 fitpdf scan.pdf                   # lossless-only pass
 ```
+
+A lossy image result is always JPEG, so the output name is re-suffixed to match
+what was actually produced (`logo.png` in, `logo.fit.jpg` out).
 
 Exit codes: 0 target hit, 2 floor reached (target not possible), 1 error.
 
@@ -62,7 +79,9 @@ browser ──▶ nginx (SPA + /api proxy) ──▶ FastAPI ──▶ Redis ─
 Four pieces, each with one job:
 
 - **`src/fitpdf/`** is the engine: pure Python, no web framework, driven either
-  by the CLI or the API. `engine.py` knows about PDFs and nothing about HTTP.
+  by the CLI or the API. `engine.py` holds the media-agnostic search;
+  `strategies.py` holds everything that knows about a specific file format.
+  Neither knows anything about HTTP.
 - **`src/fitpdf/web/`** is a thin API over it. Uploads land on a shared volume,
   work is enqueued, and nothing blocks the request thread.
 - **The worker** runs Ghostscript out-of-process. A compression can take
@@ -125,9 +144,9 @@ Three clocks, because a job's risk profile changes once it finishes.
 
 | What | When it is deleted |
 | --- | --- |
-| `input.pdf` (your original) | `FITPDF_INPUT_GRACE_SECONDS` after the job finishes |
-| `output.pdf` and job metadata | `FITPDF_TTL_SECONDS` after the job finishes |
-| A job that never finishes | `FITPDF_PENDING_TTL_SECONDS` after upload |
+| the stored original | `FITPDF_INPUT_GRACE_SECONDS` after the job finishes |
+| the compressed output and job metadata | `FITPDF_TTL_SECONDS` after the job finishes |
+| a job that never finishes | `FITPDF_PENDING_TTL_SECONDS` after upload |
 
 Retention is measured from **completion**, not upload, so a slow 40 MB scan and
 a fast 2 MB form get the same download window. The original upload is the
@@ -176,7 +195,7 @@ they share an origin, so it is not.
 
 | Method | Path | What it does |
 | --- | --- | --- |
-| POST | `/api/upload` | multipart upload, returns job id and basic PDF info |
+| POST | `/api/upload` | multipart upload, returns job id, media kind and basic info |
 | POST | `/api/jobs/{id}/analyze` | estimates the floor, returns slider bounds |
 | POST | `/api/jobs/{id}/compress` | queues a run with `{"target_bytes": n}` |
 | GET | `/api/jobs/{id}` | job state, including seconds until auto-delete |

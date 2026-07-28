@@ -19,8 +19,9 @@ import {
 
 interface TargetPickerProps {
   filename: string
+  /** Pre-rendered "2.4 MB, 3 pages" or "2.4 MB, 3000 x 2000". */
+  meta: string
   originalBytes: number
-  pages: number
   floor: number
   onCompress: (targetBytes: number) => void
   onCancel: () => void
@@ -30,8 +31,8 @@ interface TargetPickerProps {
 
 export function TargetPicker({
   filename,
+  meta,
   originalBytes,
-  pages,
   floor,
   onCompress,
   onCancel,
@@ -68,9 +69,7 @@ export function TargetPicker({
     <div className="panel">
       <header className="file-head">
         <h2 className="file-name">{filename}</h2>
-        <p className="file-meta">
-          {fmt(originalBytes)}, {pages} {pages === 1 ? 'page' : 'pages'}
-        </p>
+        <p className="file-meta">{meta}</p>
       </header>
 
       <p className="target-value">{fmt(target)}</p>

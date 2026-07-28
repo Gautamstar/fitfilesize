@@ -61,13 +61,13 @@ export function Dropzone({ onFile, error, disabled = false }: DropzoneProps) {
           handleFiles(e.dataTransfer.files)
         }}
       >
-        <p className="drop-title">Drop a PDF here</p>
+        <p className="drop-title">Drop a PDF or image here</p>
         <p className="drop-sub">or click to choose one</p>
 
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf,.pdf"
+          accept="application/pdf,.pdf,image/*"
           hidden
           // Clearing the value lets the user pick the SAME file again after an
           // error; without it the change event would not fire a second time.

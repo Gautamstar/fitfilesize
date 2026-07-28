@@ -53,8 +53,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
-/** POST /api/upload. Sends the PDF, gets back a job id and basic info. */
-export function uploadPdf(file: File, signal?: AbortSignal): Promise<UploadResponse> {
+/** POST /api/upload. Sends the PDF or image, gets back a job id and basic info. */
+export function uploadFile(file: File, signal?: AbortSignal): Promise<UploadResponse> {
   const form = new FormData()
   form.append('file', file)
   // Note: no Content-Type header. The browser sets it, including the

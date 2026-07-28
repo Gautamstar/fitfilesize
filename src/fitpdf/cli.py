@@ -4,22 +4,24 @@ from pathlib import Path
 
 import pikepdf
 
-from .engine import compress_to_target, lossless_pass
+from .engine import compress_to_target
 from .gs import GhostscriptError
+from .strategies import detect_strategy
 from .units import human_size, parse_size
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="fitpdf", description="Compress a PDF to fit under a target file size."
+        prog="fitpdf",
+        description="Compress a PDF or image to fit under a target file size.",
     )
-    parser.add_argument("input", help="input PDF")
+    parser.add_argument("input", help="input PDF or image")
     parser.add_argument(
         "-t", "--target", help='target size, e.g. "4mb" or "500kb" (omit for lossless-only)'
     )
-    parser.add_argument("-o", "--output", help="output path (default: <input>.fit.pdf)")
+    parser.add_argument("-o", "--output", help="output path (default: <input>.fit.<ext>)")
     parser.add_argument(
-        "--keep-metadata", action="store_true", help="keep XMP metadata and document info"
+        "--keep-metadata", action="store_true", help="keep XMP metadata, EXIF and document info"
     )
     parser.add_argument("--timeout", type=int, default=120, help="per-attempt timeout in seconds")
     args = parser.parse_args(argv)
@@ -28,25 +30,35 @@ def main(argv: list[str] | None = None) -> int:
     if not src.is_file():
         print(f"error: no such file: {src}", file=sys.stderr)
         return 1
-    dst = Path(args.output) if args.output else src.with_name(src.stem + ".fit.pdf")
+
+    strategy = detect_strategy(src)
+    # compress_to_target re-suffixes to match what it actually produced, so this
+    # is only a base name.
+    dst = Path(args.output) if args.output else src.with_name(src.stem + ".fit" + src.suffix)
 
     try:
         if args.target is None:
             original = src.stat().st_size
-            final = lossless_pass(src, dst, strip_metadata=not args.keep_metadata)
+            out = dst.with_suffix(strategy.output_suffix(src, lossy=False))
+            final = strategy.lossless(src, out, strip_metadata=not args.keep_metadata)
             pct = 100.0 * (1 - final / original) if original else 0.0
             print(f"{human_size(original)} -> {human_size(final)}  ({pct:.0f}% smaller, lossless)")
-            print(f"wrote {dst}")
+            print(f"wrote {out}")
             return 0
 
         target = parse_size(args.target)
         result = compress_to_target(
-            src, dst, target, timeout=args.timeout, strip_metadata=not args.keep_metadata
+            src,
+            dst,
+            target,
+            timeout=args.timeout,
+            strip_metadata=not args.keep_metadata,
+            strategy=strategy,
         )
     except pikepdf.PasswordError:
         print("error: this PDF is encrypted; decrypt it first", file=sys.stderr)
         return 1
-    except (GhostscriptError, ValueError, pikepdf.PdfError) as e:
+    except (GhostscriptError, OSError, ValueError, pikepdf.PdfError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
 

@@ -30,6 +30,25 @@ def image_pdf(tmp_path_factory) -> Path:
 
 
 @pytest.fixture(scope="session")
+def photo_jpg(tmp_path_factory) -> Path:
+    """A large, high-quality JPEG, the phone-photo case."""
+    path = tmp_path_factory.mktemp("corpus") / "photo.jpg"
+    _page_image(3000, 2000, 1).save(path, "JPEG", quality=98, optimize=False)
+    return path
+
+
+@pytest.fixture(scope="session")
+def transparent_png(tmp_path_factory) -> Path:
+    """RGBA PNG, to exercise the alpha-flattening path."""
+    path = tmp_path_factory.mktemp("corpus") / "logo.png"
+    img = _page_image(1200, 900, 2).convert("RGBA")
+    alpha = Image.linear_gradient("L").resize((1200, 900))
+    img.putalpha(alpha)
+    img.save(path, "PNG")
+    return path
+
+
+@pytest.fixture(scope="session")
 def blank_pdf(tmp_path_factory) -> Path:
     path = tmp_path_factory.mktemp("corpus") / "blank.pdf"
     pdf = pikepdf.new()

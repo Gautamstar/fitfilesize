@@ -71,6 +71,39 @@ export function tierHint(
   return { text: 'Maximum squeeze. Screen-reading quality.', below: false }
 }
 
+/** What the backend will accept, mirroring ACCEPTED_SUFFIXES in web/app.py. */
+export const ACCEPTED_EXTENSIONS = [
+  '.pdf',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.tif',
+  '.tiff',
+  '.bmp',
+]
+
+export function isAcceptedFile(file: File): boolean {
+  const name = file.name.toLowerCase()
+  if (ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(ext))) return true
+  // Some browsers report no filename extension for pasted or camera files.
+  return file.type === 'application/pdf' || file.type.startsWith('image/')
+}
+
+/** "2.4 MB, 3 pages" for PDFs, "2.4 MB, 3000 x 2000" for images. */
+export function describeSource(
+  kind: 'pdf' | 'image',
+  sizeBytes: number,
+  pages: number,
+  width?: number,
+  height?: number,
+): string {
+  if (kind === 'image' && width && height) {
+    return `${fmt(sizeBytes)}, ${width} x ${height}`
+  }
+  return `${fmt(sizeBytes)}, ${pages} ${pages === 1 ? 'page' : 'pages'}`
+}
+
 /** mm:ss for the auto-delete countdown. app.js:421-427 */
 export function formatCountdown(secondsLeft: number): string {
   const m = Math.floor(secondsLeft / 60)
