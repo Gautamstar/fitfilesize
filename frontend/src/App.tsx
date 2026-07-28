@@ -55,7 +55,7 @@ function App() {
   }, [])
 
   const secondsLeft = useCountdown(phase === 'result' ? stream.expiresAt : null, () =>
-    reset('That file expired and was deleted. Upload it again if you still need it.'),
+    reset('We deleted that file. Upload it again if you still need it.'),
   )
 
   // Move the machine forward when the stream reaches a terminal event.
@@ -75,7 +75,7 @@ function App() {
     setDropError(null)
 
     if (!isAcceptedFile(file)) {
-      setDropError('That is not a PDF or a supported image.')
+      setDropError('We can take a PDF, JPEG, PNG, WebP, TIFF or BMP.')
       return
     }
 
@@ -131,7 +131,7 @@ function App() {
       case 'analyzing':
         return (
           <div className="panel">
-            <p className="progress-headline">Reading the file...</p>
+            <p className="progress-headline">Reading your file</p>
           </div>
         )
 
@@ -204,7 +204,7 @@ function App() {
 
       <footer className="site-foot">
         <p>
-          Your original is deleted 5 minutes after compression finishes, the compressed file
+          We delete your original 5 minutes after the run finishes, and the compressed file
           after 10.
         </p>
       </footer>

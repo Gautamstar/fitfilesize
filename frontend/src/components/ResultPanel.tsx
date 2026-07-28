@@ -23,15 +23,15 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete }: R
       <p className={`badge ${result.hit_target ? 'badge-good' : 'badge-warn'}`}>
         {result.hit_target
           ? `Fits under ${fmt(result.target_bytes)}`
-          : `Could not reach ${fmt(result.target_bytes)}`}
+          : `As small as it goes`}
       </p>
 
       <p className="result-detail">
         {result.hit_target
           ? result.method === 'none'
-            ? 'It was already under your target, so it is unchanged.'
-            : `Saved ${savedPct} percent.`
-          : `This is the smallest we could make it without wrecking it. Saved ${savedPct} percent.`}
+            ? 'Your file was already under that size, so we left it alone.'
+            : `You saved ${savedPct} percent.`
+          : `This is as small as this file goes without ruining it. You saved ${savedPct} percent.`}
       </p>
 
       <div className="sizes">

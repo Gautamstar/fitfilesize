@@ -18,7 +18,7 @@ interface ProgressPanelProps {
 
 export function ProgressPanel({ filename, targetBytes, steps, attempts }: ProgressPanelProps) {
   const headline =
-    attempts > 0 ? `Attempt ${attempts} of at most ${MAX_ATTEMPTS}` : 'Working on it...'
+    attempts > 0 ? `Attempt ${attempts} of at most ${MAX_ATTEMPTS}` : 'Working on it'
 
   return (
     <div className="panel">

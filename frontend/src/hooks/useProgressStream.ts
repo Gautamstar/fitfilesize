@@ -84,7 +84,7 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
         case 'lossless':
           setState((s) => ({ ...s, attempts: s.attempts + 1 }))
-          addStep(`Lossless cleanup pass: ${fmt(ev.size)}`)
+          addStep(`Cleanup pass brought it to ${fmt(ev.size)}`)
           break
 
         case 'rung_start': {

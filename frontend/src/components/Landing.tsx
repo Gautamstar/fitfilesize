@@ -9,9 +9,8 @@ import { motion } from 'motion/react'
 import { fadeUp, inViewProps, stagger } from '../anim'
 
 const STEPS = [
-  'Lossless cleanup first, which changes nothing you can see. Often that is enough.',
-  'If not, a search over twelve settings finds the gentlest one that fits your target.',
-  'If nothing fits, you get the smallest possible file and a clear warning, not a silent failure.',
+  'We start with a cleanup that shrinks the file without changing how it looks. Often that is enough on its own.',
+  'If it needs more, we try twelve quality settings and give you the gentlest one that still fits your size.',
 ]
 
 const FORMATS = ['PDF', 'JPEG', 'PNG', 'WebP', 'TIFF', 'BMP']

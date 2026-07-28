@@ -8,7 +8,7 @@ interface ErrorPanelProps {
 export function ErrorPanel({ message, onRestart }: ErrorPanelProps) {
   return (
     <div className="panel">
-      <p className="badge badge-warn">Something went wrong</p>
+      <p className="badge badge-warn">That did not work</p>
       <p className="result-detail">{message}</p>
       <div className="actions">
         <button type="button" className="btn-primary" onClick={onRestart}>

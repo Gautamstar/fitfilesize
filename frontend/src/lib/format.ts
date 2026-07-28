@@ -55,20 +55,18 @@ export function tierHint(
 ): TierHint {
   if (target < floor) {
     return {
-      text:
-        'Below the estimated floor. You will get the smallest file possible ' +
-        `instead, about ${fmt(floor)}.`,
+      text: `This file goes down to about ${fmt(floor)}, so that is what you will get.`,
       below: true,
     }
   }
   const ratio = target / originalBytes
   if (ratio >= 0.75)
-    return { text: 'Light touch. Mostly structural cleanup, images stay sharp.', below: false }
+    return { text: 'Light work. Your images stay sharp at this size.', below: false }
   if (ratio >= 0.45)
-    return { text: 'Balanced. Modest downsampling, fine for print and screen.', below: false }
+    return { text: 'A good middle ground. Still fine to print.', below: false }
   if (ratio >= 0.25)
-    return { text: 'Aggressive. Images get visibly softer but stay readable.', below: false }
-  return { text: 'Maximum squeeze. Screen-reading quality.', below: false }
+    return { text: 'Images soften a little here, but stay easy to read.', below: false }
+  return { text: 'The hardest squeeze. Good for reading on a screen.', below: false }
 }
 
 /** What the backend will accept, mirroring ACCEPTED_SUFFIXES in web/app.py. */

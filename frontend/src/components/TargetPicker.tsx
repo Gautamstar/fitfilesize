@@ -93,7 +93,7 @@ export function TargetPicker({
           <span>{fmt(hi)}</span>
         </div>
         <p className="floor-note">
-          below {fmt(floor)}, the smallest this file can likely go
+          this file goes down to about {fmt(floor)}
         </p>
       </div>
 
