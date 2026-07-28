@@ -504,13 +504,13 @@ button:disabled {
 /* ---------- landing content ---------- */
 
 .landing {
-  margin-top: 72px;
+  margin-top: 56px;
 }
 
 .band {
-  padding-top: 40px;
+  padding-top: 32px;
   border-top: 1px solid var(--hairline);
-  margin-top: 40px;
+  margin-top: 32px;
 }
 .band:first-child {
   border-top: none;
@@ -533,105 +533,42 @@ button:disabled {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 28px;
+  gap: 14px;
 }
 .step {
   display: grid;
-  grid-template-columns: 44px 1fr;
-  column-gap: 16px;
+  grid-template-columns: 32px 1fr;
+  column-gap: 14px;
   align-items: baseline;
 }
 .step-num {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 12px;
   color: var(--accent-soft);
 }
-.step-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
 .step-body {
-  grid-column: 2;
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--ink-secondary);
   font-size: 15px;
   line-height: 1.6;
 }
 
-/* the floor pitch */
-.pitch {
-  margin: 0;
-  font-size: 20px;
-  line-height: 1.45;
-  letter-spacing: -0.015em;
-}
-.pitch-sub {
-  margin: 18px 0 0;
-  color: var(--ink-secondary);
-  font-size: 15px;
-  line-height: 1.65;
-}
-
-/* upload limits */
-.limits {
+/* supported formats */
+.formats {
   list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--hairline);
+}
+.formats li {
   border: 1px solid var(--hairline);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.limit {
-  background: var(--surface);
-  padding: 20px 14px;
-  text-align: center;
-}
-.limit-value {
-  display: block;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-.limit-label {
-  display: block;
-  margin-top: 6px;
-  color: var(--ink-muted);
+  border-radius: 999px;
+  padding: 5px 13px;
   font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-/* privacy + formats */
-.facts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 28px;
-}
-.fact-title {
-  margin: 0 0 8px;
-  font-size: 15px;
-  font-weight: 600;
-}
-.fact-body {
-  margin: 0;
+  font-size: 12px;
   color: var(--ink-secondary);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-@media (max-width: 620px) {
-  .limits {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .facts {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 480px) {
@@ -643,9 +580,6 @@ button:disabled {
   }
   .landing {
     margin-top: 52px;
-  }
-  .pitch {
-    font-size: 18px;
   }
   .target-value {
     font-size: 42px;

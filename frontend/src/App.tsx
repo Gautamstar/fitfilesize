@@ -179,10 +179,7 @@ function App() {
       <motion.header className="site-head" variants={fadeUp} initial="hidden" animate="show">
         <p className="eyebrow">PDF and image compression</p>
         <h1>Make it fit.</h1>
-        <p className="tagline">
-          Pick a size. Get a file that actually fits under it, or an honest answer that it
-          cannot go that small.
-        </p>
+        <p className="tagline">Pick a size. Get a file that fits under it.</p>
       </motion.header>
 
       <main>
@@ -205,16 +202,12 @@ function App() {
         {phase === 'drop' ? <Landing /> : null}
       </main>
 
-      {/* On the landing page the retention promise already has its own section,
-          so only repeat it once a file is actually in play. */}
-      {phase !== 'drop' ? (
-        <footer className="site-foot">
-          <p>
-            Your original is deleted 5 minutes after compression finishes, the compressed
-            file after 10.
-          </p>
-        </footer>
-      ) : null}
+      <footer className="site-foot">
+        <p>
+          Your original is deleted 5 minutes after compression finishes, the compressed file
+          after 10.
+        </p>
+      </footer>
     </div>
   )
 }
