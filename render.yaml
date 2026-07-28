@@ -11,12 +11,33 @@ services:
           type: keyvalue
           name: fitpdf-redis
           property: connectionString
+
+      # Set this in the dashboard to the Vercel URL once the frontend exists,
+      # e.g. https://fitpdf.vercel.app. Without it the browser blocks every
+      # call, because the SPA and the API are on different origins.
       - key: ALLOWED_ORIGINS
         sync: false
+
+      # Free instances get 512 MB. Ghostscript needs several times the file
+      # size while distilling, so a generous upload limit is how you get
+      # OOM-killed rather than how you serve big files.
       - key: FITPDF_MAX_UPLOAD
         value: "26214400"
       - key: FITPDF_GS_TIMEOUT
         value: "120"
+
+      # Retention. The first two are measured from when a job finishes.
+      - key: FITPDF_TTL_SECONDS
+        value: "600"
+      - key: FITPDF_INPUT_GRACE_SECONDS
+        value: "300"
+
+      # Ceiling for a job that never finishes. This MUST stay above the queue's
+      # per-job timeout, which is FITPDF_GS_TIMEOUT * 8 + 120, so 1080s at the
+      # 120s setting above. Drop it below that and the sweeper starts deleting
+      # files out from under jobs that are still compressing.
+      - key: FITPDF_PENDING_TTL_SECONDS
+        value: "1800"
 
   - type: keyvalue
     name: fitpdf-redis
