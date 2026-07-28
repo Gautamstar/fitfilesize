@@ -26,11 +26,11 @@ from .strategies import (
 RUNGS = PDF_RUNGS
 
 __all__ = [
-    "Analysis",
-    "CompressResult",
     "IMAGE_RUNGS",
     "PDF_RUNGS",
     "RUNGS",
+    "Analysis",
+    "CompressResult",
     "analyze",
     "compress_to_target",
     "estimate_floor",
@@ -100,7 +100,7 @@ def analyze(path: Path | str) -> Analysis:
         image_bytes = 0
         seen: set[tuple[int, int]] = set()
         for page in pdf.pages:
-            for _, img in page.get_images().items():
+            for img in page.get_images().values():
                 key = img.objgen
                 if key in seen:
                     continue

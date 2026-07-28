@@ -14,21 +14,21 @@ from .strategies import ImageStrategy, PdfStrategy, Strategy, detect_strategy
 from .units import human_size, parse_size
 
 __all__ = [
-    "Analysis",
-    "CompressResult",
     "IMAGE_RUNGS",
     "PDF_RUNGS",
     "RUNGS",
-    "Strategy",
-    "PdfStrategy",
+    "Analysis",
+    "CompressResult",
+    "GhostscriptError",
     "ImageStrategy",
+    "PdfStrategy",
+    "Strategy",
     "analyze",
     "compress_to_target",
     "detect_strategy",
     "estimate_floor",
-    "lossless_pass",
-    "GhostscriptError",
     "gs_available",
     "human_size",
+    "lossless_pass",
     "parse_size",
 ]

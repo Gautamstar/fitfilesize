@@ -19,7 +19,9 @@ web = [
 ]
 dev = [
     "pytest>=8",
-    "ruff>=0.4",
+    # Upper bound so a minor release cannot change what "lint passes" means
+    # between a local run and CI.
+    "ruff>=0.16,<0.17",
     "Pillow>=10",
     "httpx>=0.27",
     "fakeredis>=2.23",
@@ -40,6 +42,18 @@ where = ["src"]
 [tool.ruff]
 line-length = 100
 src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Selected explicitly rather than relying on ruff's defaults. Ruff widens its
+# default rule set between releases and CI installs the newest one, so leaning
+# on the defaults means a ruff release can fail the build on code nobody
+# touched. 0.16 did exactly that.
+#
+# BLE001 and S110 are deliberately out. This codebase catches broadly on
+# purpose in a handful of places: a validator has to return False for any
+# failure at all, and the background sweep loop must not die because one
+# directory was unreadable. Each of those sites is commented.
+select = ["E4", "E7", "E9", "F", "B", "UP", "PERF", "PLW", "RUF"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -203,37 +203,39 @@ class ImageStrategy:
         """
         from PIL import Image, ImageOps
 
-        with Image.open(src) as im:
-            fmt = (im.format or "JPEG").upper()
+        # `opened` stays bound to what the context manager will close; every
+        # transform below produces a new in-memory image held separately.
+        with Image.open(src) as opened:
+            fmt = (opened.format or "JPEG").upper()
             # EXIF carries the orientation flag. Dropping EXIF without baking the
             # rotation into the pixels first would leave photos sideways.
-            needs_rotation = im.getexif().get(0x0112, 1) not in (0, 1)
+            needs_rotation = opened.getexif().get(0x0112, 1) not in (0, 1)
 
             if fmt == "JPEG" and not needs_rotation:
                 # quality="keep" reuses the existing DCT coefficients, so this is
                 # genuinely lossless. It only works on an unmodified JPEG, which
                 # is why the rotation case below has to re-encode instead.
-                im.save(dst, "JPEG", quality="keep", optimize=True, progressive=True)
+                opened.save(dst, "JPEG", quality="keep", optimize=True, progressive=True)
             elif fmt == "JPEG":
-                ImageOps.exif_transpose(im).save(
+                ImageOps.exif_transpose(opened).save(
                     dst, "JPEG", quality=95, optimize=True, progressive=True
                 )
             elif fmt == "PNG":
-                im = ImageOps.exif_transpose(im)
-                im.save(dst, "PNG", optimize=True)
+                ImageOps.exif_transpose(opened).save(dst, "PNG", optimize=True)
             elif fmt == "WEBP":
-                im.save(dst, "WEBP", lossless=True, method=6)
+                opened.save(dst, "WEBP", lossless=True, method=6)
             else:
                 # TIFF/BMP have no meaningful lossless shrink; PNG is the
                 # honest floor for "same pixels, smaller file".
-                im.save(dst, "PNG", optimize=True)
+                opened.save(dst, "PNG", optimize=True)
         return dst.stat().st_size
 
     def render(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
         from PIL import Image, ImageOps
 
-        with Image.open(src) as im:
-            im = ImageOps.exif_transpose(im)
+        with Image.open(src) as opened:
+            im = ImageOps.exif_transpose(opened)
+
             if im.mode in ("RGBA", "LA", "P"):
                 # JPEG has no alpha. Composite onto white rather than letting
                 # Pillow drop the channel and produce black fringing.

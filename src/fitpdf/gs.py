@@ -74,7 +74,9 @@ def run_gs(
         str(src),
     ]
     try:
-        proc = subprocess.run(args, capture_output=True, timeout=timeout)
+        # check=False: a non-zero exit is expected for malformed PDFs and is
+        # turned into GhostscriptError below, with the stderr tail attached.
+        proc = subprocess.run(args, capture_output=True, timeout=timeout, check=False)
     except subprocess.TimeoutExpired as e:
         raise GhostscriptError(f"Ghostscript timed out after {timeout}s") from e
     if proc.returncode != 0 or not dst.exists():
