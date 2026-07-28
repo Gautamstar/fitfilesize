@@ -201,9 +201,6 @@ body::after {
   font-size: 12px;
   min-height: 34px;
 }
-.target-hint.below-floor {
-  color: var(--warn);
-}
 
 /* ---------- slider ---------- */
 

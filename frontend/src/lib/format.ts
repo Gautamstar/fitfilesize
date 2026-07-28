@@ -42,31 +42,13 @@ export function bytesToSlider(bytes: number, lo: number, hi: number): number {
   return Math.round((SLIDER_STEPS * Math.log(clamped / lo)) / Math.log(hi / lo))
 }
 
-export interface TierHint {
-  text: string
-  below: boolean
-}
-
-/** Plain-language description of what a given target will do. app.js:164-174 */
-export function tierHint(
-  target: number,
-  floor: number,
-  originalBytes: number,
-): TierHint {
-  if (target < floor) {
-    return {
-      text: `This file goes down to about ${fmt(floor)}, so that is what you will get.`,
-      below: true,
-    }
-  }
+/** Plain-language description of what a given target will do. */
+export function tierHint(target: number, originalBytes: number): string {
   const ratio = target / originalBytes
-  if (ratio >= 0.75)
-    return { text: 'Light work. Your images stay sharp at this size.', below: false }
-  if (ratio >= 0.45)
-    return { text: 'A good middle ground. Still fine to print.', below: false }
-  if (ratio >= 0.25)
-    return { text: 'Images soften a little here, but stay easy to read.', below: false }
-  return { text: 'The hardest squeeze. Good for reading on a screen.', below: false }
+  if (ratio >= 0.75) return 'Light work. Your images stay sharp at this size.'
+  if (ratio >= 0.45) return 'A good middle ground. Still fine to print.'
+  if (ratio >= 0.25) return 'Images soften a little here, but stay easy to read.'
+  return 'The hardest squeeze. Good for reading on a screen.'
 }
 
 /** What the backend will accept, mirroring ACCEPTED_SUFFIXES in web/app.py. */

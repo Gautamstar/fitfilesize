@@ -61,7 +61,7 @@ export function TargetPicker({
 
   // Everything below is derived from `pos`. No manual DOM updates anywhere.
   const target = sliderToBytes(pos, lo, hi)
-  const hint = tierHint(target, floor, originalBytes)
+  const hint = tierHint(target, originalBytes)
   const fillPct = (pos / SLIDER_STEPS) * 100
   const hatchPct = floor <= lo ? 0 : Math.min(100, (bytesToSlider(floor, lo, hi) / SLIDER_STEPS) * 100)
 
@@ -73,7 +73,7 @@ export function TargetPicker({
       </header>
 
       <p className="target-value">{fmt(target)}</p>
-      <p className={`target-hint${hint.below ? ' below-floor' : ''}`}>{hint.text}</p>
+      <p className="target-hint">{hint}</p>
 
       <div className="slider-wrap">
         <div className="track">
