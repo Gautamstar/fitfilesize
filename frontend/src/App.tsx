@@ -8,6 +8,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { fadeUp } from './anim'
 import { Dropzone } from './components/Dropzone'
 import { ErrorPanel } from './components/ErrorPanel'
@@ -206,6 +208,13 @@ function App() {
           after 10.
         </p>
       </footer>
+
+      {/* Both are cookieless and record no per-visitor identity, which keeps the
+          page consistent with what it promises about the files themselves.
+          Analytics gives traffic and referrers; SpeedInsights reports Core Web
+          Vitals measured on real visits rather than a synthetic run. */}
+      <Analytics />
+      <SpeedInsights />
     </div>
   )
 }
