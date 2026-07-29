@@ -178,7 +178,7 @@ function App() {
     <div className="shell">
       <motion.header className="site-head" variants={fadeUp} initial="hidden" animate="show">
         <p className="eyebrow">PDF and image compression</p>
-        <h1>Make it fit.</h1>
+        <h1>Fitmit</h1>
         <p className="tagline">Pick a size. Get a file that fits under it.</p>
       </motion.header>
 
