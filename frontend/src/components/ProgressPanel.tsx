@@ -1,9 +1,8 @@
 /**
- * Live progress while the ladder runs. Replaces the DOM building in
- * addStep() / openStream() at static/app.js:283-340.
+ * Live progress while the ladder runs.
  *
- * The steps arrive from useProgressStream as plain data; this component only
- * renders them.
+ * Steps arrive from useProgressStream as plain data. This component only
+ * renders them, so all the stream handling stays in one place.
  */
 
 import { MAX_ATTEMPTS, fmt } from '../lib/format'

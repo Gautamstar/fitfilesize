@@ -1,9 +1,8 @@
 /**
  * Typed client for the FitPDF backend.
  *
- * Replaces the hand-rolled `api()` helper at static/app.js:70-81. One function
- * per endpoint, each declaring what it returns, so callers get autocomplete
- * and typo protection instead of guessing at response shapes.
+ * One function per endpoint, each declaring what it returns, so callers get
+ * autocomplete and typo protection instead of guessing at response shapes.
  */
 
 import type { AnalyzeResponse, JobState, UploadResponse } from '../types/api'

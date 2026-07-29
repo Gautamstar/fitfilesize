@@ -1,11 +1,9 @@
 /**
- * Top-level state machine. Replaces the `state` object plus showPanel() at
- * static/app.js:5-17 and 63-68.
+ * Top-level state machine.
  *
- * The old code hid and unhid five <section> elements by toggling a `hidden`
- * attribute. Here there is a single `phase` value and each phase renders one
- * component. Two panels can never be visible at once, because `phase` cannot
- * hold two values.
+ * A single `phase` value decides what is on screen, and each phase renders
+ * exactly one component. Two panels can never show at once, because `phase`
+ * cannot hold two values.
  */
 
 import { useCallback, useEffect, useState } from 'react'
@@ -70,7 +68,7 @@ function App() {
     }
   }, [stream.error])
 
-  // Upload, then analyze, then show the picker. app.js:115-147
+  // Upload, then analyze, then show the picker.
   const handleFile = async (file: File) => {
     setDropError(null)
 
@@ -97,7 +95,7 @@ function App() {
     }
   }
 
-  // Queue the run and switch to the live progress view. app.js:259-278
+  // Queue the run and switch to the live progress view.
   const handleCompress = async (target: number) => {
     if (!job) return
     setTargetWarning(null)

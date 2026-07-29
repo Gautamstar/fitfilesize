@@ -1,22 +1,20 @@
 /**
- * Pure helpers ported from the old static/app.js.
+ * Pure formatting and slider maths.
  *
- * These are the same functions you already wrote in JavaScript, with types
- * added. Nothing here touches React or the DOM, which is exactly why they
- * live in their own file: pure functions are easy to reason about and easy
- * to test.
+ * Nothing here touches React or the DOM, which is why it lives in its own
+ * file: these functions are easy to reason about and easy to test.
  */
 
-/** Number of discrete positions on the target slider. app.js:19 */
+/** Number of discrete positions on the target slider. */
 export const SLIDER_STEPS = 1000
 
-/** Preset chip values, in MB. app.js:20 */
+/** Preset chip values, in MB. */
 export const PRESETS_MB = [2, 4, 5, 10, 25]
 
-/** Lossless pass plus at most 4 rungs (binary search over 12). app.js:21 */
+/** Lossless pass plus at most 4 rungs, since 12 rungs binary-search in 4. */
 export const MAX_ATTEMPTS = 5
 
-/** Human-readable byte size, e.g. 1536 -> "1.5 KB". app.js:53-61 */
+/** Human-readable byte size, e.g. 1536 -> "1.5 KB". */
 export function fmt(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   const units = ['KB', 'MB', 'GB']
@@ -31,7 +29,7 @@ export function fmt(bytes: number): string {
 
 /**
  * The slider is logarithmic, not linear, so that dragging feels even across
- * a range that might span 100 KB to 100 MB. app.js:153-162
+ * a range that might span 100 KB to 100 MB.
  */
 export function sliderToBytes(pos: number, lo: number, hi: number): number {
   return Math.round(lo * Math.pow(hi / lo, pos / SLIDER_STEPS))
@@ -84,7 +82,7 @@ export function describeSource(
   return `${fmt(sizeBytes)}, ${pages} ${pages === 1 ? 'page' : 'pages'}`
 }
 
-/** mm:ss for the auto-delete countdown. app.js:421-427 */
+/** mm:ss for the auto-delete countdown. */
 export function formatCountdown(secondsLeft: number): string {
   const m = Math.floor(secondsLeft / 60)
   const s = String(secondsLeft % 60).padStart(2, '0')

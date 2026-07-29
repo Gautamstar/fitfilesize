@@ -1,4 +1,4 @@
-/** Terminal error state. Replaces fail() / panel-error at static/app.js:83-87. */
+/** Terminal error state, with the only way forward being to start again. */
 
 interface ErrorPanelProps {
   message: string

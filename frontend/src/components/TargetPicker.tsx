@@ -1,10 +1,9 @@
 /**
- * Target-size slider with preset chips. Replaces openTargetPicker(),
- * buildChips() and onSliderInput() at static/app.js:149-255.
+ * Target-size slider with preset chips.
  *
- * The old code recomputed labels by writing textContent into six elements on
- * every input event. Here the slider position is one piece of state and every
- * label is derived from it during render, so they cannot drift out of sync.
+ * The slider position is the only state. Every label, the fill width, the
+ * hatched floor zone and the active chip are derived from it during render,
+ * so none of them can drift out of sync with the others.
  */
 
 import { useMemo, useState } from 'react'
@@ -40,7 +39,7 @@ export function TargetPicker({
   busy = false,
 }: TargetPickerProps) {
   // Slider spans from below the floor (so the hatched zone is visible) up to
-  // the original size. app.js:181-184
+  // the original size.
   const { lo, hi } = useMemo(() => {
     let lower = Math.max(Math.floor(floor * 0.4), 1024)
     // Guard the degenerate case where the floor estimate is at or above the
@@ -50,8 +49,7 @@ export function TargetPicker({
   }, [floor, originalBytes])
 
   // Default target: 4 MB when that makes sense, else 60% of original.
-  // app.js:201-205. The function form of useState runs this once, not on
-  // every render.
+  // The function form of useState runs this once, not on every render.
   const [pos, setPos] = useState(() => {
     const fourMB = 4 * 1024 * 1024
     let def = fourMB > floor && fourMB < originalBytes ? fourMB : Math.round(originalBytes * 0.6)
@@ -104,7 +102,7 @@ export function TargetPicker({
           const outOfRange = bytes < lo
           const disabled = tooBig || outOfRange
           const belowFloor = !disabled && bytes < floor
-          // Active when within 2% of the current target. app.js:249
+          // Active when within 2% of the current target.
           const active = Math.abs(bytes - target) / bytes < 0.02
 
           return (

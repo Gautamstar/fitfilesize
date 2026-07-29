@@ -1,6 +1,6 @@
 /**
  * Subscribes to the job's SSE progress stream and turns the raw events into
- * display-ready state. Replaces openStream() at static/app.js:292-366.
+ * display-ready state.
  *
  * The whole reason this is a hook and not plain code: an EventSource is a live
  * network connection that MUST be closed when the component goes away, or you
@@ -100,8 +100,8 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
         }
 
         case 'rung_result': {
-          // Update the most recent pending step in place, the way the old code
-          // mutated currentRungLi.
+          // A rung's result lands after its start, so fill in the most recent
+          // pending step rather than appending a second line for it.
           const size = ev.size
           const fits = ev.fits
           setState((s) => {

@@ -1,9 +1,8 @@
 /**
- * Ticks down to the job's auto-delete time. Replaces startCountdown() /
- * stopCountdown() at static/app.js:418-440.
+ * Ticks down to the job's auto-delete time.
  *
- * Same lifecycle problem as the SSE hook: setInterval keeps firing forever
- * unless something clears it. useEffect's cleanup does that automatically.
+ * setInterval keeps firing forever unless something clears it, so the timer
+ * lives in a useEffect whose cleanup owns tearing it down.
  */
 
 import { useEffect, useState } from 'react'

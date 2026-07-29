@@ -22,7 +22,8 @@ from .strategies import (
     lossless_pass,
 )
 
-# Kept as an alias so `from fitpdf import RUNGS` still means the PDF ladder.
+# `RUNGS` is the PDF ladder. Named without a prefix because the CLI and the
+# public package API treat PDFs as the default media type.
 RUNGS = PDF_RUNGS
 
 __all__ = [

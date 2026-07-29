@@ -1,10 +1,8 @@
 /**
- * File picker with drag-and-drop. Replaces the dropzone listeners at
- * static/app.js:95-113.
+ * File picker with drag-and-drop.
  *
- * In the old code you wired six addEventListener calls by hand and toggled a
- * CSS class imperatively. Here the drag state is just a boolean in React
- * state, and the class name is computed from it during render.
+ * Drag state is a boolean in React state and the class name is computed from
+ * it during render, so the highlight cannot get out of sync with the pointer.
  */
 
 import { useRef, useState } from 'react'

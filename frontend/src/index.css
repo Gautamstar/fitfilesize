@@ -1,6 +1,5 @@
-/* FitPDF, styled in the edaProj / portfolio design language:
-   dark editorial, Space Grotesk + IBM Plex Mono, #146ef5 accent, film grain.
-   Tokens mirror edaProj/frontend/tailwind.config.js. */
+/* Fitmit, in the same design language as edaProj and the portfolio site:
+   dark editorial, Space Grotesk + IBM Plex Mono, #146ef5 accent, film grain. */
 
 :root {
   --plane: #080807;

@@ -1,7 +1,4 @@
-/**
- * Outcome, before/after sizes, download link and the delete countdown.
- * Replaces showResult() at static/app.js:370-400.
- */
+/** Outcome, before and after sizes, download link, and the delete countdown. */
 
 import { downloadUrl } from '../lib/api'
 import { fmt, formatCountdown } from '../lib/format'

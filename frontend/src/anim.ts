@@ -1,5 +1,5 @@
 // Shared motion presets: small rises, soft easing, quick stagger.
-// Same values as edaProj/frontend/src/anim.ts so the two sites feel related.
+// Matched to edaProj so the two sites feel related.
 import type { Variants } from 'motion/react'
 
 export const EASE = [0.22, 1, 0.36, 1] as const
