@@ -1,17 +1,30 @@
 /**
- * Subscribes to the job's SSE progress stream and turns the raw events into
+ * Subscribes to the job's progress stream and turns the raw events into
  * display-ready state.
  *
- * The whole reason this is a hook and not plain code: an EventSource is a live
- * network connection that MUST be closed when the component goes away, or you
- * leak a socket every time the user starts a new job. useEffect's cleanup
- * function is React's mechanism for exactly that.
+ * An EventSource is a live network connection that has to be closed when the
+ * component goes away, or every new job leaks a socket. useEffect's cleanup
+ * function is what owns that, which is why this is a hook.
+ *
+ * The stream is not trusted on its own. Server-Sent Events travel as a long
+ * lived text/event-stream response, and plenty of things in the middle will
+ * quietly hold that open while delivering nothing: corporate proxies that
+ * buffer, some mobile networks, privacy extensions. A client that only listens
+ * would sit on "Working on it" forever with no way to find out otherwise. So a
+ * poll starts if the stream has said nothing by STREAM_GRACE_MS, and whichever
+ * one reports a terminal state first wins.
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { eventsUrl } from '../lib/api'
+import { eventsUrl, getJob } from '../lib/api'
 import { fmt } from '../lib/format'
 import type { DoneEvent, JobState, ProgressEvent } from '../types/api'
+
+/** How long to let the stream prove itself before polling as well. */
+const STREAM_GRACE_MS = 6000
+
+/** Poll interval once the fallback is running. */
+const POLL_MS = 2500
 
 /** One line in the progress list. */
 export interface ProgressStep {
@@ -65,6 +78,59 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
     const es = new EventSource(eventsUrl(jobId))
 
+    let settled = false
+    let heardFromStream = false
+    let pollTimer: number | undefined
+    let graceTimer: number | undefined
+
+    const stop = () => {
+      settled = true
+      es.close()
+      window.clearInterval(pollTimer)
+      window.clearTimeout(graceTimer)
+    }
+
+    /** Turn a terminal JobState into the same shape a `done` event carries. */
+    const resultFromState = (st: JobState): DoneEvent => ({
+      stage: 'done',
+      hit_target: st.hit_target ?? false,
+      final_bytes: st.final_bytes ?? 0,
+      original_bytes: st.size_bytes,
+      target_bytes: st.target_bytes ?? 0,
+      method: st.method ?? 'none',
+      warnings: st.warnings ?? [],
+    })
+
+    const settleFromState = (st: JobState) => {
+      if (settled) return
+      setState((s) => ({ ...s, expiresAt: Date.now() + st.expires_in * 1000 }))
+      if (st.status === 'done') {
+        setState((s) => ({ ...s, result: resultFromState(st) }))
+        stop()
+      } else if (st.status === 'error') {
+        setState((s) => ({ ...s, error: st.error ?? 'compression failed' }))
+        stop()
+      }
+    }
+
+    const startPolling = () => {
+      if (settled || pollTimer !== undefined) return
+      pollTimer = window.setInterval(async () => {
+        try {
+          settleFromState(await getJob(jobId))
+        } catch {
+          // A failed poll says nothing conclusive, so keep trying until the
+          // job resolves or the component unmounts.
+        }
+      }, POLL_MS)
+    }
+
+    // If the stream has produced nothing by now, something between here and the
+    // server is eating it. Poll instead rather than waiting on it forever.
+    graceTimer = window.setTimeout(() => {
+      if (!heardFromStream) startPolling()
+    }, STREAM_GRACE_MS)
+
     const addStep = (text: string, status: ProgressStep['status'] = 'done') => {
       const id = nextId.current++
       setState((s) => ({ ...s, steps: [...s.steps, { id, text, status }] }))
@@ -73,6 +139,8 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
     // Default (unnamed) events carry the ProgressEvent union.
     es.onmessage = (msg) => {
+      heardFromStream = true
+      if (settled) return
       const ev: ProgressEvent = JSON.parse(msg.data)
 
       // Switching on the literal `stage` field narrows the union, so each
@@ -128,12 +196,12 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
         case 'done':
           setState((s) => ({ ...s, result: ev }))
-          es.close()
+          stop()
           break
 
         case 'error':
           setState((s) => ({ ...s, error: ev.message || 'compression failed' }))
-          es.close()
+          stop()
           break
       }
     }
@@ -141,38 +209,21 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
     // A named `state` event arrives on connect, and again if the job was
     // already finished before we subscribed (e.g. after a page reload).
     es.addEventListener('state', (msg) => {
-      const st: JobState = JSON.parse((msg as MessageEvent).data)
-
-      setState((s) => ({ ...s, expiresAt: Date.now() + st.expires_in * 1000 }))
-
-      if (st.status === 'done') {
-        setState((s) => ({
-          ...s,
-          result: {
-            stage: 'done',
-            hit_target: st.hit_target ?? false,
-            final_bytes: st.final_bytes ?? 0,
-            original_bytes: st.size_bytes,
-            target_bytes: st.target_bytes ?? 0,
-            method: st.method ?? 'none',
-            warnings: st.warnings ?? [],
-          },
-        }))
-        es.close()
-      } else if (st.status === 'error') {
-        setState((s) => ({ ...s, error: st.error ?? 'compression failed' }))
-        es.close()
-      }
+      heardFromStream = true
+      settleFromState(JSON.parse((msg as MessageEvent).data) as JobState)
     })
 
     es.onerror = () => {
-      // EventSource reconnects on its own. If the job finished while we were
-      // disconnected, the `state` event on reconnect resolves it.
+      // EventSource reconnects on its own, and after a `done` the server closes
+      // the response, so an error here is routine rather than a failure. What it
+      // does mean is that the stream is not currently carrying anything, so
+      // start polling rather than betting on the reconnect succeeding.
+      if (!settled) startPolling()
     }
 
     // Cleanup: runs when jobId changes, enabled flips, or the component
-    // unmounts. Without this, every new job leaks the previous connection.
-    return () => es.close()
+    // unmounts. Without this, every new job leaks a connection and a timer.
+    return stop
   }, [jobId, enabled])
 
   return state
