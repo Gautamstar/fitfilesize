@@ -19,6 +19,8 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
       FITPDF_DATA_DIR: /data
+      # nginx in the frontend container sets X-Real-IP; nothing else is trusted.
+      FITPDF_CLIENT_IP_HEADERS: X-Real-IP
     volumes:
       - fitpdf-data:/data
     healthcheck:

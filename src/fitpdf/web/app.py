@@ -5,15 +5,15 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request, Response, UploadFile
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
 from ..strategies import IMAGE_SUFFIXES, PDF_SUFFIXES
 from ..units import human_size
-from . import store
+from . import limits, store
 from .config import Settings
 from .jobs import run_compress
 
@@ -41,6 +41,25 @@ MEDIA_TYPES = {
 
 class CompressRequest(BaseModel):
     target_bytes: int = Field(gt=0)
+
+
+def _limit_headers(quota: limits.Quota) -> dict[str, str]:
+    headers = {
+        "X-RateLimit-Limit": str(quota.limit),
+        "X-RateLimit-Remaining": str(quota.remaining),
+        "X-RateLimit-Reset": str(quota.reset_in),
+    }
+    if quota.exceeded:
+        headers["Retry-After"] = str(quota.reset_in)
+    return headers
+
+
+def _limit_message(limit: int, noun: str, quota: limits.Quota) -> str:
+    minutes = max(1, -(-quota.reset_in // 60))
+    return (
+        f"You have reached the limit of {limit} {noun} an hour. "
+        f"Try again in {minutes} minute{'s' if minutes != 1 else ''}."
+    )
 
 
 def remove_tree(path: Path, attempts: int = 3) -> bool:
@@ -148,6 +167,32 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
 
     app = FastAPI(title="FitPDF", lifespan=lifespan)
 
+    # Registered before CORS so CORS wraps it: a refusal from here still gets
+    # the Access-Control headers, and the browser can show its message.
+    @app.middleware("http")
+    async def limit_uploads(request: Request, call_next):
+        """Refuse over-budget uploads before their body is read.
+
+        FastAPI parses a multipart form before the endpoint runs, so a check
+        inside upload() would still accept the whole file, up to the size
+        limit, on every refused attempt. Here the body is never touched.
+        """
+        limit = settings.uploads_per_hour
+        if request.method != "POST" or request.url.path != "/api/upload" or limit <= 0:
+            return await call_next(request)
+        quota = limits.hit(
+            r, "uploads", limits.client_key(request, settings.client_ip_headers), limit
+        )
+        if quota.exceeded:
+            return JSONResponse(
+                {"detail": _limit_message(limit, "files", quota)},
+                status_code=429,
+                headers=_limit_headers(quota),
+            )
+        response = await call_next(request)
+        response.headers.update(_limit_headers(quota))
+        return response
+
     if settings.allowed_origins:
         from fastapi.middleware.cors import CORSMiddleware
 
@@ -161,6 +206,26 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
     @app.get("/health")
     async def health():
         return {"ok": True}
+
+    def enforce(request: Request, response: Response, bucket: str, limit: int, noun: str):
+        """Count this request against the visitor's hourly budget, or refuse it."""
+        if limit <= 0:
+            return
+        quota = limits.hit(r, bucket, limits.client_key(request, settings.client_ip_headers), limit)
+        if quota.exceeded:
+            raise HTTPException(429, _limit_message(limit, noun, quota), headers=_limit_headers(quota))
+        response.headers.update(_limit_headers(quota))
+
+    @app.get("/api/limits")
+    async def get_limits(request: Request):
+        """The caller's remaining budget, without spending any of it."""
+        client = limits.client_key(request, settings.client_ip_headers)
+        out = {}
+        for bucket, limit in (("uploads", settings.uploads_per_hour), ("runs", settings.runs_per_hour)):
+            if limit > 0:
+                q = limits.peek(r, bucket, client, limit)
+                out[bucket] = {"limit": q.limit, "remaining": q.remaining, "reset_in": q.reset_in}
+        return out
 
     def job_dir(job_id: str) -> Path:
         return settings.data_dir / job_id
@@ -215,6 +280,7 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
 
     @app.post("/api/upload")
     async def upload(file: UploadFile):
+        # Rate limited by the limit_uploads middleware, before the body is read.
         filename = file.filename or "input"
         # Keep the uploader's extension so detect_strategy can use it, but never
         # trust it as a path: only a known suffix is allowed through.
@@ -287,8 +353,9 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         }
 
     @app.post("/api/jobs/{job_id}/analyze")
-    async def analyze_job(job_id: str):
+    async def analyze_job(job_id: str, request: Request, response: Response):
         job = require_job(job_id)
+        enforce(request, response, "runs", settings.runs_per_hour, "compressions")
         src = require_input(job_id)
         floor = await run_in_threadpool(estimate_floor, src, timeout=settings.gs_timeout)
         store.update_job(r, job_id, floor_estimate=floor, status="analyzed")
@@ -299,10 +366,11 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         }
 
     @app.post("/api/jobs/{job_id}/compress", status_code=202)
-    async def compress(job_id: str, req: CompressRequest):
+    async def compress(job_id: str, req: CompressRequest, request: Request, response: Response):
         job = require_job(job_id)
         if job.get("status") in ("queued", "compressing"):
             raise HTTPException(409, "a compression run is already in progress for this file")
+        enforce(request, response, "runs", settings.runs_per_hour, "compressions")
         src = require_input(job_id)
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back.

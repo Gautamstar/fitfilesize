@@ -9,5 +9,4 @@ corpus/*
 !corpus/README.md
 *.fit.pdf
 data/
-.claude/
 FitPDF-Overview.pdf

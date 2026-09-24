@@ -359,3 +359,112 @@ def test_cors_for_separate_frontend(tmp_path, monkeypatch):
     with TestClient(app) as client:
         res = client.get("/health", headers={"Origin": "https://fitpdf.vercel.app"})
         assert res.headers["access-control-allow-origin"] == "https://fitpdf.vercel.app"
+
+
+def _limited_app(tmp_path, **overrides):
+    settings = Settings(data_dir=tmp_path / "data", **overrides)
+    r = fakeredis.FakeRedis()
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    return create_app(settings=settings, redis_conn=r, queue=q), settings
+
+
+def test_upload_limit_refuses_before_storing_anything(tmp_path, photo_jpg):
+    app, settings = _limited_app(tmp_path, uploads_per_hour=2)
+    with TestClient(app) as client:
+        ok = [_upload(client, photo_jpg, "a.jpg") for _ in range(2)]
+        assert [res.status_code for res in ok] == [200, 200]
+        assert ok[-1].headers["X-RateLimit-Remaining"] == "0"
+
+        refused = _upload(client, photo_jpg, "a.jpg")
+        assert refused.status_code == 429
+        assert "limit of 2 files an hour" in refused.json()["detail"]
+        assert int(refused.headers["Retry-After"]) > 0
+        # Only the two accepted uploads made job directories.
+        assert len(list(settings.data_dir.iterdir())) == 2
+
+
+def test_limits_are_per_visitor(tmp_path, photo_jpg):
+    app, _ = _limited_app(tmp_path, uploads_per_hour=1)
+    with TestClient(app) as client:
+
+        def upload_as(headers):
+            with open(photo_jpg, "rb") as f:
+                return client.post(
+                    "/api/upload",
+                    files={"file": ("a.jpg", f.read(), "image/jpeg")},
+                    headers=headers,
+                ).status_code
+
+        assert upload_as({"CF-Connecting-IP": "203.0.113.1"}) == 200
+        assert upload_as({"CF-Connecting-IP": "203.0.113.1"}) == 429
+        assert upload_as({"CF-Connecting-IP": "203.0.113.2"}) == 200
+        # X-Forwarded-For puts the original client first.
+        assert upload_as({"X-Forwarded-For": "198.51.100.7, 10.0.0.1"}) == 200
+        assert upload_as({"X-Forwarded-For": "198.51.100.7, 10.0.0.2"}) == 429
+        # One IPv6 /64 is one visitor, however many addresses it rotates through.
+        assert upload_as({"CF-Connecting-IP": "2001:db8:1:2::1"}) == 200
+        assert upload_as({"CF-Connecting-IP": "2001:db8:1:2:ffff::9"}) == 429
+
+
+def test_untrusted_headers_are_ignored(tmp_path, photo_jpg):
+    # With no trusted headers every request is keyed by the socket peer, so
+    # a forged header cannot buy a fresh budget.
+    app, _ = _limited_app(tmp_path, uploads_per_hour=1, client_ip_headers=())
+    with TestClient(app) as client:
+        assert _upload(client, photo_jpg, "a.jpg").status_code == 200
+        with open(photo_jpg, "rb") as f:
+            res = client.post(
+                "/api/upload",
+                files={"file": ("a.jpg", f.read(), "image/jpeg")},
+                headers={"CF-Connecting-IP": "203.0.113.99"},
+            )
+        assert res.status_code == 429
+
+
+def test_runs_limit_covers_analyze_and_compress(tmp_path, photo_jpg):
+    app, _ = _limited_app(tmp_path, runs_per_hour=2)
+    with TestClient(app) as client:
+        job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+        assert client.post(f"/api/jobs/{job_id}/analyze").status_code == 200
+        target = int(photo_jpg.stat().st_size * 0.5)
+        assert (
+            client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target}).status_code
+            == 202
+        )
+        res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target})
+        assert res.status_code == 429
+        assert "compressions an hour" in res.json()["detail"]
+
+
+def test_limits_endpoint_reports_without_spending(tmp_path, photo_jpg):
+    app, _ = _limited_app(tmp_path, uploads_per_hour=5)
+    with TestClient(app) as client:
+        assert client.get("/api/limits").json()["uploads"]["remaining"] == 5
+        _upload(client, photo_jpg, "a.jpg")
+        for _ in range(3):
+            assert client.get("/api/limits").json()["uploads"]["remaining"] == 4
+
+
+def test_limit_refusal_is_readable_cross_origin(tmp_path, photo_jpg):
+    # Without CORS headers the browser hides the 429 body and the visitor sees
+    # a generic network error instead of "try again in N minutes".
+    app, _ = _limited_app(
+        tmp_path, uploads_per_hour=1, allowed_origins=("https://fitfilesize.com",)
+    )
+    with TestClient(app) as client:
+        origin = {"Origin": "https://fitfilesize.com"}
+        with open(photo_jpg, "rb") as f:
+            body = f.read()
+        for expected in (200, 429):
+            res = client.post(
+                "/api/upload", files={"file": ("a.jpg", body, "image/jpeg")}, headers=origin
+            )
+            assert res.status_code == expected
+            assert res.headers["access-control-allow-origin"] == "https://fitfilesize.com"
+
+
+def test_zero_disables_limits(tmp_path, photo_jpg):
+    app, _ = _limited_app(tmp_path, uploads_per_hour=0)
+    with TestClient(app) as client:
+        assert all(_upload(client, photo_jpg, "a.jpg").status_code == 200 for _ in range(3))
+        assert "uploads" not in client.get("/api/limits").json()

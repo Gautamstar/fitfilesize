@@ -1,10 +1,15 @@
-# fitpdf
+# FitFileSize
+
+**Live at [fitfilesize.com](https://fitfilesize.com).**
 
 Compress a PDF or image to fit under a target file size. Built for the "this
 portal only accepts files under 4 MB" problem: pick a target, get a file that
 actually fits, or an honest report of the smallest achievable size.
 
 Accepts PDF, JPEG, PNG, WebP, TIFF and BMP.
+
+The site is FitFileSize; the Python package, CLI and `FITPDF_*` settings keep
+the original name, `fitpdf`.
 
 ## How it works
 
@@ -136,7 +141,24 @@ Configuration (env vars): `REDIS_URL`, `FITPDF_DATA_DIR` (default `data`),
 `FITPDF_INPUT_GRACE_SECONDS` (default 300), `FITPDF_MAX_UPLOAD` (bytes, default
 50 MB), `FITPDF_GS_TIMEOUT` (seconds per Ghostscript attempt, default 180),
 `ALLOWED_ORIGINS` (comma-separated CORS origins, only needed when the frontend
-is hosted separately).
+is hosted separately), and the rate limits below.
+
+### Rate limits
+
+Each visitor gets `FITPDF_UPLOADS_PER_HOUR` uploads (default 30) and
+`FITPDF_RUNS_PER_HOUR` floor estimates plus compressions (default 100) per
+hour, counted in Redis in fixed one-hour windows. `0` turns a limit off. An
+over-budget upload is refused with a 429 before its body is read, and every
+limited response carries `X-RateLimit-Remaining` and, when refused,
+`Retry-After`. `GET /api/limits` reports the caller's budget without spending
+any of it.
+
+The visitor is identified by the first valid IP in `FITPDF_CLIENT_IP_HEADERS`
+(default `CF-Connecting-IP,True-Client-IP,X-Forwarded-For`), falling back to
+the socket peer; IPv6 is grouped by /64. Only list headers the proxy in front
+overwrites. A header it passes through untouched can be forged to get a fresh
+budget. The Docker Compose stack sets it to `X-Real-IP`, which its nginx
+always overwrites. Set it to an empty string when nothing sits in front.
 
 ### Retention
 
@@ -202,6 +224,7 @@ they share an origin, so it is not.
 | GET | `/api/jobs/{id}/events` | SSE stream of rung attempts and the final result |
 | GET | `/api/jobs/{id}/download` | the compressed file |
 | DELETE | `/api/jobs/{id}` | delete stored files right now |
+| GET | `/api/limits` | the caller's remaining hourly budget, without spending it |
 
 All stored files are deleted on the schedule in Retention above, no exceptions.
 
