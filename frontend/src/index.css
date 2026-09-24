@@ -34,8 +34,13 @@
   color-scheme: light;
 }
 
+/* Dark scheme. The same tokens appear twice because CSS cannot share a rule
+   between a media query and a plain selector: once for "the system is dark
+   and the visitor has not chosen light", once for "the visitor chose dark".
+   data-theme is set on <html> by the inline script in index.html (before
+   first paint) and by ThemeToggle. Keep the two blocks identical. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --page: #0c0e13;
     --surface: #151821;
     --raised: #1c2029;
@@ -63,6 +68,35 @@
 
     color-scheme: dark;
   }
+}
+
+:root[data-theme='dark'] {
+  --page: #0c0e13;
+  --surface: #151821;
+  --raised: #1c2029;
+
+  --ink: #e9ebf0;
+  --ink-secondary: #a8afbd;
+  --ink-muted: #8a92a3;
+
+  --accent: #7d9bff;
+  --accent-hover: #98b0ff;
+  --accent-tint: #3a4a7a;
+  --accent-wash: rgba(125, 155, 255, 0.12);
+  --on-accent: #0c0e13;
+
+  --hairline: #262b36;
+  --hairline-strong: #363d4b;
+
+  --good: #4fd1a0;
+  --good-wash: rgba(79, 209, 160, 0.12);
+  --warn: #f2b545;
+  --warn-wash: rgba(242, 181, 69, 0.12);
+  --bad: #ff8a80;
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+
+  color-scheme: dark;
 }
 
 *,
@@ -126,6 +160,56 @@ input[type='range']:focus-visible {
   display: block;
   flex: none;
 }
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Both icons are in the markup; the effective theme decides which shows.
+   Mirrors the token rules: dark if chosen, or if the system is dark and
+   light was not chosen. */
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+.theme-toggle .icon-sun {
+  display: none;
+}
+:root[data-theme='dark'] .theme-toggle .icon-sun {
+  display: block;
+}
+:root[data-theme='dark'] .theme-toggle .icon-moon {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .theme-toggle .icon-sun {
+    display: block;
+  }
+  :root:not([data-theme='light']) .theme-toggle .icon-moon {
+    display: none;
+  }
+}
+
 .topbar-note {
   margin: 0;
   color: var(--ink-muted);
