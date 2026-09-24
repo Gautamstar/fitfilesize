@@ -38,6 +38,21 @@ class Settings:
     queue_name: str = "fitpdf"
     allowed_origins: tuple[str, ...] = ()
     """CORS origins for a separately hosted frontend, e.g. the Vercel deploy."""
+    uploads_per_hour: int = 30
+    """Uploads one visitor may make per hour. 0 turns the limit off."""
+
+    runs_per_hour: int = 100
+    """Floor estimates plus compressions per visitor per hour. Both run
+    Ghostscript, and "try another size" re-runs without a new upload, so they
+    get their own, looser budget. 0 turns the limit off."""
+
+    client_ip_headers: tuple[str, ...] = ("CF-Connecting-IP", "True-Client-IP", "X-Forwarded-For")
+    """Headers to read the visitor's IP from, first valid one wins, falling
+    back to the socket peer. Only list headers the proxy in front of the API
+    overwrites: anything it passes through untouched, a visitor can forge to
+    dodge the rate limit. Set FITPDF_CLIENT_IP_HEADERS to override, or to an
+    empty string to trust only the socket peer when nothing sits in front."""
+
     inline: bool = False
     """Run jobs in-process against a fake Redis. Dev convenience for machines
     without Redis or Docker; needs the fakeredis package (dev extra)."""
@@ -60,5 +75,14 @@ class Settings:
             max_upload_bytes=int(os.environ.get("FITPDF_MAX_UPLOAD", str(cls.max_upload_bytes))),
             gs_timeout=int(os.environ.get("FITPDF_GS_TIMEOUT", "180")),
             allowed_origins=origins,
+            uploads_per_hour=int(
+                os.environ.get("FITPDF_UPLOADS_PER_HOUR", str(cls.uploads_per_hour))
+            ),
+            runs_per_hour=int(os.environ.get("FITPDF_RUNS_PER_HOUR", str(cls.runs_per_hour))),
+            client_ip_headers=(
+                tuple(h.strip() for h in os.environ["FITPDF_CLIENT_IP_HEADERS"].split(",") if h.strip())
+                if "FITPDF_CLIENT_IP_HEADERS" in os.environ
+                else cls.client_ip_headers
+            ),
             inline=os.environ.get("FITPDF_INLINE", "") == "1",
         )

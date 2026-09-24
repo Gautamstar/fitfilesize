@@ -41,6 +41,15 @@ services:
       - key: FITPDF_PENDING_TTL_SECONDS
         value: "1800"
 
+      # Per-visitor hourly budgets (0 turns one off). The visitor's IP comes
+      # from CF-Connecting-IP, then True-Client-IP, then the first
+      # X-Forwarded-For entry; see client_ip_headers in web/config.py before
+      # changing FITPDF_CLIENT_IP_HEADERS.
+      - key: FITPDF_UPLOADS_PER_HOUR
+        value: "30"
+      - key: FITPDF_RUNS_PER_HOUR
+        value: "100"
+
   - type: keyvalue
     name: fitpdf-redis
     plan: free
