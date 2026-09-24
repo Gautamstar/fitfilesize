@@ -265,7 +265,7 @@ function App({ path }: AppProps) {
           <ul className="trust">
             <li>
               <TrustIcon d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3z" />
-              Deleted within 10 minutes
+              Deleted automatically
             </li>
             <li>
               <TrustIcon d="M20 6 9 17l-5-5" />
@@ -289,8 +289,8 @@ function App({ path }: AppProps) {
           <span className="brand-name">FitFileSize</span>
         </a>
         <p>
-          We delete your original 5 minutes after the run finishes, and the compressed file
-          after 10.
+          Files are deleted automatically: your original 5 minutes after compression, the
+          result after 10. Anything you upload but don't compress is gone within 30 minutes.
         </p>
         <nav className="foot-links" aria-label="Site">
           <a href="/privacy.html">Privacy</a>
