@@ -15,6 +15,18 @@ EVENTS_PREFIX = "fitpdf:events:"
 
 TERMINAL_STATUSES = ("done", "error")
 
+# Everything before a terminal status. A job in one of these is waiting on the
+# visitor (uploaded, analyzed) or on the worker (queued, compressing).
+ACTIVE_STATUSES = ("uploaded", "analyzed", "queued", "compressing")
+
+# Shown when a job's files or its run did not survive a server restart. On a
+# host without a persistent disk (Render's free tier) a deploy starts from an
+# empty data directory, so the visitor's only way forward is a fresh upload.
+RESTARTED_MESSAGE = (
+    "The server restarted while your file was being processed, so it was lost. "
+    "Please upload it again."
+)
+
 
 def new_job_id() -> str:
     return uuid.uuid4().hex
@@ -59,6 +71,35 @@ def get_events(r, job_id: str, start: int = 0) -> list[dict]:
 
 def clear_events(r, job_id: str) -> None:
     r.delete(events_key(job_id))
+
+
+def touch_progress(r, job_id: str) -> None:
+    """Record that the run is alive. Read by the sweeper to spot dead runs."""
+    r.hset(job_key(job_id), "progress_at", str(int(time.time())))
+
+
+def fail_job(r, job_id: str, message: str, ttl: int, pending_ttl: int) -> None:
+    """Move a job to error, tell anyone watching, and start its retention clock.
+
+    The error event is what the progress stream and the polling fallback both
+    act on, so a visitor waiting on the job sees the message within seconds.
+    """
+    update_job(r, job_id, status="error", error=message)
+    push_event(r, job_id, {"stage": "error", "message": message}, pending_ttl)
+    mark_completed(r, job_id, ttl)
+
+
+def active_job_ids(r) -> list[str]:
+    """Ids of every job not yet done or failed. SCAN, so Redis is never blocked."""
+    ids = []
+    for raw in r.scan_iter(match=JOB_PREFIX + "*", count=200):
+        key = raw.decode() if isinstance(raw, bytes) else raw
+        status = r.hget(key, "status")
+        if isinstance(status, bytes):
+            status = status.decode()
+        if status in ACTIVE_STATUSES:
+            ids.append(key[len(JOB_PREFIX):])
+    return ids
 
 
 def mark_completed(r, job_id: str, ttl: int) -> None:

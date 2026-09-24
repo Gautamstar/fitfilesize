@@ -12,6 +12,7 @@ from fitpdf.web import app as web_app
 from fitpdf.web import store
 from fitpdf.web.app import create_app, sweep_expired
 from fitpdf.web.config import Settings
+from fitpdf.web.jobs import run_compress
 
 requires_gs = pytest.mark.skipif(not gs_available(), reason="ghostscript not installed")
 
@@ -470,3 +471,91 @@ def test_zero_disables_limits(tmp_path, photo_jpg):
     with TestClient(app) as client:
         assert all(_upload(client, photo_jpg, "a.jpg").status_code == 200 for _ in range(3))
         assert "uploads" not in client.get("/api/limits").json()
+
+
+def _simulate_restart_with_empty_disk(settings):
+    """What a Render deploy does: Redis survives, the data directory does not."""
+    for d in settings.data_dir.iterdir():
+        web_app.remove_tree(d)
+
+
+def test_restart_fails_waiting_jobs_whose_upload_vanished(web, photo_jpg):
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    _simulate_restart_with_empty_disk(settings)
+
+    assert web_app.recover_interrupted(settings.data_dir, settings, r) == 1
+
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["status"] == "error"
+    assert state["error"] == store.RESTARTED_MESSAGE
+    # The watching page is told through the same channel as any failure.
+    assert store.get_events(r, job_id)[-1] == {
+        "stage": "error",
+        "message": store.RESTARTED_MESSAGE,
+    }
+    # A retry from the size picker explains itself instead of "deleted after the run".
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 1000})
+    assert res.status_code == 410
+    assert res.json()["detail"] == store.RESTARTED_MESSAGE
+
+
+def test_restart_fails_dead_runs_but_not_slow_ones(web, photo_jpg):
+    client, r, settings = web
+    dead = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    slow = _upload(client, photo_jpg, "b.jpg").json()["job_id"]
+    now = int(time.time())
+    quiet_too_long = now - web_app.stale_after(settings) - 5
+    store.update_job(r, dead, status="compressing", progress_at=quiet_too_long)
+    store.update_job(r, slow, status="compressing", progress_at=now - 30)
+
+    assert web_app.recover_interrupted(settings.data_dir, settings, r) == 1
+    assert store.get_job(r, dead)["status"] == "error"
+    assert store.get_job(r, slow)["status"] == "compressing"
+
+
+def test_recovery_leaves_healthy_and_finished_jobs_alone(web, photo_jpg):
+    client, r, settings = web
+    waiting = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    finished = _upload(client, photo_jpg, "b.jpg").json()["job_id"]
+    target = int(photo_jpg.stat().st_size * 0.5)
+    client.post(f"/api/jobs/{finished}/compress", json={"target_bytes": target})
+    assert store.get_job(r, finished)["status"] == "done"
+    # A finished job's original is deleted on schedule; that is not a restart.
+    for src in (settings.data_dir / finished).glob("input.*"):
+        src.unlink()
+
+    assert web_app.recover_interrupted(settings.data_dir, settings, r) == 0
+    assert store.get_job(r, waiting)["status"] == "uploaded"
+    assert store.get_job(r, finished)["status"] == "done"
+
+
+def test_worker_explains_a_queued_job_that_lost_its_upload(web, photo_jpg):
+    # Queued before a restart, picked up after it: the job is in Redis, the
+    # file is not on this server's disk.
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    src = next((settings.data_dir / job_id).glob("input.*"))
+    src.unlink()
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    q.enqueue(
+        run_compress,
+        job_id,
+        str(src),
+        str(settings.data_dir / job_id / "output"),
+        1000,
+        settings.ttl_seconds,
+        settings.pending_ttl_seconds,
+        settings.gs_timeout,
+    )
+    state = store.get_job(r, job_id)
+    assert state["status"] == "error"
+    assert state["error"] == store.RESTARTED_MESSAGE
+
+
+def test_progress_is_stamped_while_a_run_is_alive(web, photo_jpg):
+    client, r, _ = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    target = int(photo_jpg.stat().st_size * 0.5)
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target})
+    assert int(store.get_job(r, job_id)["progress_at"]) >= int(time.time()) - 60

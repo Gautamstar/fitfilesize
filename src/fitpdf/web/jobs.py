@@ -27,12 +27,21 @@ def run_compress(
     # TTL: a long run would otherwise expire its own event list mid-job and
     # break SSE replay for anyone who reconnects. mark_completed resets both
     # keys to the short TTL once the job lands.
+    # Queued on a server that has since restarted: the job survived in Redis
+    # but its upload did not survive on disk. Say so plainly, rather than
+    # letting the engine fail with a raw "No such file or directory".
+    if not Path(src).exists():
+        store.fail_job(r, job_id, store.RESTARTED_MESSAGE, ttl, pending_ttl)
+        return
+
     store.update_job(r, job_id, status="compressing")
+    store.touch_progress(r, job_id)
     store.push_event(r, job_id, {"stage": "start", "target_bytes": target_bytes}, pending_ttl)
 
     def on_progress(event: dict) -> None:
         try:
             store.push_event(r, job_id, event, pending_ttl)
+            store.touch_progress(r, job_id)
         except Exception:
             pass  # progress is best-effort; never kill the compression over it
 

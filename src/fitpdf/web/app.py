@@ -129,6 +129,46 @@ def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
     return removed
 
 
+def stale_after(settings: "Settings") -> int:
+    """Seconds of silence after which a compressing job is taken to be dead.
+
+    A live run reports progress at least once per Ghostscript attempt, and
+    each attempt is killed at gs_timeout, so twice that plus a minute of slack
+    is comfortably longer than any real gap.
+    """
+    return settings.gs_timeout * 2 + 60
+
+
+def recover_interrupted(data_dir: Path, settings: "Settings", r) -> int:
+    """Fail unfinished jobs that a restart has orphaned. Returns jobs failed.
+
+    Two ways a restart strands a job. Its upload can be gone, because the new
+    server started from an empty disk (Render's free tier has no persistent
+    disk). Or its run can be dead, because the worker was killed mid-job and
+    nothing will ever report on it again. Either way the job would otherwise
+    sit on "Working on it" until its pending TTL, 30 minutes by default, ran
+    out. Failing it sends an error event, so the visitor is told within a
+    minute and can upload again.
+    """
+    now = time.time()
+    failed = 0
+    for job_id in store.active_job_ids(r):
+        job = store.get_job(r, job_id)
+        if job is None:
+            continue  # expired or deleted between the scan and the read
+        has_input = any((data_dir / job_id).glob("input.*"))
+        dead_run = (
+            job.get("status") == "compressing"
+            and now - int(job.get("progress_at", job.get("created_at", "0"))) > stale_after(settings)
+        )
+        if not has_input or dead_run:
+            store.fail_job(
+                r, job_id, store.RESTARTED_MESSAGE, settings.ttl_seconds, settings.pending_ttl_seconds
+            )
+            failed += 1
+    return failed
+
+
 def create_app(settings: Settings | None = None, redis_conn=None, queue=None) -> FastAPI:
     settings = settings or Settings.from_env()
 
@@ -155,6 +195,12 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
     async def lifespan(app: FastAPI):
         async def sweep_loop():
             while True:
+                # Recovery first: it runs on the first pass after startup, which
+                # is exactly when a deploy has just orphaned jobs.
+                try:
+                    await run_in_threadpool(recover_interrupted, settings.data_dir, settings, r)
+                except Exception:
+                    pass
                 try:
                     await run_in_threadpool(sweep_expired, settings.data_dir, settings, r)
                 except Exception:
@@ -236,10 +282,14 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         """The stored upload, whatever extension it came in with."""
         return next(iter(sorted(job_dir(job_id).glob("input.*"))), None)
 
-    def require_input(job_id: str) -> Path:
+    def require_input(job_id: str, job: dict) -> Path:
         src = input_path(job_id)
         if src is None:
-            raise HTTPException(410, "stored file is gone (deleted after the run finished)")
+            # A finished job's original is removed on schedule; an unfinished
+            # one only loses it to a restart.
+            if "completed_at" in job and job.get("error") != store.RESTARTED_MESSAGE:
+                raise HTTPException(410, "stored file is gone (deleted after the run finished)")
+            raise HTTPException(410, store.RESTARTED_MESSAGE)
         return src
 
     def require_job(job_id: str) -> dict:
@@ -357,8 +407,8 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
     @app.post("/api/jobs/{job_id}/analyze")
     async def analyze_job(job_id: str, request: Request, response: Response):
         job = require_job(job_id)
+        src = require_input(job_id, job)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        src = require_input(job_id)
         floor = await run_in_threadpool(estimate_floor, src, timeout=settings.gs_timeout)
         store.update_job(r, job_id, floor_estimate=floor, status="analyzed")
         return {
@@ -372,8 +422,8 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
         job = require_job(job_id)
         if job.get("status") in ("queued", "compressing"):
             raise HTTPException(409, "a compression run is already in progress for this file")
+        src = require_input(job_id, job)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        src = require_input(job_id)
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back.
         dst = job_dir(job_id) / "output"
