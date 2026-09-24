@@ -104,9 +104,9 @@ def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
         if job is None:
             # No Redis record: an orphan from a crash or a flushed store. Fall
             # back to filesystem age so these cannot accumulate forever.
-            stamp = d.stat().st_mtime
-            for f in d.iterdir():
-                stamp = min(stamp, f.stat().st_mtime)
+            stamp = _oldest_mtime(d)
+            if stamp is None:
+                continue  # removed while we looked (a Delete now, or another sweep)
             if now - stamp > settings.pending_ttl_seconds and remove_tree(d):
                 removed += 1
             continue
@@ -127,6 +127,22 @@ def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
             store.delete_job(r, d.name)
             removed += 1
     return removed
+
+
+def _oldest_mtime(d: Path) -> float | None:
+    """Oldest modification time in a job directory, or None if it vanished.
+
+    Directories disappear under the sweep whenever a visitor clicks Delete now
+    or a second sweep runs, and an uncaught FileNotFoundError here would
+    abandon the whole pass, leaving every later directory unswept that minute.
+    """
+    try:
+        stamp = d.stat().st_mtime
+        for f in d.iterdir():
+            stamp = min(stamp, f.stat().st_mtime)
+    except FileNotFoundError:
+        return None
+    return stamp
 
 
 def stale_after(settings: "Settings") -> int:
@@ -169,7 +185,16 @@ def recover_interrupted(data_dir: Path, settings: "Settings", r) -> int:
     return failed
 
 
-def create_app(settings: Settings | None = None, redis_conn=None, queue=None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    redis_conn=None,
+    queue=None,
+    *,
+    background_sweep: bool = True,
+) -> FastAPI:
+    """Build the API. background_sweep=False skips the once-a-minute sweep and
+    recovery loop; tests turn it off and call those functions directly, since
+    a loop racing the test's own calls makes results depend on timing."""
     settings = settings or Settings.from_env()
 
     if redis_conn is None:
@@ -207,9 +232,10 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
                     pass
                 await asyncio.sleep(SWEEP_INTERVAL)
 
-        task = asyncio.create_task(sweep_loop())
+        task = asyncio.create_task(sweep_loop()) if background_sweep else None
         yield
-        task.cancel()
+        if task is not None:
+            task.cancel()
 
     app = FastAPI(title="FitPDF", lifespan=lifespan)
 

@@ -115,8 +115,12 @@ def mark_completed(r, job_id: str, ttl: int) -> None:
 
 
 def clear_completion(r, job_id: str, pending_ttl: int) -> None:
-    """Undo mark_completed when a finished job is re-queued ("try another size")."""
-    r.hdel(job_key(job_id), "completed_at")
+    """Undo mark_completed when a finished job is re-queued ("try another size").
+
+    A previous failure's message goes too: the new run supersedes it, and a
+    job reading status "done" with a leftover error is a contradiction.
+    """
+    r.hdel(job_key(job_id), "completed_at", "error")
     r.expire(job_key(job_id), pending_ttl)
 
 

@@ -28,7 +28,7 @@ def web(tmp_path):
     )
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
-    app = create_app(settings=settings, redis_conn=r, queue=q)
+    app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
     with TestClient(app) as client:
         yield client, r, settings
 
@@ -65,7 +65,7 @@ def test_upload_rejects_oversize(tmp_path, image_pdf):
     settings = Settings(data_dir=tmp_path / "data", max_upload_bytes=1024)
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
-    app = create_app(settings=settings, redis_conn=r, queue=q)
+    app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
     with TestClient(app) as client:
         res = _upload(client, image_pdf)
     assert res.status_code == 413
@@ -331,7 +331,7 @@ def test_sse_pings_a_quiet_stream(tmp_path, image_pdf, monkeypatch):
     settings = Settings(data_dir=tmp_path / "data", ttl_seconds=1)
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
-    app = create_app(settings=settings, redis_conn=r, queue=q)
+    app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
     with TestClient(app) as client:
         # Uploaded but never compressed: no events, so the stream is idle.
         job_id = _upload(client, image_pdf).json()["job_id"]
@@ -358,7 +358,7 @@ def test_cors_for_separate_frontend(tmp_path, monkeypatch):
     )
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
-    app = create_app(settings=settings, redis_conn=r, queue=q)
+    app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
     with TestClient(app) as client:
         res = client.get("/health", headers={"Origin": "https://fitpdf.vercel.app"})
         assert res.headers["access-control-allow-origin"] == "https://fitpdf.vercel.app"
@@ -368,7 +368,7 @@ def _limited_app(tmp_path, **overrides):
     settings = Settings(data_dir=tmp_path / "data", **overrides)
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
-    return create_app(settings=settings, redis_conn=r, queue=q), settings
+    return create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False), settings
 
 
 def test_upload_limit_refuses_before_storing_anything(tmp_path, photo_jpg):
@@ -559,3 +559,39 @@ def test_progress_is_stamped_while_a_run_is_alive(web, photo_jpg):
     target = int(photo_jpg.stat().st_size * 0.5)
     client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target})
     assert int(store.get_job(r, job_id)["progress_at"]) >= int(time.time()) - 60
+
+
+def test_sweep_survives_a_directory_vanishing_mid_pass(web, monkeypatch):
+    # A Delete now (or a second sweep) can remove a directory between the
+    # listing and the stat. The rest of the pass must still run.
+    _, r, settings = web
+    old = time.time() - settings.pending_ttl_seconds - 60
+    first, second = settings.data_dir / "aaaa", settings.data_dir / "bbbb"
+    for d in (first, second):
+        d.mkdir(parents=True)
+        (d / "input.pdf").write_bytes(b"%PDF")
+        os.utime(d / "input.pdf", (old, old))
+        os.utime(d, (old, old))
+
+    real = web_app._oldest_mtime
+
+    def vanishing(d):
+        if d.name == "aaaa":
+            web_app.remove_tree(d)  # gone before we get to look
+        return real(d)
+
+    monkeypatch.setattr(web_app, "_oldest_mtime", vanishing)
+    assert web_app.sweep_expired(settings.data_dir, settings, r) == 1
+    assert not second.exists()
+
+
+def test_rerun_clears_a_previous_failure(web, photo_jpg):
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    store.fail_job(r, job_id, "earlier failure", settings.ttl_seconds, settings.pending_ttl_seconds)
+
+    target = int(photo_jpg.stat().st_size * 0.5)
+    assert client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target}).status_code == 202
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["status"] == "done"
+    assert "error" not in state
