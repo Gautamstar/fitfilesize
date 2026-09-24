@@ -13,6 +13,16 @@
     <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0c0e13" media="(prefers-color-scheme: dark)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Apply a saved light/dark choice before first paint. The pages are
+         pre-rendered, so waiting for React would flash the system theme
+         first. Storage can throw (private mode, blocked site data), and then
+         the system theme simply stays. See components/ThemeToggle.tsx. -->
+    <script>
+      try {
+        var t = localStorage.getItem('fitfilesize-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
     <title>FitFileSize | Compress a PDF or image to any size limit</title>
 
     <!-- Cairn: self-hosted analytics. No cookies, no storage, IPs hashed with a

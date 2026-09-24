@@ -15,6 +15,13 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Same saved light/dark choice as the app (see components/ThemeToggle.tsx).
+      try {
+        var t = localStorage.getItem('fitfilesize-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
     <style>
       /* Same tokens as src/index.css, inlined so this page needs no bundle. */
       :root {
@@ -28,7 +35,7 @@
         color-scheme: light;
       }
       @media (prefers-color-scheme: dark) {
-        :root {
+        :root:not([data-theme='light']) {
           --page: #0c0e13;
           --surface: #151821;
           --ink: #e9ebf0;
@@ -38,6 +45,16 @@
           --hairline: #262b36;
           color-scheme: dark;
         }
+      }
+      :root[data-theme='dark'] {
+        --page: #0c0e13;
+        --surface: #151821;
+        --ink: #e9ebf0;
+        --ink-secondary: #a8afbd;
+        --ink-muted: #8a92a3;
+        --accent: #7d9bff;
+        --hairline: #262b36;
+        color-scheme: dark;
       }
       body {
         margin: 0;

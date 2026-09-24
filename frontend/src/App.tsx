@@ -19,6 +19,7 @@ import { Logo } from './components/Logo'
 import { ProgressPanel } from './components/ProgressPanel'
 import { ResultPanel } from './components/ResultPanel'
 import { TargetPicker } from './components/TargetPicker'
+import { ThemeToggle } from './components/ThemeToggle'
 import { TipLink } from './components/TipLink'
 import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
@@ -228,7 +229,10 @@ function App({ path }: AppProps) {
           <Logo />
           <span className="brand-name">FitFileSize</span>
         </a>
-        <p className="topbar-note">Free · No sign-up</p>
+        <div className="topbar-end">
+          <p className="topbar-note">Free · No sign-up</p>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* No entrance animation: this is the page's largest content, and an
