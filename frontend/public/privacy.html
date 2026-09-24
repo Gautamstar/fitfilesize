@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy | Fitmit</title>
+    <meta
+      name="description"
+      content="What Fitmit does with the files you upload, and how quickly it deletes them."
+    />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Same tokens as src/index.css, inlined so this page needs no bundle. */
+      :root {
+        --plane: #080807;
+        --ink: #e8e8e3;
+        --ink-secondary: #938f8a;
+        --ink-muted: #6b645c;
+        --hairline: rgba(232, 232, 227, 0.12);
+        --hairline-strong: rgba(232, 232, 227, 0.22);
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        background: var(--plane);
+        color: var(--ink);
+        font-family: 'Space Grotesk', system-ui, sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 64px 16px 80px;
+      }
+      .back,
+      .updated {
+        font-family: 'IBM Plex Mono', ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--ink-muted);
+      }
+      h1 {
+        margin: 24px 0 8px;
+        font-size: 40px;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 36px 0 8px;
+        font-size: 18px;
+        font-weight: 500;
+      }
+      p,
+      li {
+        color: var(--ink-secondary);
+        font-size: 15px;
+      }
+      a {
+        color: var(--ink);
+        text-decoration-color: var(--hairline-strong);
+        text-underline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="/">&larr; Back to Fitmit</a>
+      <h1>Privacy</h1>
+      <p class="updated">Last updated 24 September 2026</p>
+
+      <p>
+        Fitmit shrinks files that are often personal: passports, bank statements, certificates.
+        This page says exactly what happens to them.
+      </p>
+
+      <h2>Your files</h2>
+      <ul>
+        <li>Your file is uploaded to our server, compressed there, and used for nothing else.</li>
+        <li>
+          The original is deleted 5 minutes after the compression finishes. It is kept that long
+          only so "Try another size" works without a second upload.
+        </li>
+        <li>The compressed file is deleted 10 minutes after the compression finishes.</li>
+        <li>A file that never finishes compressing is deleted after at most 30 minutes.</li>
+        <li>"Delete now" removes both files immediately.</li>
+        <li>
+          While a job exists we also store its filename, size and page count so the page can show
+          progress. That record is deleted on the same schedule as the files.
+        </li>
+      </ul>
+
+      <h2>No accounts</h2>
+      <p>
+        There is no sign-up and no login. We do not ask for your name or email address.
+      </p>
+
+      <h2>Analytics</h2>
+      <p>
+        We count visits to learn which pages people use and how fast the site loads. None of
+        these tools set cookies or store anything in your browser.
+      </p>
+      <ul>
+        <li>Vercel Web Analytics and Speed Insights: page views, referrers and load times.</li>
+        <li>
+          Cairn, our own analytics: page views, with IP addresses hashed using a key that changes
+          every day, so visits cannot be linked across days.
+        </li>
+      </ul>
+
+      <h2>Hosting</h2>
+      <p>
+        The website is served by Vercel and the compression server runs on Render. Like any web
+        host, they may keep short-lived request logs, such as IP addresses, for security and
+        operations.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions or requests:
+        <a href="https://github.com/Gautamstar/fitpdf/issues">open an issue on GitHub</a>.
+      </p>
+    </main>
+  </body>
+</html>

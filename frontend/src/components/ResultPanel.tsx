@@ -2,6 +2,7 @@
 
 import { downloadUrl } from '../lib/api'
 import { fmt, formatCountdown } from '../lib/format'
+import { TIP_ENABLED, TipLink } from './TipLink'
 import type { DoneEvent } from '../types/api'
 
 interface ResultPanelProps {
@@ -67,6 +68,13 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete }: R
       {secondsLeft !== null ? (
         <p className={`countdown${secondsLeft < 300 ? ' soon' : ''}`}>
           Deleted in {formatCountdown(secondsLeft)}
+        </p>
+      ) : null}
+
+      {/* Asked only after a win: the one moment the request is reasonable. */}
+      {result.hit_target && TIP_ENABLED ? (
+        <p className="tip-note">
+          Saved you some hassle? <TipLink>Buy me a coffee</TipLink>
         </p>
       ) : null}
     </div>

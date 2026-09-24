@@ -52,6 +52,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T
 }
 
+/**
+ * GET /health, fire and forget, as soon as the page loads.
+ *
+ * A free-tier backend sleeps when idle and takes up to a minute to wake. Poking
+ * it here starts that clock while the visitor is still choosing a file,
+ * instead of when they drop it. The answer does not matter, so errors are
+ * swallowed: a failed upload reports itself later with a real message.
+ */
+export function warmUp(): void {
+  fetch(API_BASE + '/health').catch(() => {})
+}
+
 /** POST /api/upload. Sends the PDF or image, gets back a job id and basic info. */
 export function uploadFile(file: File, signal?: AbortSignal): Promise<UploadResponse> {
   const form = new FormData()

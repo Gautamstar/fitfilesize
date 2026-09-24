@@ -1,0 +1,122 @@
+{
+  "pages": [
+    {
+      "slug": "compress-pdf-to-100kb",
+      "kind": "pdf",
+      "targetKb": 100,
+      "heading": "Compress a PDF to 100 KB",
+      "description": "Shrink a PDF to under 100 KB for exam, admission and government forms. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Exam and admission forms often cap certificates and ID scans at 100 KB. Scanned pages are mostly image data, so they usually get there with text still readable."
+    },
+    {
+      "slug": "compress-pdf-to-200kb",
+      "kind": "pdf",
+      "targetKb": 200,
+      "heading": "Compress a PDF to 200 KB",
+      "description": "Shrink a PDF to under 200 KB for visa, ID and application uploads. Free, no sign-up, files deleted minutes after.",
+      "blurb": "200 KB is a common limit on visa and ID document uploads. A one or two page scan usually fits with room to spare."
+    },
+    {
+      "slug": "compress-pdf-to-300kb",
+      "kind": "pdf",
+      "targetKb": 300,
+      "heading": "Compress a PDF to 300 KB",
+      "description": "Shrink a PDF to under 300 KB for online application portals. Free, no sign-up, files deleted minutes after.",
+      "blurb": "300 KB leaves enough room for a few scanned pages at a size that is still comfortable to read on screen."
+    },
+    {
+      "slug": "compress-pdf-to-500kb",
+      "kind": "pdf",
+      "targetKb": 500,
+      "heading": "Compress a PDF to 500 KB",
+      "description": "Shrink a PDF to under 500 KB for applications, certificates and forms. Free, no sign-up, files deleted minutes after.",
+      "blurb": "500 KB fits most multi-page scans, like transcripts or a set of certificates, without the pages turning blurry."
+    },
+    {
+      "slug": "compress-pdf-to-1mb",
+      "kind": "pdf",
+      "targetKb": 1000,
+      "heading": "Compress a PDF to 1 MB",
+      "description": "Shrink a PDF to under 1 MB for job applications and resume uploads. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Job sites and applicant tracking systems often limit resumes and cover letters to 1 MB. Text-heavy PDFs usually fit without visible change."
+    },
+    {
+      "slug": "compress-pdf-to-2mb",
+      "kind": "pdf",
+      "targetKb": 2000,
+      "heading": "Compress a PDF to 2 MB",
+      "description": "Shrink a PDF to under 2 MB for upload forms and portals. Free, no sign-up, files deleted minutes after.",
+      "blurb": "2 MB is a common ceiling on upload forms. Photos inside the PDF get resized just enough to fit and no further."
+    },
+    {
+      "slug": "compress-pdf-to-5mb",
+      "kind": "pdf",
+      "targetKb": 5000,
+      "heading": "Compress a PDF to 5 MB",
+      "description": "Shrink a large PDF to under 5 MB for email attachments and portals. Free, no sign-up, files deleted minutes after.",
+      "blurb": "For big scans and photo-heavy reports that need to go through email or a portal with a 5 MB cap."
+    },
+    {
+      "slug": "compress-jpg-to-20kb",
+      "kind": "image",
+      "targetKb": 20,
+      "heading": "Compress a JPG to 20 KB",
+      "description": "Shrink a signature or photo to under 20 KB for online application forms. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Signature uploads on application forms are often capped at 10 to 20 KB. A signature on a plain background compresses very well."
+    },
+    {
+      "slug": "compress-jpg-to-50kb",
+      "kind": "image",
+      "targetKb": 50,
+      "heading": "Compress a JPG to 50 KB",
+      "description": "Shrink a passport-style photo to under 50 KB for application forms. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Photo uploads on application forms are often limited to 50 KB. A phone photo gets resized and re-encoded until it fits."
+    },
+    {
+      "slug": "compress-jpg-to-100kb",
+      "kind": "image",
+      "targetKb": 100,
+      "heading": "Compress a JPG to 100 KB",
+      "description": "Shrink a JPG, PNG or photo to under 100 KB. Free, no sign-up, files deleted minutes after.",
+      "blurb": "100 KB keeps a photo sharp enough for a profile picture or an ID upload."
+    },
+    {
+      "slug": "compress-jpg-to-200kb",
+      "kind": "image",
+      "targetKb": 200,
+      "heading": "Compress a JPG to 200 KB",
+      "description": "Shrink a photo or scanned image to under 200 KB. Free, no sign-up, files deleted minutes after.",
+      "blurb": "200 KB is enough for a clear photo of a document or a good-quality portrait."
+    },
+    {
+      "slug": "compress-jpg-to-500kb",
+      "kind": "image",
+      "targetKb": 500,
+      "heading": "Compress a JPG to 500 KB",
+      "description": "Shrink a large phone photo to under 500 KB without it looking compressed. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Phone photos are often 3 to 5 MB. At 500 KB they still look good on any screen."
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is it free?",
+      "a": "Yes. There is no sign-up and no watermark."
+    },
+    {
+      "q": "What happens to my file?",
+      "a": "It is processed on our server and deleted automatically: the original 5 minutes after the run finishes, the compressed file after 10. You can also delete both right away."
+    },
+    {
+      "q": "Will it look worse?",
+      "a": "We try a lossless cleanup first, which does not change how the file looks. Only if that is not enough do we lower image quality, and we pick the gentlest setting that still fits your size."
+    },
+    {
+      "q": "What if my file cannot get that small?",
+      "a": "You get the smallest version we could make and a clear note saying so, instead of a file that silently misses the limit."
+    },
+    {
+      "q": "Why does the size page aim a little under its limit?",
+      "a": "Some sites count a kilobyte as 1000 bytes and others as 1024. We aim under the stricter one, so a 200 KB page aims for 200,000 bytes and the file passes either way."
+    }
+  ]
+}

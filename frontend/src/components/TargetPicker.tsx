@@ -12,6 +12,7 @@ import {
   SLIDER_STEPS,
   bytesToSlider,
   fmt,
+  presetToSlider,
   sliderToBytes,
   tierHint,
 } from '../lib/format'
@@ -26,6 +27,8 @@ interface TargetPickerProps {
   onCancel: () => void
   warning?: string | null
   busy?: boolean
+  /** Preselected target from a landing page such as /compress-pdf-to-200kb. */
+  initialTarget?: number
 }
 
 export function TargetPicker({
@@ -37,6 +40,7 @@ export function TargetPicker({
   onCancel,
   warning,
   busy = false,
+  initialTarget,
 }: TargetPickerProps) {
   // Slider spans from below the floor (so the hatched zone is visible) up to
   // the original size.
@@ -45,12 +49,20 @@ export function TargetPicker({
     // Guard the degenerate case where the floor estimate is at or above the
     // original file size.
     if (lower >= originalBytes) lower = Math.max(Math.floor(originalBytes * 0.4), 512)
+    // Stretch down to a landing page's preset so it is reachable, e.g. a 20 KB
+    // signature page for a file whose floor is estimated at 100 KB.
+    if (initialTarget && initialTarget < lower) lower = Math.max(initialTarget, 512)
     return { lo: lower, hi: originalBytes }
-  }, [floor, originalBytes])
+  }, [floor, originalBytes, initialTarget])
 
-  // Default target: 4 MB when that makes sense, else 60% of original.
-  // The function form of useState runs this once, not on every render.
+  // Default target: the landing page's size when the file is bigger than it,
+  // else 4 MB when that makes sense, else 60% of original. A preset below the
+  // floor is kept: the visitor came for that size, and the floor is only an
+  // estimate. The function form of useState runs this once, not on every render.
   const [pos, setPos] = useState(() => {
+    if (initialTarget && initialTarget < originalBytes) {
+      return presetToSlider(initialTarget, lo, hi)
+    }
     const fourMB = 4 * 1024 * 1024
     let def = fourMB > floor && fourMB < originalBytes ? fourMB : Math.round(originalBytes * 0.6)
     if (def < lo) def = lo
