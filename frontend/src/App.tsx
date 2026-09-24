@@ -14,6 +14,8 @@ import { fadeUp } from './anim'
 import { Dropzone } from './components/Dropzone'
 import { ErrorPanel } from './components/ErrorPanel'
 import { Landing } from './components/Landing'
+import { LimitChips } from './components/LimitChips'
+import { Logo } from './components/Logo'
 import { ProgressPanel } from './components/ProgressPanel'
 import { ResultPanel } from './components/ResultPanel'
 import { TargetPicker } from './components/TargetPicker'
@@ -53,6 +55,9 @@ function App() {
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
   const [slowUpload, setSlowUpload] = useState(false)
+  // The limit picked before upload. A landing page preselects its own; null
+  // means "Other", and the picker then suggests a size from the file.
+  const [limit, setLimit] = useState<number | null>(LANDING ? pageTargetBytes(LANDING) : 1_000_000)
 
   const streaming = phase === 'progress' || phase === 'result'
   const stream = useProgressStream(job?.jobId ?? null, streaming)
@@ -145,7 +150,15 @@ function App() {
   const panel = () => {
     switch (phase) {
       case 'drop':
-        return <Dropzone onFile={handleFile} error={dropError} />
+        return (
+          <Dropzone onFile={handleFile} error={dropError}>
+            <LimitChips
+              value={limit}
+              onChange={setLimit}
+              extra={LANDING ? pageTargetBytes(LANDING) : undefined}
+            />
+          </Dropzone>
+        )
 
       case 'analyzing':
         return (
@@ -170,7 +183,7 @@ function App() {
             warning={targetWarning}
             onCompress={handleCompress}
             onCancel={() => reset()}
-            initialTarget={LANDING ? pageTargetBytes(LANDING) : undefined}
+            initialTarget={limit ?? undefined}
           />
         ) : null
 
@@ -202,13 +215,23 @@ function App() {
 
   return (
     <div className="shell">
-      <motion.header className="site-head" variants={fadeUp} initial="hidden" animate="show">
+      <header className="topbar">
+        <a className="brand" href="/" aria-label="FitFileSize home">
+          <Logo />
+          <span className="brand-name">FitFileSize</span>
+        </a>
+        <p className="topbar-note">Free · No sign-up</p>
+      </header>
+
+      <motion.section className="hero" variants={fadeUp} initial="hidden" animate="show">
         {/* On a landing page the H1 is the search phrase itself, since that is
             what the visitor typed and what the page should rank for. */}
-        <p className="eyebrow">{LANDING ? 'Fitmit' : 'PDF and image compression'}</p>
-        <h1 className={LANDING ? 'h1-long' : undefined}>{LANDING?.heading ?? 'Fitmit'}</h1>
-        <p className="tagline">Pick a size. Get a file that fits under it.</p>
-      </motion.header>
+        <h1>{LANDING?.heading ?? 'Make any file fit the upload limit'}</h1>
+        <p className="tagline">
+          {LANDING?.blurb ??
+            'Compress a PDF or image to the exact size a form asks for. Free, no sign-up, and your file is deleted within minutes.'}
+        </p>
+      </motion.section>
 
       <main>
         {/* mode="wait" lets the outgoing panel finish before the next rises in,
@@ -225,21 +248,41 @@ function App() {
           </motion.div>
         </AnimatePresence>
 
+        {phase === 'drop' ? (
+          <ul className="trust">
+            <li>
+              <TrustIcon d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3z" />
+              Deleted within 10 minutes
+            </li>
+            <li>
+              <TrustIcon d="M20 6 9 17l-5-5" />
+              Free, no watermark
+            </li>
+            <li>
+              <TrustIcon d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0zm8-4v4l3 2" />
+              Quality kept where possible
+            </li>
+          </ul>
+        ) : null}
+
         {/* Pitch belongs on a fresh page only. Once a file is in flight the
             page should be about that file. */}
         {phase === 'drop' ? <Landing page={LANDING} /> : null}
       </main>
 
       <footer className="site-foot">
+        <a className="brand brand-small" href="/">
+          <Logo size={20} />
+          <span className="brand-name">FitFileSize</span>
+        </a>
         <p>
           We delete your original 5 minutes after the run finishes, and the compressed file
           after 10.
         </p>
         <nav className="foot-links" aria-label="Site">
-          <a href="/">Home</a>
           <a href="/privacy.html">Privacy</a>
           <a href="/terms.html">Terms</a>
-          <TipLink>Support Fitmit</TipLink>
+          <TipLink>Support FitFileSize</TipLink>
         </nav>
       </footer>
 
@@ -250,6 +293,22 @@ function App() {
       <Analytics />
       <SpeedInsights />
     </div>
+  )
+}
+
+/** A small line icon for the trust row. Decorative: the text says it all. */
+function TrustIcon({ d }: { d: string }) {
+  return (
+    <svg className="trust-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d={d}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 

@@ -1,5 +1,5 @@
 /**
- * Typed client for the FitPDF backend.
+ * Typed client for the FitFileSize backend (the fitpdf package).
  *
  * One function per endpoint, each declaring what it returns, so callers get
  * autocomplete and typo protection instead of guessing at response shapes.

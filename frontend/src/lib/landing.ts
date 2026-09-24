@@ -6,6 +6,7 @@
  * stamp each page's <title>, meta tags and the sitemap at build time.
  */
 
+import { limitLabel } from './format'
 import data from './landing-pages.json'
 
 export interface LandingPage {
@@ -43,5 +44,5 @@ export function pageTargetBytes(page: LandingPage): number {
 
 /** Short chip label: "200 KB", "1 MB". */
 export function pageSizeLabel(page: LandingPage): string {
-  return page.targetKb >= 1000 ? `${page.targetKb / 1000} MB` : `${page.targetKb} KB`
+  return limitLabel(pageTargetBytes(page))
 }

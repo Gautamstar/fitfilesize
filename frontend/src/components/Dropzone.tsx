@@ -5,16 +5,18 @@
  * it during render, so the highlight cannot get out of sync with the pointer.
  */
 
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 
 interface DropzoneProps {
   onFile: (file: File) => void
   /** Validation or upload error to show under the zone. */
   error?: string | null
   disabled?: boolean
+  /** Rendered inside the card, under the drop area (the limit chips). */
+  children?: ReactNode
 }
 
-export function Dropzone({ onFile, error, disabled = false }: DropzoneProps) {
+export function Dropzone({ onFile, error, disabled = false, children }: DropzoneProps) {
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -59,8 +61,20 @@ export function Dropzone({ onFile, error, disabled = false }: DropzoneProps) {
           handleFiles(e.dataTransfer.files)
         }}
       >
-        <p className="drop-title">Drop a PDF or image here</p>
-        <p className="drop-sub">or click to choose one</p>
+        <svg className="drop-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <p className="drop-title">Drop your file here</p>
+        <p className="drop-sub">
+          or <span className="drop-link">choose a file</span> · PDF, JPG, PNG, WebP, TIFF or BMP
+        </p>
 
         <input
           ref={inputRef}
@@ -77,6 +91,7 @@ export function Dropzone({ onFile, error, disabled = false }: DropzoneProps) {
       </div>
 
       {error ? <p className="error-text">{error}</p> : null}
+      {children}
     </div>
   )
 }

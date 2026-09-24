@@ -8,8 +8,22 @@
 /** Number of discrete positions on the target slider. */
 export const SLIDER_STEPS = 1000
 
-/** Preset chip values, in MB. */
-export const PRESETS_MB = [2, 4, 5, 10, 25]
+/**
+ * Common upload limits, as a portal states them. Kilobytes here are 1000
+ * bytes: sites disagree on 1000 vs 1024, and aiming under the smaller reading
+ * means the file passes a check done either way.
+ */
+export const LIMIT_PRESETS = [
+  100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 25_000_000,
+]
+
+/** The limits offered before upload, when the file size is still unknown. */
+export const UPFRONT_LIMITS = [100_000, 200_000, 500_000, 1_000_000, 2_000_000]
+
+/** A limit as a portal would write it: 200_000 -> "200 KB", 1_000_000 -> "1 MB". */
+export function limitLabel(bytes: number): string {
+  return bytes >= 1_000_000 ? `${bytes / 1_000_000} MB` : `${bytes / 1000} KB`
+}
 
 /** Lossless pass plus at most 4 rungs, since 12 rungs binary-search in 4. */
 export const MAX_ATTEMPTS = 5

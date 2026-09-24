@@ -1,12 +1,13 @@
 /**
- * The short explainer under the dropzone.
+ * The explainer under the dropzone.
  *
  * Rendered only in the 'drop' phase. Once a file is in flight the page should
  * be about that file, so App unmounts this.
  *
- * On a search landing page (/compress-pdf-to-200kb) it leads with that page's
- * own copy. The FAQ and the size links are there for both people and search
- * engines: the links are how a crawler finds every landing page from any one.
+ * The FAQ and the size links are there for both people and search engines:
+ * the links are how a crawler finds every landing page from any one, and the
+ * FAQ answers are in the DOM even while collapsed, matching the FAQPage markup
+ * scripts/seo-pages.mjs puts in the head.
  */
 
 import { motion } from 'motion/react'
@@ -14,11 +15,19 @@ import { fadeUp, inViewProps, stagger } from '../anim'
 import { FAQ, LANDING_PAGES, pageSizeLabel, type LandingPage } from '../lib/landing'
 
 const STEPS = [
-  'We start with a cleanup that shrinks the file without changing how it looks. Often that is enough on its own.',
-  'If it needs more, we try twelve quality settings and give you the gentlest one that still fits your size.',
+  {
+    title: 'Drop your file',
+    body: 'A PDF or an image. It goes over an encrypted connection and nowhere else.',
+  },
+  {
+    title: 'Pick your limit',
+    body: 'Choose the size the form asks for. We start with a cleanup that changes nothing you can see.',
+  },
+  {
+    title: 'Download it',
+    body: 'If it needs more, we find the gentlest quality setting that still fits, and delete everything soon after.',
+  },
 ]
-
-const FORMATS = ['PDF', 'JPEG', 'PNG', 'WebP', 'TIFF', 'BMP']
 
 const SIZE_GROUPS = [
   { title: 'PDF', pages: LANDING_PAGES.filter((p) => p.kind === 'pdf') },
@@ -28,23 +37,16 @@ const SIZE_GROUPS = [
 export function Landing({ page }: { page?: LandingPage }) {
   return (
     <div className="landing">
-      {page ? (
-        <motion.section className="band" variants={stagger} {...inViewProps}>
-          <motion.p className="band-lede" variants={fadeUp}>
-            {page.blurb}
-          </motion.p>
-        </motion.section>
-      ) : null}
-
       <motion.section className="band" variants={stagger} {...inViewProps}>
         <motion.h2 className="band-title" variants={fadeUp}>
           How it works
         </motion.h2>
         <ol className="steps-grid">
           {STEPS.map((step, i) => (
-            <motion.li key={step} className="step" variants={fadeUp}>
-              <span className="step-num">{String(i + 1).padStart(2, '0')}</span>
-              <p className="step-body">{step}</p>
+            <motion.li key={step.title} className="step" variants={fadeUp}>
+              <span className="step-num">{i + 1}</span>
+              <h3 className="step-title">{step.title}</h3>
+              <p className="step-body">{step.body}</p>
             </motion.li>
           ))}
         </ol>
@@ -52,27 +54,16 @@ export function Landing({ page }: { page?: LandingPage }) {
 
       <motion.section className="band" variants={stagger} {...inViewProps}>
         <motion.h2 className="band-title" variants={fadeUp}>
-          Supported formats
-        </motion.h2>
-        <motion.ul className="formats" variants={fadeUp}>
-          {FORMATS.map((format) => (
-            <li key={format}>{format}</li>
-          ))}
-        </motion.ul>
-      </motion.section>
-
-      <motion.section className="band" variants={stagger} {...inViewProps}>
-        <motion.h2 className="band-title" variants={fadeUp}>
           Questions
         </motion.h2>
-        <dl className="faq">
+        <motion.div className="faq" variants={fadeUp}>
           {FAQ.map((item) => (
-            <motion.div key={item.q} className="faq-item" variants={fadeUp}>
-              <dt>{item.q}</dt>
-              <dd>{item.a}</dd>
-            </motion.div>
+            <details key={item.q} className="faq-item">
+              <summary>{item.q}</summary>
+              <p>{item.a}</p>
+            </details>
           ))}
-        </dl>
+        </motion.div>
       </motion.section>
 
       <motion.section className="band" variants={stagger} {...inViewProps}>
@@ -82,9 +73,9 @@ export function Landing({ page }: { page?: LandingPage }) {
         {SIZE_GROUPS.map((group) => (
           <motion.div key={group.title} className="size-group" variants={fadeUp}>
             <p className="size-group-title">{group.title}</p>
-            <ul className="formats">
+            <ul className="size-links">
               {group.pages.map((p) => (
-                <li key={p.slug} className={p.slug === page?.slug ? 'current' : undefined}>
+                <li key={p.slug}>
                   {/* Plain links, not client-side routing: each page is its own
                       prerendered HTML with its own title, which is the point. */}
                   <a href={`/${p.slug}`} aria-current={p.slug === page?.slug ? 'page' : undefined}>

@@ -29,7 +29,9 @@ const { pages, faq } = JSON.parse(
   readFileSync(join(root, 'src/lib/landing-pages.json'), 'utf8'),
 )
 const base = readFileSync(join(dist, 'index.html'), 'utf8')
-const siteName = base.match(/<title>([^<]*)<\/title>/)?.[1] ?? 'Fitmit'
+const siteName =
+  base.match(/<meta\s+name="application-name"\s+content="([^"]*)"/)?.[1] ?? 'FitFileSize'
+const homeTitle = base.match(/<title>([^<]*)<\/title>/)?.[1] ?? siteName
 
 const escapeHtml = (s) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -89,7 +91,7 @@ const homeDescription =
   base.match(/<meta\s+name="description"\s+content="([^"]*)"/)?.[1] ?? ''
 writeFileSync(
   join(dist, 'index.html'),
-  render({ path: '/', title: siteName, description: homeDescription }),
+  render({ path: '/', title: homeTitle, description: homeDescription }),
 )
 
 for (const page of pages) {

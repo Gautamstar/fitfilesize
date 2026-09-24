@@ -8,10 +8,11 @@
 
 import { useMemo, useState } from 'react'
 import {
-  PRESETS_MB,
+  LIMIT_PRESETS,
   SLIDER_STEPS,
   bytesToSlider,
   fmt,
+  limitLabel,
   presetToSlider,
   sliderToBytes,
   tierHint,
@@ -69,6 +70,8 @@ export function TargetPicker({
     return bytesToSlider(def, lo, hi)
   })
 
+  const chipLimits = LIMIT_PRESETS.filter((bytes) => bytes < originalBytes)
+
   // Everything below is derived from `pos`. No manual DOM updates anywhere.
   const target = sliderToBytes(pos, lo, hi)
   const hint = tierHint(target, originalBytes)
@@ -107,34 +110,37 @@ export function TargetPicker({
         </p>
       </div>
 
+      {/* Limits the file already fits under are left out rather than shown
+          disabled: a row of dead buttons is noise, and the answer for those
+          is simply "you don't need this". */}
+      {chipLimits.length > 0 ? <p className="chips-label">Common limits</p> : null}
       <div className="chips">
-        {PRESETS_MB.map((mb) => {
-          const bytes = mb * 1024 * 1024
-          const tooBig = bytes >= originalBytes
+        {chipLimits.map((bytes) => {
           const outOfRange = bytes < lo
-          const disabled = tooBig || outOfRange
+          const disabled = outOfRange
           const belowFloor = !disabled && bytes < floor
-          // Active when within 2% of the current target.
-          const active = Math.abs(bytes - target) / bytes < 0.02
+          // Chips land on a hard limit the same way the landing presets do,
+          // so a chip is active exactly when the slider sits on its position.
+          const chipPos = presetToSlider(bytes, lo, hi)
+          const active = !disabled && pos === chipPos
 
           return (
             <button
-              key={mb}
+              key={bytes}
               type="button"
               className={`chip${active ? ' active' : ''}${belowFloor ? ' below-floor' : ''}`}
               disabled={disabled}
               title={
-                tooBig
-                  ? 'already smaller than this'
-                  : outOfRange
-                    ? 'out of range for this file'
-                    : belowFloor
-                      ? 'below the estimated floor'
-                      : undefined
+                outOfRange
+                  ? 'out of range for this file'
+                  : belowFloor
+                    ? 'below the estimated floor'
+                    : undefined
               }
-              onClick={() => setPos(bytesToSlider(bytes, lo, hi))}
+              aria-pressed={active}
+              onClick={() => setPos(chipPos)}
             >
-              {mb} MB
+              {limitLabel(bytes)}
             </button>
           )
         })}
