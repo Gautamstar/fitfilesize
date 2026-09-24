@@ -17,12 +17,23 @@ import { Landing } from './components/Landing'
 import { ProgressPanel } from './components/ProgressPanel'
 import { ResultPanel } from './components/ResultPanel'
 import { TargetPicker } from './components/TargetPicker'
+import { TipLink } from './components/TipLink'
 import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
 import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
 import { describeSource, isAcceptedFile } from './lib/format'
+import { pageForPath, pageTargetBytes } from './lib/landing'
 
 type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
+
+/** Set on a search landing page such as /compress-pdf-to-200kb. Fixed per load. */
+const LANDING = pageForPath(window.location.pathname)
+
+/**
+ * How long an upload may take before we say why. A free-tier backend that has
+ * been idle takes up to a minute to wake, and without a word that looks hung.
+ */
+const SLOW_UPLOAD_MS = 5000
 
 /** Everything we learn about the file from /upload and /analyze. */
 interface JobInfo {
@@ -41,6 +52,7 @@ function App() {
   const [dropError, setDropError] = useState<string | null>(null)
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
+  const [slowUpload, setSlowUpload] = useState(false)
 
   const streaming = phase === 'progress' || phase === 'result'
   const stream = useProgressStream(job?.jobId ?? null, streaming)
@@ -80,8 +92,15 @@ function App() {
     }
 
     setPhase('analyzing')
+    const slowTimer = window.setTimeout(() => setSlowUpload(true), SLOW_UPLOAD_MS)
     try {
-      const up = await uploadFile(file)
+      let up
+      try {
+        up = await uploadFile(file)
+      } finally {
+        window.clearTimeout(slowTimer)
+        setSlowUpload(false)
+      }
       const an = await analyzeJob(up.job_id)
       setJob({
         jobId: up.job_id,
@@ -132,6 +151,12 @@ function App() {
         return (
           <div className="panel">
             <p className="progress-headline">Reading your file</p>
+            {slowUpload ? (
+              <p className="slow-note">
+                Still working. If nobody has used the site for a while, the server takes up to a
+                minute to wake up.
+              </p>
+            ) : null}
           </div>
         )
 
@@ -145,6 +170,7 @@ function App() {
             warning={targetWarning}
             onCompress={handleCompress}
             onCancel={() => reset()}
+            initialTarget={LANDING ? pageTargetBytes(LANDING) : undefined}
           />
         ) : null
 
@@ -177,8 +203,10 @@ function App() {
   return (
     <div className="shell">
       <motion.header className="site-head" variants={fadeUp} initial="hidden" animate="show">
-        <p className="eyebrow">PDF and image compression</p>
-        <h1>Fitmit</h1>
+        {/* On a landing page the H1 is the search phrase itself, since that is
+            what the visitor typed and what the page should rank for. */}
+        <p className="eyebrow">{LANDING ? 'Fitmit' : 'PDF and image compression'}</p>
+        <h1 className={LANDING ? 'h1-long' : undefined}>{LANDING?.heading ?? 'Fitmit'}</h1>
         <p className="tagline">Pick a size. Get a file that fits under it.</p>
       </motion.header>
 
@@ -199,7 +227,7 @@ function App() {
 
         {/* Pitch belongs on a fresh page only. Once a file is in flight the
             page should be about that file. */}
-        {phase === 'drop' ? <Landing /> : null}
+        {phase === 'drop' ? <Landing page={LANDING} /> : null}
       </main>
 
       <footer className="site-foot">
@@ -207,6 +235,12 @@ function App() {
           We delete your original 5 minutes after the run finishes, and the compressed file
           after 10.
         </p>
+        <nav className="foot-links" aria-label="Site">
+          <a href="/">Home</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+          <TipLink>Support Fitmit</TipLink>
+        </nav>
       </footer>
 
       {/* Both are cookieless and record no per-visitor identity, which keeps the

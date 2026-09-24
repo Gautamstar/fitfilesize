@@ -40,6 +40,17 @@ export function bytesToSlider(bytes: number, lo: number, hi: number): number {
   return Math.round((SLIDER_STEPS * Math.log(clamped / lo)) / Math.log(hi / lo))
 }
 
+/**
+ * Slider position for a hard limit: the highest position whose size is still
+ * at or under `bytes`. bytesToSlider rounds to the nearest position, which can
+ * land a few hundred bytes over, and over is exactly what a limit forbids.
+ */
+export function presetToSlider(bytes: number, lo: number, hi: number): number {
+  let pos = bytesToSlider(bytes, lo, hi)
+  while (pos > 0 && sliderToBytes(pos, lo, hi) > bytes) pos--
+  return pos
+}
+
 /** Plain-language description of what a given target will do. */
 export function tierHint(target: number, originalBytes: number): string {
   const ratio = target / originalBytes
