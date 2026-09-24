@@ -203,7 +203,9 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             allow_headers=["*"],
         )
 
-    @app.get("/health")
+    # HEAD as well as GET: uptime monitors (UptimeRobot by default) probe with
+    # HEAD, and a 405 there reads as the service being down.
+    @app.api_route("/health", methods=["GET", "HEAD"])
     async def health():
         return {"ok": True}
 

@@ -343,6 +343,8 @@ def test_sse_pings_a_quiet_stream(tmp_path, image_pdf, monkeypatch):
 def test_health(web):
     client, _, _ = web
     assert client.get("/health").json() == {"ok": True}
+    # Uptime monitors probe with HEAD; a 405 would page as an outage.
+    assert client.head("/health").status_code == 200
 
 
 def test_cors_for_separate_frontend(tmp_path, monkeypatch):
