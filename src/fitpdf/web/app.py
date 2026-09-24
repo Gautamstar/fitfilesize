@@ -20,6 +20,11 @@ from .jobs import run_compress
 SWEEP_INTERVAL = 60
 UPLOAD_CHUNK = 1024 * 1024
 
+# SSE timing. The ping keeps proxies and load balancers from reaping a stream
+# that has gone quiet mid-run; many drop idle connections at 30-60s.
+EVENT_POLL_INTERVAL = 0.4
+PING_INTERVAL = 15.0
+
 ACCEPTED_SUFFIXES = PDF_SUFFIXES | IMAGE_SUFFIXES
 
 MEDIA_TYPES = {
@@ -338,8 +343,11 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
             job = store.get_job(r, job_id)
             yield f"event: state\ndata: {json.dumps(job_state(job_id, job))}\n\n"
             idx = 0
-            idle = 0.0
-            while idle < settings.ttl_seconds:
+            # Measured against the clock rather than summed from sleep
+            # intervals: 0.4s steps never land exactly on a multiple of the
+            # ping interval, and float drift made the first ping arrive at 90s.
+            last_event = last_write = time.monotonic()
+            while time.monotonic() - last_event < settings.ttl_seconds:
                 new = await run_in_threadpool(store.get_events, r, job_id, idx)
                 for ev in new:
                     idx += 1
@@ -353,13 +361,13 @@ def create_app(settings: Settings | None = None, redis_conn=None, queue=None) ->
                     # terminal but no done event left to replay (list expired)
                     yield f"event: state\ndata: {json.dumps(job_state(job_id, job))}\n\n"
                     return
+                now = time.monotonic()
                 if new:
-                    idle = 0.0
-                else:
-                    idle += 0.4
-                    if int(idle * 10) % 150 == 0:
-                        yield ": ping\n\n"
-                await asyncio.sleep(0.4)
+                    last_event = last_write = now
+                elif now - last_write >= PING_INTERVAL:
+                    yield ": ping\n\n"
+                    last_write = now
+                await asyncio.sleep(EVENT_POLL_INTERVAL)
 
         return StreamingResponse(
             stream(),
