@@ -29,7 +29,7 @@
   --shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px rgba(17, 24, 39, 0.06);
   --radius: 16px;
 
-  --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   color-scheme: light;
 }
@@ -623,6 +623,43 @@ button:disabled {
   letter-spacing: -0.02em;
 }
 
+.guide-body {
+  margin: 0 0 14px;
+  max-width: 68ch;
+  color: var(--ink-secondary);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.guide-tips-title {
+  margin: 22px 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.guide-tips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.guide-tips li {
+  position: relative;
+  padding-left: 26px;
+  color: var(--ink-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+}
+.guide-tips li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .steps-grid {
   list-style: none;
   margin: 0;
@@ -738,6 +775,33 @@ button:disabled {
 }
 .size-links a[aria-current='page'] {
   background: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- 404 ---------- */
+
+.notfound-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.notfound-links a {
+  display: block;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.notfound-links a:hover {
   border-color: var(--accent);
   color: var(--accent);
 }

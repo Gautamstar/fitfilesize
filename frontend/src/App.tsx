@@ -24,12 +24,9 @@ import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
 import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
 import { describeSource, isAcceptedFile } from './lib/format'
-import { pageForPath, pageTargetBytes } from './lib/landing'
+import { keepUnits, pageForPath, pageTargetBytes } from './lib/landing'
 
 type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
-
-/** Set on a search landing page such as /compress-pdf-to-200kb. Fixed per load. */
-const LANDING = pageForPath(window.location.pathname)
 
 /**
  * How long an upload may take before we say why. A free-tier backend that has
@@ -47,7 +44,18 @@ interface JobInfo {
   floor: number
 }
 
-function App() {
+interface AppProps {
+  /**
+   * The URL path. Passed in rather than read from window.location so the same
+   * component renders at build time (scripts/seo-pages.mjs pre-renders every
+   * page to HTML) and in the browser, where main.tsx hydrates that HTML.
+   */
+  path: string
+}
+
+function App({ path }: AppProps) {
+  // Set on a search landing page such as /compress-pdf-to-200kb.
+  const landing = pageForPath(path)
   const [phase, setPhase] = useState<Phase>('drop')
   const [job, setJob] = useState<JobInfo | null>(null)
   const [targetBytes, setTargetBytes] = useState(0)
@@ -57,7 +65,7 @@ function App() {
   const [slowUpload, setSlowUpload] = useState(false)
   // The limit picked before upload. A landing page preselects its own; null
   // means "Other", and the picker then suggests a size from the file.
-  const [limit, setLimit] = useState<number | null>(LANDING ? pageTargetBytes(LANDING) : 1_000_000)
+  const [limit, setLimit] = useState<number | null>(landing ? pageTargetBytes(landing) : 1_000_000)
 
   const streaming = phase === 'progress' || phase === 'result'
   const stream = useProgressStream(job?.jobId ?? null, streaming)
@@ -155,7 +163,7 @@ function App() {
             <LimitChips
               value={limit}
               onChange={setLimit}
-              extra={LANDING ? pageTargetBytes(LANDING) : undefined}
+              extra={landing ? pageTargetBytes(landing) : undefined}
             />
           </Dropzone>
         )
@@ -223,20 +231,25 @@ function App() {
         <p className="topbar-note">Free · No sign-up</p>
       </header>
 
-      <motion.section className="hero" variants={fadeUp} initial="hidden" animate="show">
+      {/* No entrance animation: this is the page's largest content, and an
+          element that starts at opacity 0 does not count as painted until it
+          has faded in, which is what Google's LCP measures. */}
+      <section className="hero">
         {/* On a landing page the H1 is the search phrase itself, since that is
             what the visitor typed and what the page should rank for. */}
-        <h1>{LANDING?.heading ?? 'Make any file fit the upload limit'}</h1>
+        <h1>{landing?.heading ?? 'Make any file fit the upload limit'}</h1>
         <p className="tagline">
-          {LANDING?.blurb ??
+          {(landing && keepUnits(landing.blurb)) ??
             'Compress a PDF or image to the exact size a form asks for. Free, no sign-up, and your file is deleted within minutes.'}
         </p>
-      </motion.section>
+      </section>
 
       <main>
         {/* mode="wait" lets the outgoing panel finish before the next rises in,
             so the two never overlap mid-transition. */}
-        <AnimatePresence mode="wait">
+        {/* initial={false}: the first panel is part of the pre-rendered page
+            and shows at once; only later phase changes animate. */}
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={phase}
             variants={fadeUp}
@@ -267,7 +280,7 @@ function App() {
 
         {/* Pitch belongs on a fresh page only. Once a file is in flight the
             page should be about that file. */}
-        {phase === 'drop' ? <Landing page={LANDING} /> : null}
+        {phase === 'drop' ? <Landing page={landing} /> : null}
       </main>
 
       <footer className="site-foot">

@@ -1,4 +1,4 @@
-// Shared motion presets: small rises, soft easing, quick stagger.
+// Motion preset for phase changes: a small rise with soft easing.
 // Kept small so motion supports the content instead of performing.
 import type { Variants } from 'motion/react'
 
@@ -11,16 +11,4 @@ export const fadeUp: Variants = {
     y: 0,
     transition: { duration: 0.55, ease: EASE },
   },
-}
-
-export const stagger: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07 } },
-}
-
-/** Reveal a section the first time it scrolls into view, then leave it alone. */
-export const inViewProps = {
-  initial: 'hidden' as const,
-  whileInView: 'show' as const,
-  viewport: { once: true, margin: '-60px' },
 }
