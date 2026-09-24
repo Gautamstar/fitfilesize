@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from rq import Queue
 
 from fitpdf.gs import gs_available
+from fitpdf.web import app as web_app
 from fitpdf.web import store
 from fitpdf.web.app import create_app, sweep_expired
 from fitpdf.web.config import Settings
@@ -319,6 +320,24 @@ def test_expires_in_restarts_at_completion(web, image_pdf):
     store.mark_completed(r, job_id, settings.ttl_seconds)
     expires_in = client.get(f"/api/jobs/{job_id}").json()["expires_in"]
     assert settings.ttl_seconds - 5 <= expires_in <= settings.ttl_seconds
+
+
+def test_sse_pings_a_quiet_stream(tmp_path, image_pdf, monkeypatch):
+    # Shrink the clock so the test runs in about a second. ttl_seconds=1 bounds
+    # the stream, so it ends on its own instead of needing a disconnect.
+    monkeypatch.setattr(web_app, "EVENT_POLL_INTERVAL", 0.02)
+    monkeypatch.setattr(web_app, "PING_INTERVAL", 0.2)
+    settings = Settings(data_dir=tmp_path / "data", ttl_seconds=1)
+    r = fakeredis.FakeRedis()
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    app = create_app(settings=settings, redis_conn=r, queue=q)
+    with TestClient(app) as client:
+        # Uploaded but never compressed: no events, so the stream is idle.
+        job_id = _upload(client, image_pdf).json()["job_id"]
+        with client.stream("GET", f"/api/jobs/{job_id}/events") as res:
+            pings = sum(1 for line in res.iter_lines() if line == ": ping")
+    # About 1s of silence at a 0.2s interval: several pings, not zero.
+    assert pings >= 3
 
 
 def test_health(web):
