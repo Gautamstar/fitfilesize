@@ -1,5 +1,5 @@
 /**
- * Hand-written mirror of the Fitmit backend API.
+ * Hand-written mirror of the FitFileSize backend API.
  *
  * These types are ASSERTIONS, not guarantees. `await res.json()` returns `any`,
  * so nothing here is verified at compile time or at runtime. If the Python

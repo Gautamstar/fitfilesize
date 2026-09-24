@@ -3,78 +3,125 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Terms | Fitmit</title>
-    <meta name="description" content="The terms for using Fitmit, a free file compression tool." />
-    <link rel="icon" href="/favicon.svg" />
+    <title>Terms | FitFileSize</title>
+    <meta name="description" content="The terms for using FitFileSize, a free file compression tool." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <style>
       /* Same tokens as src/index.css, inlined so this page needs no bundle. */
       :root {
-        --plane: #080807;
-        --ink: #e8e8e3;
-        --ink-secondary: #938f8a;
-        --ink-muted: #6b645c;
-        --hairline-strong: rgba(232, 232, 227, 0.22);
-        color-scheme: dark;
+        --page: #f6f7f9;
+        --surface: #ffffff;
+        --ink: #111827;
+        --ink-secondary: #4b5563;
+        --ink-muted: #6b7280;
+        --accent: #2451e0;
+        --hairline: #e4e7ec;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --page: #0c0e13;
+          --surface: #151821;
+          --ink: #e9ebf0;
+          --ink-secondary: #a8afbd;
+          --ink-muted: #8a92a3;
+          --accent: #7d9bff;
+          --hairline: #262b36;
+          color-scheme: dark;
+        }
       }
       body {
         margin: 0;
-        background: var(--plane);
+        background: var(--page);
         color: var(--ink);
-        font-family: 'Space Grotesk', system-ui, sans-serif;
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
       }
       main {
-        max-width: 680px;
+        max-width: 720px;
         margin: 0 auto;
-        padding: 64px 16px 80px;
+        padding: 20px 16px 72px;
       }
-      .back,
-      .updated {
-        font-family: 'IBM Plex Mono', ui-monospace, monospace;
-        font-size: 12px;
-        color: var(--ink-muted);
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+      .brand img {
+        display: block;
+      }
+      article {
+        margin-top: 28px;
+        padding: 32px;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: 16px;
       }
       h1 {
-        margin: 24px 0 8px;
-        font-size: 40px;
+        margin: 0 0 4px;
+        font-size: 36px;
+        font-weight: 800;
         letter-spacing: -0.03em;
-        line-height: 1.1;
+        line-height: 1.15;
+      }
+      .updated {
+        margin: 0;
+        color: var(--ink-muted);
+        font-size: 14px;
       }
       h2 {
-        margin: 36px 0 8px;
+        margin: 32px 0 8px;
         font-size: 18px;
-        font-weight: 500;
+        font-weight: 700;
       }
       p,
       li {
         color: var(--ink-secondary);
-        font-size: 15px;
+        font-size: 16px;
+      }
+      li + li {
+        margin-top: 6px;
       }
       a {
-        color: var(--ink);
-        text-decoration-color: var(--hairline-strong);
-        text-underline-offset: 3px;
+        color: var(--accent);
+      }
+      @media (max-width: 480px) {
+        article {
+          padding: 20px;
+        }
+        h1 {
+          font-size: 30px;
+        }
       }
     </style>
   </head>
   <body>
     <main>
-      <a class="back" href="/">&larr; Back to Fitmit</a>
+      <a class="brand" href="/">
+        <img src="/favicon.svg" width="28" height="28" alt="" />
+        FitFileSize
+      </a>
+      <article>
       <h1>Terms</h1>
       <p class="updated">Last updated 24 September 2026</p>
 
-      <p>By using Fitmit you agree to these terms. They are short on purpose.</p>
+      <p>By using FitFileSize you agree to these terms. They are short on purpose.</p>
 
       <h2>The service</h2>
       <p>
-        Fitmit is a free tool that compresses PDFs and images to fit under a size you choose. It is
+        FitFileSize is a free tool that compresses PDFs and images to fit under a size you choose. It is
         provided as is, without any warranty. We do our best, but we cannot promise that every
         file will reach your target, that the result will be accepted by the site you upload it
         to, or that the service will always be available.
@@ -83,7 +130,7 @@
       <h2>Your files</h2>
       <p>
         You keep all rights to what you upload. You must have the right to upload it, and you must
-        not use Fitmit for anything illegal. Keep your own copy of the original: we delete files
+        not use FitFileSize for anything illegal. Keep your own copy of the original: we delete files
         on the schedule in the <a href="/privacy.html">privacy page</a> and cannot recover them.
       </p>
 
@@ -104,6 +151,7 @@
         We may update these terms. The date at the top shows when they last changed. Questions:
         <a href="https://github.com/Gautamstar/fitpdf/issues">open an issue on GitHub</a>.
       </p>
+      </article>
     </main>
   </body>
 </html>

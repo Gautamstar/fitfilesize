@@ -5,22 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Compress a PDF or image to fit under a size you pick."
+      content="Compress a PDF or image to fit under any upload limit, like 200 KB or 1 MB. Free, no sign-up, and your file is deleted within minutes."
     />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23e8e8e3'/%3E%3Crect x='8' y='6' width='16' height='20' rx='2' fill='%23080807'/%3E%3Crect x='11' y='11' width='10' height='2' rx='1' fill='%23e8e8e3'/%3E%3Crect x='11' y='15' width='10' height='2' rx='1' fill='%23e8e8e3'/%3E%3Crect x='11' y='19' width='6' height='2' rx='1' fill='%23e8e8e3'/%3E%3C/svg%3E"
-    />
+    <!-- The brand name on its own. scripts/seo-pages.mjs reads it for page
+         titles and structured data, since <title> below is a full phrase. -->
+    <meta name="application-name" content="FitFileSize" />
+    <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c0e13" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <title>Fitmit</title>
+    <title>FitFileSize | Compress a PDF or image to any size limit</title>
 
     <!-- Cairn: self-hosted analytics. No cookies, no storage, IPs hashed with a
-         salt that rotates daily. https://github.com/Gautamstar/cairn -->
+         salt that rotates daily. https://github.com/Gautamstar/cairn
+         data-site keeps the pre-rename id so the traffic history stays in one
+         place; it is an internal key, never shown to visitors. -->
     <script
       defer
       src="https://d1fspum1n48e1s.cloudfront.net/cairn.js"
