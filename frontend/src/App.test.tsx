@@ -37,7 +37,7 @@ vi.stubGlobal(
 
 it('explains a slow upload instead of looking hung', async () => {
   const { default: App } = await import('./App')
-  render(<App />)
+  render(<App path="/" />)
 
   const input = document.querySelector('input[type=file]') as HTMLInputElement
   const file = new File(['x'], 'scan.pdf', { type: 'application/pdf' })

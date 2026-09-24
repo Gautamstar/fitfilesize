@@ -1,4 +1,5 @@
 {
+  "updated": "2026-09-24",
   "pages": [
     {
       "slug": "compress-pdf-to-100kb",
@@ -6,7 +7,19 @@
       "targetKb": 100,
       "heading": "Compress a PDF to 100 KB",
       "description": "Shrink a PDF to under 100 KB for exam, admission and government forms. Free, no sign-up, files deleted minutes after.",
-      "blurb": "Exam and admission forms often cap certificates and ID scans at 100 KB. Scanned pages are mostly image data, so they usually get there with text still readable."
+      "blurb": "Exam and admission forms often cap certificates and ID scans at 100 KB. Scanned pages are mostly image data, so they usually get there with text still readable.",
+      "guide": {
+        "title": "Getting a PDF under 100 KB",
+        "paragraphs": [
+          "100 KB is tight, but it depends on what is in the file. A PDF made straight from a document, exported from Word or a web form, is mostly text, and text takes almost no space. Those usually fit after the lossless pass alone. Scanned pages are photos of paper, and those are what have to shrink.",
+          "For scans we lower the resolution of the page images one step at a time, down to 50 dpi at the lowest setting, and stop at the first step that fits. Anything drawn as real text stays sharp at every step; only images lose detail."
+        ],
+        "tips": [
+          "Scan one page per file if the form allows it. Every scanned page adds to the size.",
+          "Scan in grayscale or black and white when color does not matter. It compresses far better than color.",
+          "Crop the scan to the edge of the document. A strip of scanner lid still costs bytes."
+        ]
+      }
     },
     {
       "slug": "compress-pdf-to-200kb",
@@ -14,7 +27,19 @@
       "targetKb": 200,
       "heading": "Compress a PDF to 200 KB",
       "description": "Shrink a PDF to under 200 KB for visa, ID and application uploads. Free, no sign-up, files deleted minutes after.",
-      "blurb": "200 KB is a common limit on visa and ID document uploads. A one or two page scan usually fits with room to spare."
+      "blurb": "200 KB is a common limit on visa and ID document uploads. A one or two page scan usually fits with room to spare.",
+      "guide": {
+        "title": "Getting a PDF under 200 KB",
+        "paragraphs": [
+          "Visa and ID portals often ask for a passport page, a bank statement or a photo ID under 200 KB. A one or two page scan usually gets there at a resolution that is still easy to read.",
+          "We try a lossless cleanup first. If the file is still too big, we step the page images down in resolution and JPEG quality together and keep the gentlest step that fits under 200,000 bytes, so it passes however the portal counts a kilobyte."
+        ],
+        "tips": [
+          "Zoom in on the result before you upload. Small print like passport numbers and dates is what suffers first.",
+          "If a long statement will not fit, check whether the portal only needs the pages it asks for.",
+          "Filling in a form PDF? Fill it and save it first. The stronger settings can flatten fillable fields."
+        ]
+      }
     },
     {
       "slug": "compress-pdf-to-300kb",
@@ -22,7 +47,19 @@
       "targetKb": 300,
       "heading": "Compress a PDF to 300 KB",
       "description": "Shrink a PDF to under 300 KB for online application portals. Free, no sign-up, files deleted minutes after.",
-      "blurb": "300 KB leaves enough room for a few scanned pages at a size that is still comfortable to read on screen."
+      "blurb": "300 KB leaves enough room for a few scanned pages at a size that is still comfortable to read on screen.",
+      "guide": {
+        "title": "Getting a PDF under 300 KB",
+        "paragraphs": [
+          "At 300 KB there is room for a few scanned pages at a resolution that reads comfortably on screen, or a much longer document if it was created digitally.",
+          "Digital PDFs mostly shrink in the lossless pass: we repack the file's internal structure and drop parts nothing uses, without changing how anything looks. Scans shrink by lowering image resolution a step at a time until the file fits."
+        ],
+        "tips": [
+          "Include only the pages you need. Each extra scanned page counts against the limit.",
+          "If you can rescan, 150 to 200 dpi is plenty for reading on screen and leaves far less to compress away than 600 dpi.",
+          "If a file cannot reach 300 KB, you get the smallest version we could make and a note saying so."
+        ]
+      }
     },
     {
       "slug": "compress-pdf-to-500kb",
@@ -30,7 +67,19 @@
       "targetKb": 500,
       "heading": "Compress a PDF to 500 KB",
       "description": "Shrink a PDF to under 500 KB for applications, certificates and forms. Free, no sign-up, files deleted minutes after.",
-      "blurb": "500 KB fits most multi-page scans, like transcripts or a set of certificates, without the pages turning blurry."
+      "blurb": "500 KB fits most multi-page scans, like transcripts or a set of certificates, without the pages turning blurry.",
+      "guide": {
+        "title": "Getting a PDF under 500 KB",
+        "paragraphs": [
+          "500 KB fits most multi-page documents: transcripts, a set of certificates, a signed contract. Pages usually stay close to print quality.",
+          "Our highest-quality settings keep color images at 200 to 300 dpi. We only go lower when the file still does not fit, and we always stop at the first setting that does."
+        ],
+        "tips": [
+          "Photos embedded in a document are usually most of its size. Text and tables add very little.",
+          "Keep your original for printing. The compressed copy is meant for uploading.",
+          "Password-protected PDFs cannot be compressed. Remove the password first, then upload."
+        ]
+      }
     },
     {
       "slug": "compress-pdf-to-1mb",
@@ -38,7 +87,19 @@
       "targetKb": 1000,
       "heading": "Compress a PDF to 1 MB",
       "description": "Shrink a PDF to under 1 MB for job applications and resume uploads. Free, no sign-up, files deleted minutes after.",
-      "blurb": "Job sites and applicant tracking systems often limit resumes and cover letters to 1 MB. Text-heavy PDFs usually fit without visible change."
+      "blurb": "Job sites and applicant tracking systems often limit resumes and cover letters to 1 MB. Text-heavy PDFs usually fit without visible change.",
+      "guide": {
+        "title": "Getting a PDF under 1 MB",
+        "paragraphs": [
+          "Job sites and applicant tracking systems often cap resumes, cover letters and portfolios at 1 MB. A resume exported from Word or Google Docs is usually well under that already. Oversized ones are almost always carrying a large photo or come from a design tool.",
+          "Text and vector graphics stay sharp at every setting. Only embedded images are resampled, so a headshot or logo gets smaller while your text stays crisp."
+        ],
+        "tips": [
+          "PDFs exported from design tools often embed images at full resolution, which is exactly what we reduce.",
+          "Keep your text as real text rather than a scanned image, so applicant tracking systems can read it.",
+          "The download is named yourfile.fit.pdf. Rename it to something like firstname-lastname-resume.pdf before you apply."
+        ]
+      }
     },
     {
       "slug": "compress-pdf-to-2mb",
@@ -46,7 +107,19 @@
       "targetKb": 2000,
       "heading": "Compress a PDF to 2 MB",
       "description": "Shrink a PDF to under 2 MB for upload forms and portals. Free, no sign-up, files deleted minutes after.",
-      "blurb": "2 MB is a common ceiling on upload forms. Photos inside the PDF get resized just enough to fit and no further."
+      "blurb": "2 MB is a common ceiling on upload forms. Photos inside the PDF get resized just enough to fit and no further.",
+      "guide": {
+        "title": "Getting a PDF under 2 MB",
+        "paragraphs": [
+          "2 MB is a common ceiling on upload forms, insurance claims and school portals. Photo-heavy PDFs and long scans are the usual reasons a file goes over.",
+          "We reduce the photos inside the PDF only as far as needed. The first setting keeps images at 300 dpi and high JPEG quality, and the search stops at the first setting that fits."
+        ],
+        "tips": [
+          "Phone photos dropped into a document can be several megabytes each on their own.",
+          "If the form accepts more than one file, splitting a long document keeps each part sharper.",
+          "The original is deleted 5 minutes after the run finishes, so try other sizes before then."
+        ]
+      }
     },
     {
       "slug": "compress-pdf-to-5mb",
@@ -54,7 +127,19 @@
       "targetKb": 5000,
       "heading": "Compress a PDF to 5 MB",
       "description": "Shrink a large PDF to under 5 MB for email attachments and portals. Free, no sign-up, files deleted minutes after.",
-      "blurb": "For big scans and photo-heavy reports that need to go through email or a portal with a 5 MB cap."
+      "blurb": "For big scans and photo-heavy reports that need to go through email or a portal with a 5 MB cap.",
+      "guide": {
+        "title": "Getting a PDF under 5 MB",
+        "paragraphs": [
+          "5 MB covers most email attachments and portals with a larger limit. Big scans, photo reports and slide decks saved as PDF are the files that usually need it.",
+          "At this size most files keep high-resolution images. Very large ones, like dozens of scanned pages or print-resolution artwork, may still need the stronger settings."
+        ],
+        "tips": [
+          "Uploads can be up to 25 MB. Split anything larger before you start.",
+          "Big files take longer, since each setting is a full pass over the document. A large scan can take a minute or two.",
+          "Keep your original. The compressed copy is for sending, not for printing or editing."
+        ]
+      }
     },
     {
       "slug": "compress-jpg-to-20kb",
@@ -62,7 +147,19 @@
       "targetKb": 20,
       "heading": "Compress a JPG to 20 KB",
       "description": "Shrink a signature or photo to under 20 KB for online application forms. Free, no sign-up, files deleted minutes after.",
-      "blurb": "Signature uploads on application forms are often capped at 10 to 20 KB. A signature on a plain background compresses very well."
+      "blurb": "Signature uploads on application forms are often capped at 10 to 20 KB. A signature on a plain background compresses very well.",
+      "guide": {
+        "title": "Getting a signature or small image under 20 KB",
+        "paragraphs": [
+          "Application forms often want a scanned signature between 10 and 20 KB. A signature is dark ink on a plain background, which compresses very well once the image is a sensible size.",
+          "We shrink the pixel dimensions and JPEG quality together, down to 800 pixels on the longest side at the smallest setting, and keep the gentlest step that fits under 20,000 bytes."
+        ],
+        "tips": [
+          "Sign in dark ink on plain white paper, and crop tightly around the signature before uploading.",
+          "Take the photo in good light so the paper comes out white rather than gray. A clean background takes far fewer bytes.",
+          "If the form also asks for exact pixel dimensions, check them. We shrink to hit the file size, not to a specific width and height."
+        ]
+      }
     },
     {
       "slug": "compress-jpg-to-50kb",
@@ -70,7 +167,19 @@
       "targetKb": 50,
       "heading": "Compress a JPG to 50 KB",
       "description": "Shrink a passport-style photo to under 50 KB for application forms. Free, no sign-up, files deleted minutes after.",
-      "blurb": "Photo uploads on application forms are often limited to 50 KB. A phone photo gets resized and re-encoded until it fits."
+      "blurb": "Photo uploads on application forms are often limited to 50 KB. A phone photo gets resized and re-encoded until it fits.",
+      "guide": {
+        "title": "Getting a photo under 50 KB",
+        "paragraphs": [
+          "Photo uploads for exam registrations, applications and ID cards are often limited to 50 KB. A phone photo is usually several megabytes, so it has to lose most of its pixels.",
+          "We scale the photo down and lower JPEG quality together until it fits. Even the smallest setting keeps 800 pixels on the longest side, which is more than most photo forms display."
+        ],
+        "tips": [
+          "Crop to head and shoulders before uploading. Fewer pixels to start with means less detail has to go.",
+          "Use a plain, light background. It takes far fewer bytes than a busy one.",
+          "If the form also has a minimum size or exact pixel dimensions, check the result against them. We aim for the file size only."
+        ]
+      }
     },
     {
       "slug": "compress-jpg-to-100kb",
@@ -78,7 +187,19 @@
       "targetKb": 100,
       "heading": "Compress a JPG to 100 KB",
       "description": "Shrink a JPG, PNG or photo to under 100 KB. Free, no sign-up, files deleted minutes after.",
-      "blurb": "100 KB keeps a photo sharp enough for a profile picture or an ID upload."
+      "blurb": "100 KB keeps a photo sharp enough for a profile picture or an ID upload.",
+      "guide": {
+        "title": "Getting an image under 100 KB",
+        "paragraphs": [
+          "100 KB is enough for a clear profile picture, an ID photo or a photo of a document for most online forms.",
+          "For a JPEG we first try an optimized re-encode that keeps every pixel exactly as it is. If that is not enough, we reduce the dimensions and quality step by step until it fits."
+        ],
+        "tips": [
+          "PNG screenshots and images with transparency come back as JPEG when they need shrinking, with transparent areas filled white.",
+          "Photographing a document? Shoot it flat and in good light, filling the frame. Less background means more detail survives.",
+          "We keep your image's shape and never crop it, so crop first if the form wants a particular framing."
+        ]
+      }
     },
     {
       "slug": "compress-jpg-to-200kb",
@@ -86,7 +207,19 @@
       "targetKb": 200,
       "heading": "Compress a JPG to 200 KB",
       "description": "Shrink a photo or scanned image to under 200 KB. Free, no sign-up, files deleted minutes after.",
-      "blurb": "200 KB is enough for a clear photo of a document or a good-quality portrait."
+      "blurb": "200 KB is enough for a clear photo of a document or a good-quality portrait.",
+      "guide": {
+        "title": "Getting an image under 200 KB",
+        "paragraphs": [
+          "200 KB leaves room for a sharp portrait, a readable photo of a certificate or a product image for a listing.",
+          "We stop at the first setting that fits, so an image that only needs a little squeezing keeps most of its resolution and detail."
+        ],
+        "tips": [
+          "iPhone photos saved as HEIC need to be JPEG first. Export or share them as JPEG, or set the camera to Most Compatible.",
+          "We remove camera metadata such as GPS location. It saves space and keeps where you took the photo private.",
+          "PNG and WebP files come back as JPEG when they need lossy compression, since that is what gets them small."
+        ]
+      }
     },
     {
       "slug": "compress-jpg-to-500kb",
@@ -94,7 +227,19 @@
       "targetKb": 500,
       "heading": "Compress a JPG to 500 KB",
       "description": "Shrink a large phone photo to under 500 KB without it looking compressed. Free, no sign-up, files deleted minutes after.",
-      "blurb": "Phone photos are often 3 to 5 MB. At 500 KB they still look good on any screen."
+      "blurb": "Phone photos are often 3 to 5 MB. At 500 KB they still look good on any screen.",
+      "guide": {
+        "title": "Getting an image under 500 KB",
+        "paragraphs": [
+          "Phone photos are often 3 to 5 MB. At 500 KB they still look good on any screen, which is why it is a common limit for listings, profile uploads and support forms.",
+          "Our highest-quality setting keeps up to 4000 pixels on the longest side at JPEG quality 92. We only step down as far as the size requires."
+        ],
+        "tips": [
+          "Most screens show far fewer pixels than a phone camera captures, so the size drop is rarely visible.",
+          "Large PNG screenshots often shrink the most, since they are stored without lossy compression.",
+          "Need several photos done? Each file is compressed separately; upload them one at a time."
+        ]
+      }
     }
   ],
   "faq": [

@@ -8,11 +8,13 @@
  * the links are how a crawler finds every landing page from any one, and the
  * FAQ answers are in the DOM even while collapsed, matching the FAQPage markup
  * scripts/seo-pages.mjs puts in the head.
+ *
+ * No scroll-in animation here: these sections are pre-rendered, and anything
+ * that starts at opacity 0 is invisible until JavaScript runs, which is the
+ * wrong trade for the text search engines and link previews read.
  */
 
-import { motion } from 'motion/react'
-import { fadeUp, inViewProps, stagger } from '../anim'
-import { FAQ, LANDING_PAGES, pageSizeLabel, type LandingPage } from '../lib/landing'
+import { FAQ, LANDING_PAGES, keepUnits, pageSizeLabel, type LandingPage } from '../lib/landing'
 
 const STEPS = [
   {
@@ -37,41 +39,60 @@ const SIZE_GROUPS = [
 export function Landing({ page }: { page?: LandingPage }) {
   return (
     <div className="landing">
-      <motion.section className="band" variants={stagger} {...inViewProps}>
-        <motion.h2 className="band-title" variants={fadeUp}>
+      {/* The one section that differs per page. Everything below is shared,
+          so without this Google sees near-duplicates and may index only one. */}
+      {page ? (
+        <section className="band guide">
+          <h2 className="band-title">{page.guide.title}</h2>
+          {page.guide.paragraphs.map((text) => (
+            <p key={text} className="guide-body">
+              {keepUnits(text)}
+            </p>
+          ))}
+          <h3 className="guide-tips-title">Tips</h3>
+          <ul className="guide-tips">
+            {page.guide.tips.map((tip) => (
+              <li key={tip}>{keepUnits(tip)}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className="band">
+        <h2 className="band-title">
           How it works
-        </motion.h2>
+        </h2>
         <ol className="steps-grid">
           {STEPS.map((step, i) => (
-            <motion.li key={step.title} className="step" variants={fadeUp}>
+            <li key={step.title} className="step">
               <span className="step-num">{i + 1}</span>
               <h3 className="step-title">{step.title}</h3>
               <p className="step-body">{step.body}</p>
-            </motion.li>
+            </li>
           ))}
         </ol>
-      </motion.section>
+      </section>
 
-      <motion.section className="band" variants={stagger} {...inViewProps}>
-        <motion.h2 className="band-title" variants={fadeUp}>
+      <section className="band">
+        <h2 className="band-title">
           Questions
-        </motion.h2>
-        <motion.div className="faq" variants={fadeUp}>
+        </h2>
+        <div className="faq">
           {FAQ.map((item) => (
             <details key={item.q} className="faq-item">
               <summary>{item.q}</summary>
               <p>{item.a}</p>
             </details>
           ))}
-        </motion.div>
-      </motion.section>
+        </div>
+      </section>
 
-      <motion.section className="band" variants={stagger} {...inViewProps}>
-        <motion.h2 className="band-title" variants={fadeUp}>
+      <section className="band">
+        <h2 className="band-title">
           Common size limits
-        </motion.h2>
+        </h2>
         {SIZE_GROUPS.map((group) => (
-          <motion.div key={group.title} className="size-group" variants={fadeUp}>
+          <div key={group.title} className="size-group">
             <p className="size-group-title">{group.title}</p>
             <ul className="size-links">
               {group.pages.map((p) => (
@@ -84,9 +105,9 @@ export function Landing({ page }: { page?: LandingPage }) {
                 </li>
               ))}
             </ul>
-          </motion.div>
+          </div>
         ))}
-      </motion.section>
+      </section>
     </div>
   )
 }

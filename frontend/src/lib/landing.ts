@@ -17,6 +17,12 @@ export interface LandingPage {
   heading: string
   description: string
   blurb: string
+  /** The page's own section: what fits at this size and how to get there. */
+  guide: {
+    title: string
+    paragraphs: string[]
+    tips: string[]
+  }
 }
 
 export interface FaqItem {
@@ -45,4 +51,12 @@ export function pageTargetBytes(page: LandingPage): number {
 /** Short chip label: "200 KB", "1 MB". */
 export function pageSizeLabel(page: LandingPage): string {
   return limitLabel(pageTargetBytes(page))
+}
+
+/**
+ * Glue a number to its unit ("200 KB", "50 dpi") with a no-break space, so a
+ * line never ends on the number and starts the next with the unit.
+ */
+export function keepUnits(text: string): string {
+  return text.replace(/(\d) (KB|MB|dpi|pixels)\b/g, '$1\u00a0$2')
 }

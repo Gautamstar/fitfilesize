@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { presetToSlider, sliderToBytes } from './format'
-import { LANDING_PAGES, pageForPath, pageSizeLabel, pageTargetBytes } from './landing'
+import { LANDING_PAGES, keepUnits, pageForPath, pageSizeLabel, pageTargetBytes } from './landing'
 
 describe('pageForPath', () => {
   it('finds a landing page with or without a trailing slash', () => {
@@ -45,6 +45,25 @@ describe('presetToSlider', () => {
         // And not needlessly far under it: within one slider step.
         expect(bytes).toBeGreaterThan(limit * 0.98)
       }
+    }
+  })
+})
+
+describe('keepUnits', () => {
+  it('glues sizes to their units and leaves other spaces alone', () => {
+    expect(keepUnits('under 200 KB at 50 dpi, 1 MB or 800 pixels')).toBe(
+      'under 200\u00a0KB at 50\u00a0dpi, 1\u00a0MB or 800\u00a0pixels',
+    )
+  })
+})
+
+describe('landing page guides', () => {
+  it('gives every page its own guide, so the pages are not near-duplicates', () => {
+    const bodies = LANDING_PAGES.map((p) => [...p.guide.paragraphs, ...p.guide.tips].join(' '))
+    expect(new Set(bodies).size).toBe(LANDING_PAGES.length)
+    for (const page of LANDING_PAGES) {
+      expect(page.guide.paragraphs.length).toBeGreaterThan(0)
+      expect(page.guide.tips.length).toBeGreaterThan(0)
     }
   })
 })
