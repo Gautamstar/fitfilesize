@@ -249,7 +249,7 @@
     },
     {
       "q": "What happens to my file?",
-      "a": "It is processed on our server and deleted automatically: the original 5 minutes after the run finishes, the compressed file after 10. You can also delete both right away."
+      "a": "It is processed on our server and deleted automatically: the original 5 minutes after the run finishes, the compressed file after 10. A file you upload but never compress is deleted within 30 minutes. You can also delete everything right away with Delete now."
     },
     {
       "q": "Will it look worse?",
