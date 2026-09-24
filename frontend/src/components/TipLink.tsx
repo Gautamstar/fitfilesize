@@ -1,5 +1,5 @@
 /**
- * "Buy me a coffee" link to a Stripe Payment Link.
+ * Tip link to a Stripe Payment Link.
  *
  * The URL comes from VITE_TIP_URL at build time. Unset means no link anywhere,
  * so the component can sit in the tree before the Stripe side exists.

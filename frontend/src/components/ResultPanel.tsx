@@ -74,7 +74,7 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete }: R
       {/* Asked only after a win: the one moment the request is reasonable. */}
       {result.hit_target && TIP_ENABLED ? (
         <p className="tip-note">
-          Saved you some hassle? <TipLink>Buy me a coffee</TipLink>
+          Saved you some hassle? <TipLink>Buy me a White Monster</TipLink>
         </p>
       ) : null}
     </div>
