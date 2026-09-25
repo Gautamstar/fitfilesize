@@ -4,7 +4,7 @@ import pytest
 from PIL import Image
 
 from fitpdf.engine import analyze, compress_to_target, estimate_floor
-from fitpdf.strategies import ImageStrategy, PdfStrategy, detect_strategy
+from fitpdf.strategies import IMAGE_RUNGS, ImageStrategy, PdfStrategy, detect_strategy
 
 
 def test_detect_strategy_by_extension(photo_jpg, transparent_png, image_pdf):
@@ -181,7 +181,7 @@ def test_resize_notes_say_what_happened_to_the_picture(photo_jpg):
     assert any("trimmed about 33% of the width" in w for w in crop)
     pad = ImageStrategy(resize=(200, 200), fit="pad").probe(photo_jpg).warnings
     assert any("white border" in w for w in pad)
-    bigger = ImageStrategy(resize=(6000, 4000)).probe(photo_jpg).warnings
+    bigger = ImageStrategy(resize=(3900, 2600)).probe(photo_jpg).warnings
     assert any("enlarged from 3000 x 2000" in w for w in bigger)
     same_shape = ImageStrategy(resize=(600, 400)).probe(photo_jpg).warnings
     assert same_shape == []
@@ -190,6 +190,9 @@ def test_resize_notes_say_what_happened_to_the_picture(photo_jpg):
 def test_resize_rejects_bad_settings():
     with pytest.raises(ValueError):
         ImageStrategy(resize=(0, 100))
+    with pytest.raises(ValueError):
+        # Past the cap: a tiny upload must not become a huge enlargement.
+        ImageStrategy(resize=(4001, 100))
     with pytest.raises(ValueError):
         ImageStrategy(resize=(100, 100), fit="stretch")
 
@@ -237,12 +240,25 @@ def test_shrinking_while_decoding_keeps_sizes_exact(tmp_path):
         strategy = ImageStrategy()
         out = tmp_path / "o.jpg"
         strategy.render(src, out, rung, timeout=60)
-        assert ("decoded", src, reduce) in strategy._pixels
+        assert strategy._pixels[("decoded", src)][0] == reduce
         with Image.open(out) as im:
             assert im.size == expected
     out = tmp_path / "fit.jpg"
     strategy = ImageStrategy(resize=(150, 200))
     strategy.render(src, out, strategy.rungs[0], timeout=60)
-    assert ("decoded", src, 8) in strategy._pixels
+    assert strategy._pixels[("decoded", src)][0] == 8
     with Image.open(out) as im:
         assert im.size == (150, 200)
+
+
+def test_a_run_holds_one_decode_even_when_the_decoder_cannot_shrink(tmp_path):
+    """A PNG ignores draft mode, so it must not be decoded, and kept, once per
+    requested shrink factor."""
+    src = tmp_path / "big.png"
+    Image.linear_gradient("L").resize((4000, 3000)).convert("RGB").save(src)
+    strategy = ImageStrategy()
+    for rung in (IMAGE_RUNGS[5], IMAGE_RUNGS[-1], IMAGE_RUNGS[0]):
+        strategy.render(src, tmp_path / "o.jpg", rung, timeout=60)
+    decodes = [k for k in strategy._pixels if k[0] == "decoded"]
+    assert len(decodes) == 1
+    assert strategy._pixels[decodes[0]][0] == 1

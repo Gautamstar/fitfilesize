@@ -186,7 +186,11 @@ trims the overflow, "pad" keeps the whole image and fills the gap with white."""
 # trimming evenly from top and bottom is what cuts it off.
 CROP_CENTERING = (0.5, 0.35)
 
-MAX_RESIZE_EDGE = 10_000
+# Largest side an exact-size result may have. Forms that ask for pixels want a
+# few hundred, visa photos up to about 1200; this matches the top of the
+# ordinary ladder. Capped because an enlargement costs the worker memory and
+# CPU for every pixel however small the upload was: 4000 x 4000 is 48 MB.
+MAX_RESIZE_EDGE = 4000
 
 
 def fit_exact(im, size: tuple[int, int], fit: str):
@@ -350,6 +354,10 @@ class ImageStrategy:
         cheaper than decoding every pixel and resizing them afterwards. At
         least twice the output size is kept, as Pillow's own thumbnail() does,
         so the final LANCZOS resize still decides the quality.
+
+        Only one decode is kept, and any rung that needs no more pixels than
+        it holds reuses it; a rung that needs more replaces it. So a run holds
+        at most one copy of the picture, however many rungs it tries.
         """
         from PIL import Image, ImageOps
 
@@ -363,9 +371,13 @@ class ImageStrategy:
         while reduce < 8 and reduce * 2 * 2 * scale <= 1:
             reduce *= 2
 
-        key = ("decoded", src, reduce)
-        if key not in self._pixels:
+        key = ("decoded", src)
+        cached = self._pixels.get(key)
+        if cached is None or cached[0] > reduce:
+            # Let the previous decode go before making the next one.
+            self._pixels.pop(key, None)
             with Image.open(src) as opened:
+                full_width = opened.width
                 if reduce > 1:
                     # A no-op for anything but JPEG, which then decodes in full.
                     # Pillow picks the factor as width // requested, so ask for
@@ -387,8 +399,11 @@ class ImageStrategy:
                     im = background
                 elif im.mode != "RGB":
                     im = im.convert("RGB")
-            self._pixels[key] = im
-        return self._pixels[key]
+                # What the decoder actually did: nothing for a PNG, and for a
+                # JPEG possibly less than asked.
+                actual = round(full_width / opened.width)
+            self._pixels[key] = (actual, im)
+        return self._pixels[key][1]
 
     def validate(self, out: Path, probe: Probe) -> bool:
         from PIL import Image

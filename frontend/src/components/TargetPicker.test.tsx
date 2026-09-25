@@ -3,22 +3,32 @@ import { describe, expect, it, vi } from 'vitest'
 import type { MediaKind, Resize } from '../types/api'
 import { TargetPicker } from './TargetPicker'
 
-function setup(kind: MediaKind, initialResize?: Resize) {
+function setup(
+  kind: MediaKind,
+  initialResize?: Resize,
+  // null for no landing-page preset (undefined would take the default).
+  { originalBytes = 3_000_000, floor = 120_000, initialTarget = 50_000 as number | null } = {},
+) {
   const onCompress = vi.fn()
   render(
     <TargetPicker
       filename="photo.jpg"
       meta="3.0 MB, 3000 x 2000"
-      originalBytes={3_000_000}
-      floor={120_000}
+      originalBytes={originalBytes}
+      floor={floor}
       kind={kind}
       onCompress={onCompress}
       onCancel={() => {}}
-      initialTarget={50_000}
+      initialTarget={initialTarget ?? undefined}
       initialResize={initialResize}
     />,
   )
   return onCompress
+}
+
+const typeSize = (width: string, height: string) => {
+  fireEvent.change(screen.getByRole('textbox', { name: 'Width' }), { target: { value: width } })
+  fireEvent.change(screen.getByRole('textbox', { name: 'Height' }), { target: { value: height } })
 }
 
 const compress = () => fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
@@ -63,6 +73,18 @@ describe('TargetPicker pixel size', () => {
     fireEvent.click(screen.getByRole('button', { name: '200 KB' }))
     compress()
     expect(onCompress.mock.calls.at(-1)![0]).toBe(200_000)
+  })
+
+  it('never raises a picked limit when a large pixel size raises the floor', () => {
+    const onCompress = setup('image', undefined, { initialTarget: null })
+    fireEvent.click(screen.getByRole('button', { name: '100 KB' }))
+    // 3000 x 3000 puts the estimated floor near 560 KB, well above 100 KB.
+    typeSize('3000', '3000')
+    expect((screen.getByRole('button', { name: '100 KB' }) as HTMLButtonElement).disabled).toBe(
+      false,
+    )
+    compress()
+    expect(onCompress.mock.calls.at(-1)![0]).toBe(100_000)
   })
 
   it('comes back filled in after "Try another size"', () => {
