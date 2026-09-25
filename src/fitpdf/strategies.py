@@ -210,6 +210,9 @@ class ImageStrategy:
         self.resize = resize
         self.fit = fit
         self.always_render = resize is not None
+        # Decoded pictures, reused by every rung of a run. A strategy lives
+        # for one run (one file), so this never outlives the file it holds.
+        self._pixels: dict[tuple, object] = {}
         if resize is None:
             self.rungs = IMAGE_RUNGS
         else:
@@ -222,10 +225,6 @@ class ImageStrategy:
         warnings: list[str] = []
         with Image.open(src) as im:
             width, height = im.size
-            upright = (width, height)
-            # Orientations 5-8 turn the photo a quarter, swapping its sides.
-            if im.getexif().get(0x0112, 1) in (5, 6, 7, 8):
-                upright = (height, width)
             fmt = im.format or ""
             if im.mode in ("RGBA", "LA", "P"):
                 warnings.append(
@@ -237,7 +236,7 @@ class ImageStrategy:
                     f"{fmt} has multiple frames; only the first one is kept"
                 )
         if self.resize is not None:
-            warnings.extend(self._resize_notes(*upright))
+            warnings.extend(self._resize_notes(*self._upright_size(src)))
         return Probe(kind="image", pages=1, width=width, height=height, warnings=warnings)
 
     def _resize_notes(self, src_w: int, src_h: int) -> list[str]:
@@ -304,31 +303,92 @@ class ImageStrategy:
         return dst.stat().st_size
 
     def render(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
-        from PIL import Image, ImageOps
+        from PIL import Image
 
-        with Image.open(src) as opened:
-            im = ImageOps.exif_transpose(opened)
-
-            if im.mode in ("RGBA", "LA", "P"):
-                # JPEG has no alpha. Composite onto white rather than letting
-                # Pillow drop the channel and produce black fringing.
-                background = Image.new("RGB", im.size, (255, 255, 255))
-                converted = im.convert("RGBA")
-                background.paste(converted, mask=converted.split()[-1])
-                im = background
-            elif im.mode != "RGB":
-                im = im.convert("RGB")
-
-            if "width" in rung:
-                im = fit_exact(im, (rung["width"], rung["height"]), self.fit)
-            elif max(im.size) > rung["max_edge"]:
+        if "width" in rung:
+            # Every rung of an exact-size run shares one picture and differs
+            # only in quality, so the resize happens once per run.
+            size = (rung["width"], rung["height"])
+            key = ("fit", src, size)
+            if key not in self._pixels:
+                self._pixels[key] = fit_exact(self._decoded(src, rung), size, self.fit)
+            im = self._pixels[key]
+        else:
+            im = self._decoded(src, rung)
+            # Sized from the full source, not from `im`, so the result is the
+            # same size whether or not the decoder already shrank it.
+            full_w, full_h = self._upright_size(src)
+            if max(full_w, full_h) > rung["max_edge"]:
                 # Only ever shrink to the cap; smaller images keep their size.
-                scale = rung["max_edge"] / max(im.size)
-                new_size = (max(1, round(im.width * scale)), max(1, round(im.height * scale)))
+                scale = rung["max_edge"] / max(full_w, full_h)
+                new_size = (max(1, round(full_w * scale)), max(1, round(full_h * scale)))
                 im = im.resize(new_size, Image.LANCZOS)
 
-            im.save(dst, "JPEG", quality=rung["quality"], optimize=True, progressive=True)
+        im.save(dst, "JPEG", quality=rung["quality"], optimize=True, progressive=True)
         return dst.stat().st_size
+
+    def _upright_size(self, src: Path) -> tuple[int, int]:
+        """(width, height) of the source once turned the way it is viewed."""
+        from PIL import Image
+
+        key = ("size", src)
+        if key not in self._pixels:
+            with Image.open(src) as im:
+                width, height = im.size
+                # Orientations 5-8 turn the photo a quarter, swapping its sides.
+                turned = im.getexif().get(0x0112, 1) in (5, 6, 7, 8)
+            self._pixels[key] = (height, width) if turned else (width, height)
+        return self._pixels[key]
+
+    def _decoded(self, src: Path, rung: dict):
+        """The source upright and in RGB on white, decoded once per run.
+
+        Decoding a phone photo is a large share of each render, and every rung
+        of a run starts from the same pixels, so they are kept. When the rung's
+        output is much smaller than the source, a JPEG can also be shrunk by
+        2, 4 or 8 while it is decoded (Pillow's draft mode), which is far
+        cheaper than decoding every pixel and resizing them afterwards. At
+        least twice the output size is kept, as Pillow's own thumbnail() does,
+        so the final LANCZOS resize still decides the quality.
+        """
+        from PIL import Image, ImageOps
+
+        width, height = self._upright_size(src)
+        if "width" in rung:
+            sx, sy = rung["width"] / width, rung["height"] / height
+            scale = max(sx, sy) if self.fit == "crop" else min(sx, sy)
+        else:
+            scale = rung["max_edge"] / max(width, height)
+        reduce = 1
+        while reduce < 8 and reduce * 2 * 2 * scale <= 1:
+            reduce *= 2
+
+        key = ("decoded", src, reduce)
+        if key not in self._pixels:
+            with Image.open(src) as opened:
+                if reduce > 1:
+                    # A no-op for anything but JPEG, which then decodes in full.
+                    # Pillow picks the factor as width // requested, so ask for
+                    # width // reduce: rounding that up would turn a factor of
+                    # 2 into 1 for every odd-sized photo.
+                    opened.draft(
+                        None,
+                        (max(1, opened.width // reduce), max(1, opened.height // reduce)),
+                    )
+                im = ImageOps.exif_transpose(opened)
+
+                if im.mode in ("RGBA", "LA", "P"):
+                    # JPEG has no alpha. Composite onto white rather than
+                    # letting Pillow drop the channel and produce black
+                    # fringing.
+                    background = Image.new("RGB", im.size, (255, 255, 255))
+                    converted = im.convert("RGBA")
+                    background.paste(converted, mask=converted.split()[-1])
+                    im = background
+                elif im.mode != "RGB":
+                    im = im.convert("RGB")
+            self._pixels[key] = im
+        return self._pixels[key]
 
     def validate(self, out: Path, probe: Probe) -> bool:
         from PIL import Image
