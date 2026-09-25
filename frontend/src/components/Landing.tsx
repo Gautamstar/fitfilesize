@@ -31,10 +31,17 @@ const STEPS = [
   },
 ]
 
-const SIZE_GROUPS = [
-  { title: 'PDF', pages: LANDING_PAGES.filter((p) => p.kind === 'pdf') },
-  { title: 'Photos and images', pages: LANDING_PAGES.filter((p) => p.kind === 'image') },
-]
+const KIND_GROUP = { pdf: 'PDF', image: 'Photos and images' }
+
+// In the order the groups first appear in the page data.
+const SIZE_GROUPS = [...new Set(LANDING_PAGES.map(groupOf))].map((title) => ({
+  title,
+  pages: LANDING_PAGES.filter((p) => groupOf(p) === title),
+}))
+
+function groupOf(page: LandingPage): string {
+  return page.group ?? KIND_GROUP[page.kind]
+}
 
 export function Landing({ page }: { page?: LandingPage }) {
   return (

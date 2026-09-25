@@ -12,6 +12,12 @@ import data from './landing-pages.json'
 export interface LandingPage {
   slug: string
   kind: 'pdf' | 'image'
+  /**
+   * Heading for this page's link under "Common size limits". Pages without
+   * one are grouped by kind. Set it when the kind alone would list the same
+   * size twice, as with "PNG" pages next to the JPG ones.
+   */
+  group?: string
   /** The limit as a portal states it: 200 for "200 KB", 1000 for "1 MB". */
   targetKb: number
   heading: string
