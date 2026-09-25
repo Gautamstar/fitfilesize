@@ -73,6 +73,11 @@ def clear_events(r, job_id: str) -> None:
     r.delete(events_key(job_id))
 
 
+def now_stamp() -> str:
+    """Current time as stored in job hashes."""
+    return str(int(time.time()))
+
+
 def touch_progress(r, job_id: str) -> None:
     """Record that the run is alive. Read by the sweeper to spot dead runs."""
     r.hset(job_key(job_id), "progress_at", str(int(time.time())))
@@ -84,7 +89,10 @@ def fail_job(r, job_id: str, message: str, ttl: int, pending_ttl: int) -> None:
     The error event is what the progress stream and the polling fallback both
     act on, so a visitor waiting on the job sees the message within seconds.
     """
-    update_job(r, job_id, status="error", error=message)
+    # completed_at goes in the same write as the status: a reader must never
+    # see a terminal status without it, or expires_in falls back to the
+    # 30-minute pending clock instead of the real deletion time.
+    update_job(r, job_id, status="error", error=message, completed_at=now_stamp())
     push_event(r, job_id, {"stage": "error", "message": message}, pending_ttl)
     mark_completed(r, job_id, ttl)
 
