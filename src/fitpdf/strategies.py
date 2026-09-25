@@ -19,7 +19,7 @@ a third media type means implementing four methods, not touching the search.
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Protocol
+from typing import ClassVar, Protocol
 
 import pikepdf
 
@@ -275,22 +275,38 @@ class ImageStrategy:
     def ensure_available(self) -> None:
         from PIL import Image  # noqa: F401
 
-    # A lossless JPEG pass only re-optimises entropy coding and drops
-    # metadata: a few percent. Below half the original it cannot help.
-    LOSSLESS_JPEG_REACH = 0.5
+    # How far the lossless pass can shrink each format, as a share of the
+    # original. A JPEG pass only re-optimises entropy coding and drops
+    # metadata: a few percent, so below half the original it cannot help.
+    # A PNG that is already compressed gains 3 to 10 percent from
+    # re-optimising, and even one saved at a weak compression level about
+    # half; below a quarter it cannot help either. (Measured on photo-like
+    # and UI-screenshot PNGs. On the free server the pass took 7 s on a
+    # 3.6 MB PNG to save 9 percent.)
+    LOSSLESS_REACH: ClassVar[dict[str, float]] = {"JPEG": 0.5, "PNG": 0.25}
+    # A PNG stored close to raw (compression level 0) can shrink many times
+    # over and stay a PNG, so it always gets the pass.
+    STORED_PNG = 0.9
 
     def lossless_hopeless(self, src: Path, original: int, target: int) -> bool:
-        """True when the lossless pass cannot get a JPEG down to the target.
+        """True when the lossless pass cannot get the file down to the target.
 
-        Only JPEGs: a PNG, TIFF or BMP can shrink a great deal losslessly.
+        JPEG and PNG only. TIFF and BMP are often stored uncompressed and can
+        shrink a great deal on the way to PNG, so they always get the pass.
+        Reads the header only; no pixels are decoded.
         """
-        if target >= original * self.LOSSLESS_JPEG_REACH:
-            return False
         from PIL import Image
 
         try:
-            with Image.open(src) as im:  # header only; no pixels are decoded
-                return (im.format or "").upper() == "JPEG"
+            with Image.open(src) as im:
+                fmt = (im.format or "").upper()
+                reach = self.LOSSLESS_REACH.get(fmt)
+                if reach is None or target >= original * reach:
+                    return False
+                if fmt == "PNG":
+                    raw = im.width * im.height * len(im.getbands())
+                    return original < raw * self.STORED_PNG
+                return True
         except Exception:
             return False
 
