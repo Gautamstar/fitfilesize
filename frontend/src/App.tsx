@@ -208,9 +208,6 @@ function App({ path }: AppProps) {
           <ProgressPanel
             filename={job.filename}
             targetBytes={targetBytes}
-            originalBytes={job.originalBytes}
-            steps={stream.steps}
-            attempts={stream.attempts}
             search={stream.search}
           />
         ) : null

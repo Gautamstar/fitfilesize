@@ -61,3 +61,28 @@ export function narrate(search: SearchState, chosenRung?: number | null): string
   const left = hi - lo + 1
   return `Setting ${last.rung + 1}: ${verdict}. ${left} ${left === 1 ? 'setting' : 'settings'} left to check.`
 }
+
+/**
+ * How far the run is, 0 to 1, for the progress bar, and which try it is on.
+ *
+ * The number of renders is not known in advance (usually 1 to 4), so the bar
+ * cannot be a timer. Instead each finished render fills its share of the
+ * work still possibly ahead: the renders a bisection of the settings still
+ * open would take, which the guided search usually beats. The render in
+ * flight counts as half done so the bar moves when one starts. The first
+ * tenth is the run getting started and its cleanup pass. The caller keeps
+ * the bar from ever moving back.
+ */
+export function runProgress(search: SearchState): { fraction: number; tries: number } {
+  const tries = Object.values(search.points).filter((p) => !p.known).length
+  const started = search.current ? 1 : 0
+  if (search.rungs === null) {
+    return { fraction: search.lossless !== null ? 0.08 : 0.03, tries }
+  }
+  const { lo, hi, settled } = searchRange(search)
+  if (settled) return { fraction: 1, tries }
+  const open = hi - lo + 1
+  const ahead = Math.max(1, Math.ceil(Math.log2(open + 1)))
+  const done = tries + 0.5 * started
+  return { fraction: 0.1 + 0.9 * (done / (tries + ahead)), tries: tries + started }
+}

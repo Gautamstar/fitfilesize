@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SearchState } from '../hooks/useProgressStream'
-import { narrate, searchRange, statusOf } from './search'
+import { narrate, runProgress, searchRange, statusOf } from './search'
 
 function state(points: [number, number | null, boolean][], extra: Partial<SearchState> = {}): SearchState {
   return {
@@ -76,5 +76,30 @@ describe('narrate', () => {
   it('covers the cleanup pass before the search starts', () => {
     const s = { ...state([]), rungs: null, lossless: 4_570_000 }
     expect(narrate(s)).toMatch(/^Cleanup pass: 4\.4 MB\. Still over your limit/)
+  })
+})
+
+describe('runProgress', () => {
+  const base: SearchState = { rungs: null, target: 200_000, lossless: null, points: {}, current: null }
+  const point = (rung: number, fits: boolean, order: number | null, known = false) => ({
+    rung, size: fits ? 100_000 : 300_000, fits, label: '', known, order,
+  })
+
+  it('starts near zero before the search is announced', () => {
+    expect(runProgress(base).fraction).toBeLessThan(0.1)
+  })
+
+  it('moves forward with each try and ends at 1 once settled', () => {
+    const floorKnown = { ...base, rungs: 12, points: { 11: point(11, true, null, true) } }
+    const a = runProgress(floorKnown).fraction
+    const trying = { ...floorKnown, current: { rung: 6, label: '1800 px, quality 70' } }
+    const b = runProgress(trying)
+    const oneDone = { ...floorKnown, points: { ...floorKnown.points, 6: point(6, true, 1) } }
+    const c = runProgress(oneDone).fraction
+    const settled = { ...oneDone, points: { ...oneDone.points, 5: point(5, false, 2) } }
+    expect(b.tries).toBe(1)
+    expect(a).toBeLessThan(b.fraction)
+    expect(b.fraction).toBeLessThan(c)
+    expect(runProgress(settled)).toEqual({ fraction: 1, tries: 2 })
   })
 })
