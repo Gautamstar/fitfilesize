@@ -199,14 +199,36 @@ def test_lossless_pass_still_runs_when_it_could_reach_the_target(photo_jpg, tmp_
     assert events[0]["stage"] == "lossless"
 
 
-def test_lossless_pass_still_runs_for_png_whatever_the_target(transparent_png, tmp_path):
-    # PNG, TIFF and BMP can shrink a great deal losslessly; only JPEG is capped.
+def _stages(src, tmp_path, target):
     events = []
-    compress_to_target(
-        transparent_png, tmp_path / "out.jpg", transparent_png.stat().st_size // 20,
-        on_progress=events.append,
-    )
-    assert events[0]["stage"] == "lossless"
+    compress_to_target(src, tmp_path / "out.png", target, on_progress=events.append)
+    return [e["stage"] for e in events]
+
+
+def test_hopeless_lossless_pass_is_skipped_for_a_compressed_png(transparent_png, tmp_path):
+    # Re-optimising an already compressed PNG saves a few percent; a
+    # twentieth of the file is out of its reach.
+    size = transparent_png.stat().st_size
+    assert "lossless" not in _stages(transparent_png, tmp_path, size // 20)
+
+
+def test_png_lossless_pass_still_runs_when_it_could_reach_the_target(transparent_png, tmp_path):
+    size = transparent_png.stat().st_size
+    assert _stages(transparent_png, tmp_path, int(size * 0.3))[0] == "lossless"
+
+
+def test_stored_png_and_bmp_always_get_the_lossless_pass(photo_jpg, tmp_path):
+    # Stored without compression, these can shrink many times over and stay
+    # lossless, so however small the target, the pass runs.
+    from PIL import Image
+
+    im = Image.open(photo_jpg)
+    stored = tmp_path / "stored.png"
+    im.save(stored, "PNG", compress_level=0)
+    bmp = tmp_path / "scan.bmp"
+    im.save(bmp, "BMP")
+    for src in (stored, bmp):
+        assert _stages(src, tmp_path, src.stat().st_size // 20)[0] == "lossless", src.name
 
 
 def test_search_is_announced_with_the_ladder_and_what_is_known(tmp_path):
