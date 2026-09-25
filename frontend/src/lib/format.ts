@@ -65,6 +65,24 @@ export function presetToSlider(bytes: number, lo: number, hi: number): number {
   return pos
 }
 
+export type LimitUnit = 'KB' | 'MB'
+
+/** Largest custom limit accepted. Uploads cap at 25 MB, so a target above that is never needed. */
+export const MAX_CUSTOM_LIMIT = 100_000_000
+
+/**
+ * Parse a typed limit ("150", "1.5", "1,5") in the given unit to bytes, in
+ * the same 1000-byte kilobytes as the preset chips. Returns null for anything
+ * that is not a positive number, or is below 1 KB or above MAX_CUSTOM_LIMIT.
+ */
+export function parseLimit(text: string, unit: LimitUnit): number | null {
+  const normalised = text.trim().replace(',', '.')
+  if (!/^\d+(\.\d+)?$/.test(normalised)) return null
+  const bytes = Math.floor(Number(normalised) * (unit === 'MB' ? 1_000_000 : 1000))
+  if (!Number.isFinite(bytes) || bytes < 1000 || bytes > MAX_CUSTOM_LIMIT) return null
+  return bytes
+}
+
 /** Plain-language description of what a given target will do. */
 export function tierHint(target: number, originalBytes: number): string {
   const ratio = target / originalBytes
