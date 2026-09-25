@@ -18,6 +18,7 @@ import { LimitChips } from './components/LimitChips'
 import { Logo } from './components/Logo'
 import { ProgressPanel } from './components/ProgressPanel'
 import { ResultPanel } from './components/ResultPanel'
+import { ReadingPanel } from './components/ReadingPanel'
 import { TargetPicker } from './components/TargetPicker'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TipLink } from './components/TipLink'
@@ -69,6 +70,9 @@ function App({ path }: AppProps) {
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
   const [slowUpload, setSlowUpload] = useState(false)
+  // Upload progress, 0 to 1, while the file is being sent; null after.
+  const [uploaded, setUploaded] = useState<number | null>(null)
+  const [fileBytes, setFileBytes] = useState(0)
   // The limit picked before upload. A landing page preselects its own; null
   // means "Other", and the picker then suggests a size from the file.
   const [limit, setLimit] = useState<number | null>(landing ? pageTargetBytes(landing) : 1_000_000)
@@ -111,15 +115,18 @@ function App({ path }: AppProps) {
       return
     }
 
+    setFileBytes(file.size)
+    setUploaded(0)
     setPhase('analyzing')
     const slowTimer = window.setTimeout(() => setSlowUpload(true), SLOW_UPLOAD_MS)
     try {
       let up
       try {
-        up = await uploadFile(file)
+        up = await uploadFile(file, undefined, setUploaded)
       } finally {
         window.clearTimeout(slowTimer)
         setSlowUpload(false)
+        setUploaded(null)
       }
       const an = await analyzeJob(up.job_id)
       setJob({
@@ -178,17 +185,7 @@ function App({ path }: AppProps) {
         )
 
       case 'analyzing':
-        return (
-          <div className="panel">
-            <p className="progress-headline">Reading your file</p>
-            {slowUpload ? (
-              <p className="slow-note">
-                Still working. If nobody has used the site for a while, the server takes up to a
-                minute to wake up.
-              </p>
-            ) : null}
-          </div>
-        )
+        return <ReadingPanel uploaded={uploaded} fileBytes={fileBytes} slow={slowUpload} />
 
       case 'target':
         return job ? (

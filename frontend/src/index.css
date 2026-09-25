@@ -719,6 +719,43 @@ button:disabled {
   color: var(--good);
   font-weight: 600;
 }
+.read-bar {
+  position: relative;
+  height: 8px;
+  margin: 14px 0 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--raised);
+}
+.read-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 0.2s ease-out;
+}
+.read-bar.indeterminate .read-bar-fill {
+  position: absolute;
+  width: 35%;
+  animation: read-slide 1.2s ease-in-out infinite;
+}
+@keyframes read-slide {
+  from { left: -35%; }
+  to { left: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .read-bar.indeterminate .read-bar-fill {
+    animation: none;
+    left: 0;
+    width: 100%;
+    opacity: 0.45;
+  }
+}
+.read-meta {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
 .slow-note {
   margin: 10px 0 0;
   color: var(--ink-secondary);
