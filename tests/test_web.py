@@ -595,3 +595,89 @@ def test_rerun_clears_a_previous_failure(web, photo_jpg):
     state = client.get(f"/api/jobs/{job_id}").json()
     assert state["status"] == "done"
     assert "error" not in state
+
+
+def _fit(client, path, target, name="a.jpg", headers=None):
+    with open(path, "rb") as f:
+        return client.post(
+            "/api/fit",
+            files={"file": (name, f.read(), "image/jpeg")},
+            data={"target": target},
+            headers=headers or {},
+        )
+
+
+def test_fit_compresses_in_one_call_and_links_the_result(web, photo_jpg):
+    client, _, _ = web
+    target_kb = photo_jpg.stat().st_size // 2000  # about half, in 1000-byte KB
+    res = _fit(client, photo_jpg, f"{target_kb}KB", headers={"X-Forwarded-Proto": "https"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "done"
+    assert body["fits"] is True
+    assert body["target_bytes"] == target_kb * 1000
+    assert body["final_bytes"] <= body["target_bytes"]
+    # An absolute link an agent can fetch as is, honouring the proxy's scheme.
+    assert body["download_url"].startswith("https://testserver/api/jobs/")
+    path = body["download_url"].split("testserver", 1)[1]
+    download = client.get(path)
+    assert download.status_code == 200
+    assert len(download.content) == body["final_bytes"]
+
+
+def test_fit_rejects_a_target_it_cannot_read(web, photo_jpg):
+    client, _, settings = web
+    res = _fit(client, photo_jpg, "about two hundred")
+    assert res.status_code == 422
+    assert "200KB" in res.json()["detail"]
+    # Refused before anything was stored.
+    assert not settings.data_dir.exists() or not any(settings.data_dir.iterdir())
+
+
+def test_fit_answers_202_with_links_when_the_run_is_slow(tmp_path, photo_jpg, monkeypatch):
+    # An async queue with no worker: the job never leaves "queued".
+    monkeypatch.setattr(web_app, "FIT_WAIT_SECONDS", 0.2)
+    monkeypatch.setattr(web_app, "FIT_POLL_INTERVAL", 0.05)
+    settings = Settings(data_dir=tmp_path / "data")
+    r = fakeredis.FakeRedis()
+    q = Queue(settings.queue_name, connection=r, is_async=True)
+    app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
+    with TestClient(app) as client:
+        res = _fit(client, photo_jpg, "100KB")
+    assert res.status_code == 202
+    body = res.json()
+    assert body["status"] == "queued"
+    assert body["status_url"].endswith(f"/api/jobs/{body['job_id']}")
+    assert body["download_url"].endswith(f"/api/jobs/{body['job_id']}/download")
+
+
+def test_fit_counts_against_both_hourly_budgets(tmp_path, photo_jpg):
+    app, _ = _limited_app(tmp_path, uploads_per_hour=1, runs_per_hour=5)
+    with TestClient(app) as client:
+        assert _fit(client, photo_jpg, "100KB").status_code == 200
+        refused = _fit(client, photo_jpg, "100KB")
+        assert refused.status_code == 429
+        assert "files an hour" in refused.json()["detail"]
+        assert client.get("/api/limits").json()["runs"]["remaining"] == 4
+
+
+def test_parse_limit_uses_decimal_units():
+    from fitpdf.units import parse_limit
+
+    assert parse_limit("200KB") == 200_000
+    assert parse_limit("1.5 mb") == 1_500_000
+    assert parse_limit("200000") == 200_000
+    for bad in ("", "abc", "0KB", "-5KB"):
+        with pytest.raises(ValueError):
+            parse_limit(bad)
+
+
+def test_openapi_describes_the_one_call_route(web):
+    client, _, _ = web
+    spec = client.get("/openapi.json").json()
+    assert spec["info"]["title"] == "FitFileSize API"
+    assert "/api/fit" in spec["paths"]
+    assert "POST /api/fit" in spec["info"]["description"]
+    # Generated clients refuse a spec with repeated operation ids.
+    ids = [op["operationId"] for ops in spec["paths"].values() for op in ops.values()]
+    assert len(ids) == len(set(ids))

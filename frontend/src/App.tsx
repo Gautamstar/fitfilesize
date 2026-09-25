@@ -299,6 +299,7 @@ function App({ path }: AppProps) {
         <nav className="foot-links" aria-label="Site">
           <a href="/privacy.html">Privacy</a>
           <a href="/terms.html">Terms</a>
+          <a href="https://api.fitfilesize.com/docs">API</a>
           <TipLink>Support FitFileSize</TipLink>
         </nav>
       </footer>

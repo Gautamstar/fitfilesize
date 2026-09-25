@@ -173,6 +173,17 @@ writeFileSync(
   `User-agent: *\nAllow: /\n${siteUrl ? `\nSitemap: ${siteUrl}/sitemap.xml\n` : ''}`,
 )
 
+// llms.txt (public/) describes the service and API for AI agents; its list of
+// size pages is appended here from the same data, so it cannot go stale.
+const llmsPath = join(dist, 'llms.txt')
+if (existsSync(llmsPath)) {
+  const base = siteUrl || ''
+  const list = pages
+    .map((p) => `- [${p.heading}](${base}/${p.slug}): ${p.description.split(' Free,')[0]}`)
+    .join('\n')
+  writeFileSync(llmsPath, `${readFileSync(llmsPath, 'utf8').trimEnd()}\n\n## Common limits\n\n${list}\n`)
+}
+
 // The SSR bundle is only a build tool; nothing serves it.
 if (existsSync(ssrDir)) rmSync(ssrDir, { recursive: true })
 

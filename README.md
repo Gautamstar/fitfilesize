@@ -217,6 +217,7 @@ they share an origin, so it is not.
 
 | Method | Path | What it does |
 | --- | --- | --- |
+| POST | `/api/fit` | one call for agents and scripts: multipart `file` + `target` (`200KB`, `1.5MB`, bytes; 1000-based), waits up to 80s and returns `download_url`, or `202` with `status_url` |
 | POST | `/api/upload` | multipart upload, returns job id, media kind and basic info |
 | POST | `/api/jobs/{id}/analyze` | estimates the floor, returns slider bounds |
 | POST | `/api/jobs/{id}/compress` | queues a run with `{"target_bytes": n}` |
@@ -225,6 +226,10 @@ they share an origin, so it is not.
 | GET | `/api/jobs/{id}/download` | the compressed file |
 | DELETE | `/api/jobs/{id}` | delete stored files right now |
 | GET | `/api/limits` | the caller's remaining hourly budget, without spending it |
+
+Interactive docs are served at `/docs` (OpenAPI at `/openapi.json`), and the
+site publishes `/llms.txt`, a plain-text guide for AI agents built from
+`frontend/public/llms.txt` plus the landing-page list.
 
 All stored files are deleted on the schedule in Retention above, no exceptions.
 
