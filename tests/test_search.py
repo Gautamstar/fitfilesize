@@ -45,6 +45,10 @@ class FakeStrategy:
         return size
 
     def validate(self, out: Path, probe: Probe) -> bool:
+        # The real PDF strategy reads probe.pages here. Checking the type
+        # catches the engine passing anything else (it once handed over a
+        # rung index through a shadowed name, and every PDF render failed).
+        assert isinstance(probe, Probe), f"validate got {probe!r}"
         return True
 
     def output_suffix(self, src: Path, lossy: bool) -> str:
