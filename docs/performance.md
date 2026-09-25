@@ -137,3 +137,19 @@ validation. The Ghostscript tests that catch it are skipped on a machine
 without Ghostscript, which is how it passed locally; CI caught it. The fake
 strategy in `tests/test_search.py` now asserts it receives a real Probe, so
 the same mistake fails without Ghostscript too.
+
+## Live test, varied sizes (2026-09-25)
+
+Thirteen runs in Chrome on production, 0.1 to 12 MB, targets 20 KB to 2 MB.
+Every result fit its limit. Compress times ran from 1.9 s (small targets,
+where the floor render already answers most of it) to 15.2 s (a 7.9 MB,
+6-page scan to 2 MB).
+
+That slowest run spent 2.1 s rendering the gentlest rung, which for a
+300 dpi scan is the original again. With only the floor measured, the
+typical PDF slope (0.21) pointed there; the scan actually drops about 0.45
+per rung. The first guess now also interpolates from the original's size
+and averages the two. Simulated over every target on the measured ladders
+of eight real files (264 runs), renders per run fell from 2.73 to 2.36; the
+6-page scan from 3.62 to 2.09 (to 2 MB: 4 renders to 2), while the 3-page
+scan rose from 2.00 to 2.72. Answers are unchanged in every case.

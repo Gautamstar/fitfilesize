@@ -1,7 +1,7 @@
 /** Outcome, before and after sizes, download link, and the delete countdown. */
 
 import { downloadUrl } from '../lib/api'
-import { fmt, formatCountdown } from '../lib/format'
+import { fmt, fmtLimit, formatCountdown, savedPercent, sentence } from '../lib/format'
 import { TIP_ENABLED, TipLink } from './TipLink'
 import type { SearchState } from '../hooks/useProgressStream'
 import { SearchLadder } from './SearchLadder'
@@ -18,7 +18,7 @@ interface ResultPanelProps {
 }
 
 export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, search }: ResultPanelProps) {
-  const savedPct = Math.round(100 * (1 - result.final_bytes / result.original_bytes))
+  const savedPct = savedPercent(result.final_bytes, result.original_bytes)
   // "rung:6" names the setting the run kept; "floor", "lossless" and "none" keep none.
   const chosenRung = result.method.startsWith('rung:') ? Number(result.method.slice(5)) : null
 
@@ -26,7 +26,7 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, sea
     <div className="panel">
       <p className={`badge ${result.hit_target ? 'badge-good' : 'badge-warn'}`}>
         {result.hit_target
-          ? `Fits under ${fmt(result.target_bytes)}`
+          ? `Fits under ${fmtLimit(result.target_bytes)}`
           : `As small as it goes`}
       </p>
 
@@ -54,7 +54,7 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, sea
         {result.warnings
           .filter((w) => !w.includes('floor'))
           .map((w) => (
-            <li key={w}>{w}</li>
+            <li key={w}>{sentence(w)}</li>
           ))}
       </ul>
 

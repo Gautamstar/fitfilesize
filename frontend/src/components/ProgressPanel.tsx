@@ -5,7 +5,7 @@
  * component only renders them, so all the stream handling stays in one place.
  */
 
-import { MAX_ATTEMPTS, fmt } from '../lib/format'
+import { MAX_ATTEMPTS, fmtLimit } from '../lib/format'
 import type { ProgressStep, SearchState } from '../hooks/useProgressStream'
 import { SearchLadder } from './SearchLadder'
 
@@ -33,7 +33,7 @@ export function ProgressPanel({
     <div className="panel">
       <header className="file-head">
         <h2 className="file-name">{filename}</h2>
-        <p className="file-meta">target {fmt(targetBytes)}</p>
+        <p className="file-meta">target {fmtLimit(targetBytes)}</p>
       </header>
 
       {/* Once the rung search starts, draw it; before that (or for a run that

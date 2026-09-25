@@ -18,7 +18,7 @@
 
 import { useId, useLayoutEffect, useRef, useState } from 'react'
 import type { RungPoint, SearchState } from '../hooks/useProgressStream'
-import { fmt } from '../lib/format'
+import { fmt, fmtLimit } from '../lib/format'
 import { narrate, searchRange, statusOf, type RungStatus } from '../lib/search'
 
 interface SearchLadderProps {
@@ -194,7 +194,7 @@ export function SearchLadder({ search, originalBytes, chosenRung }: SearchLadder
           {/* The limit: a solid line, labelled directly. */}
           <line className="ladder-limit" x1={M.left} x2={W - M.right} y1={y(target)} y2={y(target)} />
           <text className="ladder-limit-label" x={W - M.right} y={y(target) - 6} textAnchor="end">
-            {narrow ? fmt(target) : `Your limit ${fmt(target)}`}
+            {narrow ? fmtLimit(target) : `Your limit ${fmtLimit(target)}`}
           </text>
 
           <text className="ladder-axis" x={cx(0)} y={BASE + 32} textAnchor="middle">

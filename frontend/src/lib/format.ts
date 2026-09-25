@@ -25,6 +25,39 @@ export function limitLabel(bytes: number): string {
   return bytes >= 1_000_000 ? `${bytes / 1_000_000} MB` : `${bytes / 1000} KB`
 }
 
+/**
+ * A message from the API as a sentence: capital first letter, full stop.
+ * The API writes its errors and warnings in lower case, as API messages
+ * usually are, and they read as unfinished on the page.
+ */
+export function sentence(text: string): string {
+  const t = text.trim()
+  if (!t) return t
+  const capped = t[0].toUpperCase() + t.slice(1)
+  return /[.!?]$/.test(capped) ? capped : `${capped}.`
+}
+
+/**
+ * A size limit as the visitor chose it. Presets, landing pages and typed
+ * limits are round 1000-byte sizes (50_000), and fmt() would show them in
+ * 1024-byte units as "48.8 KB", which reads as a different, missed limit.
+ * Round limits keep their own number; anything else (a slider position)
+ * goes through fmt().
+ */
+export function fmtLimit(bytes: number): string {
+  if (bytes >= 1000 && bytes % 1000 === 0) {
+    return bytes >= 1_000_000 ? `${bytes / 1_000_000} MB` : `${bytes / 1000} KB`
+  }
+  return fmt(bytes)
+}
+
+/** Share of the original saved, as a whole percent that never overstates:
+ * a file that got smaller saved between 1 and 99 percent, never 0 or 100. */
+export function savedPercent(finalBytes: number, originalBytes: number): number {
+  const pct = Math.round(100 * (1 - finalBytes / originalBytes))
+  return finalBytes < originalBytes ? Math.min(99, Math.max(1, pct)) : Math.max(0, pct)
+}
+
 /** Lossless pass plus at most 4 rungs, since 12 rungs binary-search in 4. */
 export const MAX_ATTEMPTS = 5
 

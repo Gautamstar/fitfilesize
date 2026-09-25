@@ -6,6 +6,7 @@
  */
 
 import { useRef, useState, type ReactNode } from 'react'
+import { sentence } from '../lib/format'
 
 interface DropzoneProps {
   onFile: (file: File) => void
@@ -90,7 +91,7 @@ export function Dropzone({ onFile, error, disabled = false, children }: Dropzone
         />
       </div>
 
-      {error ? <p className="error-text">{error}</p> : null}
+      {error ? <p className="error-text">{sentence(error)}</p> : null}
       {children}
     </div>
   )
