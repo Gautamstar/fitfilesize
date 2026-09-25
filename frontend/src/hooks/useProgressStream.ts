@@ -36,8 +36,35 @@ export interface ProgressStep {
   tag?: 'under' | 'over'
 }
 
+/** One rung of the ladder as the search has seen it. */
+export interface RungPoint {
+  rung: number
+  /** Output size, or null when the render failed. */
+  size: number | null
+  fits: boolean
+  /** Human-readable settings, e.g. "1800 px, quality 70". Empty for known rungs. */
+  label: string
+  /** Measured before this run (the analyze step's floor), not rendered by it. */
+  known: boolean
+  /** 1 for the first rung this run rendered, 2 for the next, and so on. */
+  order: number | null
+}
+
+/** Structured view of the rung search, for SearchLadder. */
+export interface SearchState {
+  /** Ladder length, from the `search` event. Null until the search starts. */
+  rungs: number | null
+  target: number | null
+  /** Size after the lossless pass, when there was one. */
+  lossless: number | null
+  points: Record<number, RungPoint>
+  /** The rung being rendered right now. */
+  current: { rung: number; label: string } | null
+}
+
 export interface StreamState {
   steps: ProgressStep[]
+  search: SearchState
   /** How many attempts have started, for the "Attempt 2 of at most 5" line. */
   attempts: number
   /** Set once the job finishes successfully. */
@@ -48,8 +75,17 @@ export interface StreamState {
   expiresAt: number | null
 }
 
+const EMPTY_SEARCH: SearchState = {
+  rungs: null,
+  target: null,
+  lossless: null,
+  points: {},
+  current: null,
+}
+
 const EMPTY: StreamState = {
   steps: [],
+  search: EMPTY_SEARCH,
   attempts: 0,
   result: null,
   error: null,
@@ -146,14 +182,38 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
       // Switching on the literal `stage` field narrows the union, so each
       // branch below sees only the fields that stage actually carries.
       switch (ev.stage) {
-        case 'start':
-          addStep(`Starting, target ${fmt(ev.target_bytes)}`)
+        case 'start': {
+          const target = ev.target_bytes
+          setState((s) => ({ ...s, search: { ...s.search, target } }))
+          addStep(`Starting, target ${fmt(target)}`)
           break
+        }
 
-        case 'lossless':
-          setState((s) => ({ ...s, attempts: s.attempts + 1 }))
-          addStep(`Cleanup pass brought it to ${fmt(ev.size)}`)
+        case 'lossless': {
+          const size = ev.size
+          setState((s) => ({ ...s, attempts: s.attempts + 1, search: { ...s.search, lossless: size } }))
+          addStep(`Cleanup pass brought it to ${fmt(size)}`)
           break
+        }
+
+        case 'search': {
+          const { rungs, known } = ev
+          setState((s) => {
+            const points = { ...s.search.points }
+            for (const k of known) {
+              points[k.rung] = {
+                rung: k.rung,
+                size: k.size,
+                fits: s.search.target !== null && k.size <= s.search.target,
+                label: '',
+                known: true,
+                order: null,
+              }
+            }
+            return { ...s, search: { ...s.search, rungs, points } }
+          })
+          break
+        }
 
         case 'rung_start': {
           setState((s) => ({ ...s, attempts: s.attempts + 1 }))
@@ -166,6 +226,14 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
                 ? `Trying ${ev.max_edge}px wide, quality ${ev.quality}`
                 : `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`
           addStep(label, 'pending')
+          const rung = ev.rung
+          const short =
+            'width' in ev
+              ? `${ev.width} x ${ev.height}, quality ${ev.quality}`
+              : 'max_edge' in ev
+                ? `${ev.max_edge} px, quality ${ev.quality}`
+                : `${ev.color_dpi} DPI, quality ${ev.jpeg_q}`
+          setState((s) => ({ ...s, search: { ...s.search, current: { rung, label: short } } }))
           break
         }
 
@@ -174,7 +242,18 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
           // pending step rather than appending a second line for it.
           const size = ev.size
           const fits = ev.fits
+          const rung = ev.rung
           setState((s) => {
+            const tried = Object.values(s.search.points).filter((p) => !p.known).length
+            const label = s.search.current?.rung === rung ? s.search.current.label : ''
+            const search: SearchState = {
+              ...s.search,
+              current: null,
+              points: {
+                ...s.search.points,
+                [rung]: { rung, size, fits, label, known: false, order: tried + 1 },
+              },
+            }
             const steps = [...s.steps]
             for (let i = steps.length - 1; i >= 0; i--) {
               const step = steps[i]
@@ -191,15 +270,19 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
                 break
               }
             }
-            return { ...s, steps }
+            return { ...s, steps, search }
           })
           break
         }
 
-        case 'done':
-          setState((s) => ({ ...s, result: ev }))
+        case 'done': {
+          // The `state` event on connect carried the pending window, since
+          // the job had not finished yet; completion restarts the clock.
+          const expiresAt = ev.expires_in !== undefined ? Date.now() + ev.expires_in * 1000 : null
+          setState((s) => ({ ...s, result: ev, expiresAt: expiresAt ?? s.expiresAt }))
           stop()
           break
+        }
 
         case 'error':
           setState((s) => ({ ...s, error: ev.message || 'compression failed' }))

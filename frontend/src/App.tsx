@@ -211,8 +211,10 @@ function App({ path }: AppProps) {
           <ProgressPanel
             filename={job.filename}
             targetBytes={targetBytes}
+            originalBytes={job.originalBytes}
             steps={stream.steps}
             attempts={stream.attempts}
+            search={stream.search}
           />
         ) : null
 
@@ -224,6 +226,7 @@ function App({ path }: AppProps) {
             secondsLeft={secondsLeft}
             onRetry={() => setPhase('target')}
             onDelete={handleDelete}
+            search={stream.search}
           />
         ) : null
 

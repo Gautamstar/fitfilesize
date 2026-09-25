@@ -3,6 +3,8 @@
 import { downloadUrl } from '../lib/api'
 import { fmt, formatCountdown } from '../lib/format'
 import { TIP_ENABLED, TipLink } from './TipLink'
+import type { SearchState } from '../hooks/useProgressStream'
+import { SearchLadder } from './SearchLadder'
 import type { DoneEvent } from '../types/api'
 
 interface ResultPanelProps {
@@ -11,10 +13,14 @@ interface ResultPanelProps {
   secondsLeft: number | null
   onRetry: () => void
   onDelete: () => void
+  /** The run's search, when it had one; shown under "How we found it". */
+  search?: SearchState
 }
 
-export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete }: ResultPanelProps) {
+export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, search }: ResultPanelProps) {
   const savedPct = Math.round(100 * (1 - result.final_bytes / result.original_bytes))
+  // "rung:6" names the setting the run kept; "floor", "lossless" and "none" keep none.
+  const chosenRung = result.method.startsWith('rung:') ? Number(result.method.slice(5)) : null
 
   return (
     <div className="panel">
@@ -64,6 +70,13 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete }: R
           Delete now
         </button>
       </div>
+
+      {search && search.rungs !== null ? (
+        <details className="how-found">
+          <summary>How we found it</summary>
+          <SearchLadder search={search} originalBytes={result.original_bytes} chosenRung={chosenRung} />
+        </details>
+      ) : null}
 
       {secondsLeft !== null ? (
         <p className={`countdown${secondsLeft < 300 ? ' soon' : ''}`}>

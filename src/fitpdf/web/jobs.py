@@ -104,6 +104,10 @@ def run_compress(
             "target_bytes": target_bytes,
             "method": result.method,
             "warnings": result.warnings,
+            # The deletion clock restarts at completion. The page opened its
+            # stream while the job was pending and read the 30-minute pending
+            # window then, so it needs the real one here.
+            "expires_in": ttl,
         },
         pending_ttl,
     )

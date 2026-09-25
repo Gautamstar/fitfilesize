@@ -791,3 +791,13 @@ def test_compression_reuses_the_floor_render_from_analyze(web, photo_jpg):
     # The floor file is never offered as the download.
     assert client.get(f"/api/jobs/{job_id}/download").status_code == 200
     assert not any(p.name.startswith("floor") for p in (settings.data_dir / job_id).glob("output.*"))
+
+
+def test_done_event_carries_the_completion_deletion_window(web, photo_jpg):
+    # The page reads expires_in on connect, while the job is still pending
+    # (30 minutes); the done event must carry the real post-completion window.
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": photo_jpg.stat().st_size // 2})
+    done = next(e for e in store.get_events(r, job_id) if e["stage"] == "done")
+    assert done["expires_in"] == settings.ttl_seconds
