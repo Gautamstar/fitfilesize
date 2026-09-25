@@ -316,6 +316,63 @@ input[type='range']:focus-visible {
   font-weight: 600;
 }
 
+.custom-limit {
+  margin-top: 14px;
+}
+.custom-limit-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+.custom-limit-row {
+  display: flex;
+  gap: 8px;
+  max-width: 280px;
+}
+.custom-limit-input,
+.custom-limit-unit {
+  height: 42px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px; /* 16px stops iOS zooming into the field on focus */
+}
+.custom-limit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+}
+.custom-limit-input:focus,
+.custom-limit-unit:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.custom-limit-input[aria-invalid='true'] {
+  border-color: var(--bad);
+}
+.custom-limit-unit {
+  padding: 0 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.custom-limit-hint,
+.custom-limit-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+.custom-limit-hint {
+  color: var(--ink-muted);
+}
+.custom-limit-error {
+  color: var(--bad);
+  font-weight: 500;
+}
+
 /* ---------- trust row ---------- */
 
 .trust {
