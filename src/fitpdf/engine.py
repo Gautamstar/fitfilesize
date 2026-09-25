@@ -330,23 +330,26 @@ def compress_to_target(
                     cache, target_bytes, getattr(strategy, "typical_log_step", None)
                 )
             )
+            # Named `rung`, not `probe`: try_rung's validate() reads the
+            # enclosing `probe` (the source's page count and size), and
+            # shadowing it made every PDF render fail validation.
             if guess is None:
-                probe = (lo + hi) // 2
+                rung = (lo + hi) // 2
             else:
                 # Outside the open range the prediction still says which end
                 # to check: a boundary at hi + 1 means "hi should not fit".
-                probe = min(max(guess, lo), hi)
-            size, _ = try_rung(probe)
+                rung = min(max(guess, lo), hi)
+            size, _ = try_rung(rung)
             fits = size is not None and size <= target_bytes
             if fits:
-                fit = probe
-                hi = probe - 1
+                fit = rung
+                hi = rung - 1
             else:
-                lo = probe + 1
+                lo = rung + 1
             # The prediction says rung r fits exactly when r >= guess. Two
             # results that contradict it and the model is not describing this
             # file; bisection bounds the rest of the search.
-            if guess is not None and fits != (probe >= guess):
+            if guess is not None and fits != (rung >= guess):
                 misses += 1
 
         if fit is not None:
