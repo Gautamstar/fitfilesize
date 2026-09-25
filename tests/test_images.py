@@ -192,3 +192,57 @@ def test_resize_rejects_bad_settings():
         ImageStrategy(resize=(0, 100))
     with pytest.raises(ValueError):
         ImageStrategy(resize=(100, 100), fit="stretch")
+
+
+# --------------------------------------------------------------------------- #
+# Speed: work shared across the rungs of a run
+
+def test_a_run_decodes_the_source_once(photo_jpg, tmp_path, monkeypatch):
+    from PIL import ImageOps
+
+    calls = []
+    real = ImageOps.exif_transpose
+    monkeypatch.setattr(ImageOps, "exif_transpose", lambda im: calls.append(1) or real(im))
+    # Every rung of this search needs more than half the source's pixels,
+    # so all of them share one full-size decode.
+    target = int(photo_jpg.stat().st_size * 0.4)
+    result = compress_to_target(photo_jpg, tmp_path / "out.jpg", target)
+    assert result.rungs_tried > 1
+    assert len(calls) == 1
+
+
+def test_an_exact_size_run_resizes_once(photo_jpg, tmp_path, monkeypatch):
+    import fitpdf.strategies as strategies
+
+    calls = []
+    real = strategies.fit_exact
+    monkeypatch.setattr(strategies, "fit_exact", lambda *a: calls.append(1) or real(*a))
+    strategy = ImageStrategy(resize=(200, 230))
+    result = compress_to_target(photo_jpg, tmp_path / "out.jpg", 3_000, strategy=strategy)
+    assert result.rungs_tried > 1
+    assert len(calls) == 1
+
+
+def test_shrinking_while_decoding_keeps_sizes_exact(tmp_path):
+    """Draft decoding must not change the result's dimensions, even for odd
+    sizes and a photo stored sideways."""
+    src = tmp_path / "sideways.jpg"
+    exif = Image.Exif()
+    exif[0x0112] = 6  # rotate 90 degrees to view
+    Image.linear_gradient("L").resize((4001, 2999)).convert("RGB").save(src, exif=exif)
+    # Viewed upright it is 2999 x 4001, so an 800 pixel result can be decoded
+    # at half size and a 150 x 200 one at an eighth.
+    for rung, expected, reduce in (({"max_edge": 800, "quality": 35}, (600, 800), 2),
+                                   ({"max_edge": 2200, "quality": 78}, (1649, 2200), 1)):
+        strategy = ImageStrategy()
+        out = tmp_path / "o.jpg"
+        strategy.render(src, out, rung, timeout=60)
+        assert ("decoded", src, reduce) in strategy._pixels
+        with Image.open(out) as im:
+            assert im.size == expected
+    out = tmp_path / "fit.jpg"
+    strategy = ImageStrategy(resize=(150, 200))
+    strategy.render(src, out, strategy.rungs[0], timeout=60)
+    assert ("decoded", src, 8) in strategy._pixels
+    with Image.open(out) as im:
+        assert im.size == (150, 200)
