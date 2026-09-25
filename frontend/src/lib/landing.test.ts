@@ -25,6 +25,15 @@ describe('landing page data', () => {
     }
   })
 
+  it('never lists the same size twice under one link group', () => {
+    const seen = new Set<string>()
+    for (const page of LANDING_PAGES) {
+      const key = `${page.group ?? page.kind} ${page.targetKb}`
+      expect(seen.has(key)).toBe(false)
+      seen.add(key)
+    }
+  })
+
   it('aims under the stricter kilobyte', () => {
     const page = pageForPath('/compress-pdf-to-200kb')!
     expect(pageTargetBytes(page)).toBe(200_000)
