@@ -5,20 +5,57 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request, Response, UploadFile
+from fastapi import FastAPI, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
 from ..strategies import IMAGE_SUFFIXES, PDF_SUFFIXES
-from ..units import human_size
+from ..units import human_size, parse_limit
 from . import limits, store
 from .config import Settings
 from .jobs import run_compress
 
 SWEEP_INTERVAL = 60
 UPLOAD_CHUNK = 1024 * 1024
+
+# /api/fit waits this long for the run before answering 202 with a status URL.
+# Kept under the ~100s a proxy in front of the API (Cloudflare, on Render) lets
+# a request sit without a response before cutting it off.
+FIT_WAIT_SECONDS = 80.0
+FIT_POLL_INTERVAL = 0.5
+
+# Endpoints that take a file. Their rate limit is checked in middleware, before
+# the multipart body is read.
+UPLOAD_PATHS = ("/api/upload", "/api/fit")
+
+API_DESCRIPTION = """
+Compress a PDF or image so it fits under an upload limit, like "200 KB" on a
+visa form or "1 MB" on a job site. Lossless first; if that is not enough, the
+gentlest lossy setting that fits. Free, no key needed.
+
+**Quickest route, one call:** `POST /api/fit` with the file and a `target`
+such as `200KB` or `1.5MB`. It answers with a `download_url` when the file is
+ready (usually seconds), or `202` with a `status_url` to poll for large files.
+
+**Step by step (what the website does):** `POST /api/upload`, then
+`POST /api/jobs/{job_id}/compress` with `{"target_bytes": n}`, then follow
+`GET /api/jobs/{job_id}/events` (Server-Sent Events) or poll
+`GET /api/jobs/{job_id}` until `status` is `done`, then
+`GET /api/jobs/{job_id}/download`.
+
+**Units:** KB and MB are 1000-based, so a `200KB` target aims under 200,000
+bytes and passes whichever way the destination counts.
+
+**Limits:** uploads up to 25 MB; per client, 30 uploads and 100 compressions
+an hour (`GET /api/limits` shows what is left; a refusal is `429` with
+`Retry-After`). Accepted types: PDF, JPEG, PNG, WebP, TIFF, BMP.
+
+**Retention:** the original is deleted 5 minutes after a run finishes, the
+result 10 minutes after; `DELETE /api/jobs/{job_id}` removes both at once.
+Files are used for nothing else. Website: https://fitfilesize.com
+"""
 
 # SSE timing. The ping keeps proxies and load balancers from reaping a stream
 # that has gone quiet mid-run; many drop idle connections at 30-60s.
@@ -237,7 +274,12 @@ def create_app(
         if task is not None:
             task.cancel()
 
-    app = FastAPI(title="FitPDF", lifespan=lifespan)
+    app = FastAPI(
+        title="FitFileSize API",
+        version="1.0.0",
+        description=API_DESCRIPTION,
+        lifespan=lifespan,
+    )
 
     # Registered before CORS so CORS wraps it: a refusal from here still gets
     # the Access-Control headers, and the browser can show its message.
@@ -250,7 +292,7 @@ def create_app(
         limit, on every refused attempt. Here the body is never touched.
         """
         limit = settings.uploads_per_hour
-        if request.method != "POST" or request.url.path != "/api/upload" or limit <= 0:
+        if request.method != "POST" or request.url.path not in UPLOAD_PATHS or limit <= 0:
             return await call_next(request)
         quota = limits.hit(
             r, "uploads", limits.client_key(request, settings.client_ip_headers), limit
@@ -275,11 +317,15 @@ def create_app(
             allow_headers=["*"],
         )
 
-    # HEAD as well as GET: uptime monitors (UptimeRobot by default) probe with
-    # HEAD, and a 405 there reads as the service being down.
-    @app.api_route("/health", methods=["GET", "HEAD"])
+    @app.get("/health", summary="Liveness check")
     async def health():
         return {"ok": True}
+
+    # HEAD as well: uptime monitors (UptimeRobot by default) probe with HEAD,
+    # and a 405 there reads as the service being down. Kept out of the OpenAPI
+    # schema, where a second operation on the same function would repeat its
+    # operation id and break strict client generators.
+    app.add_api_route("/health", health, methods=["HEAD"], include_in_schema=False)
 
     def enforce(request: Request, response: Response, bucket: str, limit: int, noun: str):
         """Count this request against the visitor's hourly budget, or refuse it."""
@@ -356,9 +402,12 @@ def create_app(
             state["warnings"] = json.loads(job["warnings"])
         return state
 
-    @app.post("/api/upload")
-    async def upload(file: UploadFile):
-        # Rate limited by the limit_uploads middleware, before the body is read.
+    async def receive_upload(file: UploadFile) -> tuple[str, str, int, object]:
+        """Store an upload and create its job. Returns (job_id, filename, size, info).
+
+        Shared by /api/upload and /api/fit. Rate limiting happens earlier, in
+        the limit_uploads middleware, before the body is read.
+        """
         filename = file.filename or "input"
         # Keep the uploader's extension so detect_strategy can use it, but never
         # trust it as a path: only a known suffix is allowed through.
@@ -416,6 +465,12 @@ def create_app(
             },
             settings.pending_ttl_seconds,
         )
+        return job_id, filename, size, info
+
+    @app.post("/api/upload", summary="Upload a file (step 1 of the step-by-step flow)")
+    async def upload(file: UploadFile):
+        """Store a PDF or image and return its job id plus basic facts about it."""
+        job_id, filename, size, info = await receive_upload(file)
         return {
             "job_id": job_id,
             "kind": info.kind,
@@ -450,6 +505,11 @@ def create_app(
             raise HTTPException(409, "a compression run is already in progress for this file")
         src = require_input(job_id, job)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
+        queue_run(job_id, src, req.target_bytes)
+        return {"job_id": job_id, "status": "queued"}
+
+    def queue_run(job_id: str, src: Path, target_bytes: int) -> None:
+        """Reset a job for a fresh run and put it on the worker queue."""
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back.
         dst = job_dir(job_id) / "output"
@@ -461,13 +521,13 @@ def create_app(
         # A re-run ("try another size") is no longer a finished job, so drop the
         # completion stamp and put the key back on the pending clock.
         store.clear_completion(r, job_id, settings.pending_ttl_seconds)
-        store.update_job(r, job_id, status="queued", target_bytes=req.target_bytes)
+        store.update_job(r, job_id, status="queued", target_bytes=target_bytes)
         q.enqueue(
             run_compress,
             job_id,
             str(src),
             str(dst),
-            req.target_bytes,
+            target_bytes,
             settings.ttl_seconds,
             settings.pending_ttl_seconds,
             settings.gs_timeout,
@@ -475,7 +535,84 @@ def create_app(
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,
         )
-        return {"job_id": job_id, "status": "queued"}
+
+    def public_url(request: Request, path: str) -> str:
+        """Absolute URL for a path on this API, as the client reached it.
+
+        Behind a proxy the socket sees plain HTTP, so the scheme comes from
+        X-Forwarded-Proto when the proxy sets it.
+        """
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme).split(",")[0]
+        host = request.headers.get("host", request.url.netloc)
+        return f"{scheme}://{host}{path}"
+
+    @app.post(
+        "/api/fit",
+        summary="Compress a file to fit a size limit, in one call",
+        responses={
+            202: {"description": "Still compressing; poll status_url."},
+            422: {"description": "Unreadable file, bad target, or the run failed."},
+            429: {"description": "Hourly limit reached; see Retry-After."},
+        },
+    )
+    async def fit(
+        request: Request,
+        response: Response,
+        file: UploadFile,
+        target: str = Form(
+            ...,
+            description="The limit to fit under, like 200KB, 1.5MB or 200000 (bytes). "
+            "KB and MB are 1000-based.",
+        ),
+    ):
+        """Upload a file and compress it to fit under `target`.
+
+        Waits for the result (usually a few seconds) and returns a
+        `download_url`. If the run takes longer than about 80 seconds, answers
+        `202` with a `status_url` to poll instead; the job keeps going. When
+        `fits` is false, the file could not get that small and the result is
+        the smallest version that could be made.
+        """
+        try:
+            target_bytes = parse_limit(target)
+        except ValueError as e:
+            raise HTTPException(422, str(e)) from None
+        job_id, _, _, _ = await receive_upload(file)
+        enforce(request, response, "runs", settings.runs_per_hour, "compressions")
+        queue_run(job_id, require_input(job_id, require_job(job_id)), target_bytes)
+
+        waited = 0.0
+        job = store.get_job(r, job_id) or {}
+        while job.get("status") not in store.TERMINAL_STATUSES and waited < FIT_WAIT_SECONDS:
+            await asyncio.sleep(FIT_POLL_INTERVAL)
+            waited += FIT_POLL_INTERVAL
+            job = store.get_job(r, job_id) or {}
+
+        status_path = f"/api/jobs/{job_id}"
+        if job.get("status") == "error":
+            raise HTTPException(422, job.get("error", "compression failed"))
+        if job.get("status") != "done":
+            response.status_code = 202
+            return {
+                "job_id": job_id,
+                "status": job.get("status", "queued"),
+                "status_url": public_url(request, status_path),
+                "download_url": public_url(request, f"{status_path}/download"),
+                "message": "Still compressing. Poll status_url until status is done "
+                "(or error), then fetch download_url.",
+            }
+        state = job_state(job_id, job)
+        return {
+            "job_id": job_id,
+            "status": "done",
+            "fits": state.get("hit_target", False),
+            "original_bytes": state["size_bytes"],
+            "final_bytes": state.get("final_bytes"),
+            "target_bytes": target_bytes,
+            "download_url": public_url(request, f"{status_path}/download"),
+            "expires_in": state["expires_in"],
+            "warnings": state.get("warnings", []),
+        }
 
     @app.get("/api/jobs/{job_id}")
     async def get_job(job_id: str):

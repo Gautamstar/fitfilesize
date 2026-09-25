@@ -1,0 +1,29 @@
+# FitFileSize
+
+> Compress a PDF or image so it fits under an upload limit, such as "200 KB" on a visa form or "1 MB" on a job application. Free, no sign-up, no API key. Lossless first; if that is not enough, the gentlest lossy setting that fits. Files are deleted within minutes.
+
+FitFileSize is for the situation where a website rejects a file for being too large. Pick the limit, get a file that is under it, or an honest report of the smallest size reachable. It accepts PDF, JPEG, PNG, WebP, TIFF and BMP, up to 25 MB.
+
+## Using it for someone (API)
+
+One call does everything. Send the file and the limit; get a download link back.
+
+```
+curl -F "file=@passport-scan.pdf" -F "target=200KB" https://api.fitfilesize.com/api/fit
+```
+
+- `target` accepts values like `200KB`, `1.5MB` or `200000` (bytes). KB and MB are 1000-based, so `200KB` aims under 200,000 bytes and passes whichever way the destination counts.
+- `200` response: `fits` (true if it got under the target), `final_bytes`, and `download_url`. Fetch `download_url` to get the file; it expires about 10 minutes after the run.
+- `202` response: still working (large files). Poll `status_url` until `status` is `done`, then fetch `download_url`.
+- `fits: false` means the file cannot get that small without becoming unusable; the result is the smallest version that could be made. Tell the user, rather than retrying.
+- Lossy image results are always JPEG. Transparent areas become white.
+- Limits: 30 uploads and 100 compressions per hour per client. A `429` includes `Retry-After`. `GET https://api.fitfilesize.com/api/limits` shows what is left.
+- Privacy: the uploaded original is deleted 5 minutes after the run, the result after 10. `DELETE https://api.fitfilesize.com/api/jobs/{job_id}` removes both immediately; do this once the user has their file.
+
+## Docs
+
+- [API reference (OpenAPI, interactive)](https://api.fitfilesize.com/docs): every endpoint, including the step-by-step flow the website uses
+- [OpenAPI schema (JSON)](https://api.fitfilesize.com/openapi.json)
+- [Privacy](https://fitfilesize.com/privacy.html): what happens to uploaded files
+- [Terms](https://fitfilesize.com/terms.html)
+- [Source code](https://github.com/Gautamstar/fitfilesize)
