@@ -65,12 +65,50 @@ export function warmUp(): void {
 }
 
 /** POST /api/upload. Sends the PDF or image, gets back a job id and basic info. */
-export function uploadFile(file: File, signal?: AbortSignal): Promise<UploadResponse> {
+export function uploadFile(
+  file: File,
+  signal?: AbortSignal,
+  onProgress?: (fraction: number) => void,
+): Promise<UploadResponse> {
   const form = new FormData()
   form.append('file', file)
-  // Note: no Content-Type header. The browser sets it, including the
-  // multipart boundary, and setting it by hand breaks the upload.
-  return request<UploadResponse>('/api/upload', { method: 'POST', body: form, signal })
+  // XMLHttpRequest rather than fetch: only it reports upload progress, and a
+  // 5 MB photo on mobile data takes long enough to need a bar. No
+  // Content-Type header: the browser sets it, including the multipart
+  // boundary, and setting it by hand breaks the upload.
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', API_BASE + '/api/upload')
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && e.total > 0) onProgress(e.loaded / e.total)
+      }
+    }
+    xhr.onload = () => {
+      let body: unknown = null
+      try {
+        body = JSON.parse(xhr.responseText)
+      } catch {
+        // Not JSON; handled below.
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && body) {
+        resolve(body as UploadResponse)
+        return
+      }
+      const detail = (body as { detail?: unknown } | null)?.detail
+      reject(
+        new ApiError(
+          typeof detail === 'string' ? detail : `request failed (${xhr.status})`,
+          xhr.status,
+        ),
+      )
+    }
+    xhr.onerror = () =>
+      reject(new Error('the upload did not reach the server; check your connection and try again'))
+    xhr.onabort = () => reject(new DOMException('The upload was cancelled.', 'AbortError'))
+    signal?.addEventListener('abort', () => xhr.abort(), { once: true })
+    xhr.send(form)
+  })
 }
 
 /** POST /api/jobs/{id}/analyze. Estimates the floor that bounds the slider. */

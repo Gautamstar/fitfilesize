@@ -222,6 +222,8 @@ class ImageStrategy:
         # Decoded pictures, reused by every rung of a run. A strategy lives
         # for one run (one file), so this never outlives the file it holds.
         self._pixels: dict[tuple, object] = {}
+        # Whether see-through pixels were turned white; None until known.
+        self.flattened: bool | None = None
         if resize is None:
             self.rungs = IMAGE_RUNGS
         else:
@@ -235,11 +237,10 @@ class ImageStrategy:
         with Image.open(src) as im:
             width, height = im.size
             fmt = im.format or ""
-            if im.mode in ("RGBA", "LA", "P"):
-                warnings.append(
-                    "image has transparency; the compressed result is JPEG and will "
-                    "have a white background where it used to be transparent"
-                )
+            # Transparency is not warned about here: a mode that can hold it
+            # (most screenshots are RGBA) usually has none, and finding out
+            # means decoding every pixel. _decoded() checks the pixels it
+            # decodes anyway and sets `flattened`.
             if getattr(im, "n_frames", 1) > 1:
                 warnings.append(
                     f"{fmt} has multiple frames; only the first one is kept"
@@ -417,17 +418,42 @@ class ImageStrategy:
                     # JPEG has no alpha. Composite onto white rather than
                     # letting Pillow drop the channel and produce black
                     # fringing.
-                    background = Image.new("RGB", im.size, (255, 255, 255))
                     converted = im.convert("RGBA")
-                    background.paste(converted, mask=converted.split()[-1])
-                    im = background
-                elif im.mode != "RGB":
-                    im = im.convert("RGB")
+                    alpha = converted.getchannel("A")
+                    # One pass over pixels already in memory: only a pixel
+                    # that is actually see-through turns white.
+                    self.flattened = alpha.getextrema()[0] < 255
+                    if self.flattened:
+                        background = Image.new("RGB", im.size, (255, 255, 255))
+                        background.paste(converted, mask=alpha)
+                        im = background
+                    else:
+                        im = converted.convert("RGB")
+                else:
+                    self.flattened = False
+                    if im.mode != "RGB":
+                        im = im.convert("RGB")
                 # What the decoder actually did: nothing for a PNG, and for a
                 # JPEG possibly less than asked.
                 actual = round(full_width / opened.width)
             self._pixels[key] = (actual, im)
         return self._pixels[key][1]
+
+    def lost_transparency(self, src: Path) -> bool:
+        """Whether a JPEG made from src turned see-through pixels white.
+
+        Known for free once a render has decoded the source. A run answered
+        entirely by the analyze step's floor render never decodes it, so
+        then it is checked here, and only for a mode that can hold alpha.
+        """
+        from PIL import Image
+
+        if self.flattened is None:
+            with Image.open(src) as im:
+                self.flattened = im.mode in ("RGBA", "LA", "P") and (
+                    im.convert("RGBA").getchannel("A").getextrema()[0] < 255
+                )
+        return self.flattened
 
     def validate(self, out: Path, probe: Probe) -> bool:
         from PIL import Image

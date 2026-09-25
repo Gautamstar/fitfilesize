@@ -83,9 +83,37 @@ def test_binary_search_beats_linear(photo_jpg, tmp_path):
     assert len(renders) <= 4
 
 
-def test_transparency_warning_is_raised(transparent_png):
-    probe = ImageStrategy().probe(transparent_png)
-    assert any("transparency" in w for w in probe.warnings)
+def test_transparency_warning_is_raised(transparent_png, tmp_path):
+    result = compress_to_target(
+        transparent_png, tmp_path / "out.png", transparent_png.stat().st_size // 10
+    )
+    assert any("see-through parts are now white" in w for w in result.warnings)
+
+
+def test_an_opaque_png_with_an_alpha_channel_gets_no_transparency_warning(
+    photo_jpg, tmp_path
+):
+    # Most screenshots are RGBA with every pixel solid: nothing turns white.
+    png = tmp_path / "screenshot.png"
+    Image.open(photo_jpg).convert("RGBA").save(png, "PNG")
+    assert ImageStrategy().probe(png).warnings == []
+    result = compress_to_target(png, tmp_path / "out.png", png.stat().st_size // 20)
+    assert not any("see-through" in w for w in result.warnings)
+    assert any(w.startswith("saved as a JPG: as a PNG") for w in result.warnings)
+
+
+def test_transparency_is_known_without_a_render(transparent_png, tmp_path):
+    # A target below the floor is answered by the analyze step's render
+    # alone, so this run never decodes the source itself.
+    strategy = ImageStrategy()
+    floor = tmp_path / "floor.jpg"
+    ImageStrategy().render(transparent_png, floor, IMAGE_RUNGS[-1], timeout=60)
+    result = compress_to_target(
+        transparent_png, tmp_path / "out.png", 100, strategy=strategy,
+        prerendered={len(IMAGE_RUNGS) - 1: floor},
+    )
+    assert result.method == "floor"
+    assert any("see-through parts are now white" in w for w in result.warnings)
 
 
 def test_transparency_is_flattened_onto_white(transparent_png, tmp_path):
@@ -124,7 +152,7 @@ def test_a_jpg_or_a_transparent_png_gets_no_extra_format_warning(
     png = compress_to_target(
         transparent_png, tmp_path / "b.png", transparent_png.stat().st_size // 10
     )
-    assert sum("JPEG" in w or "JPG" in w for w in png.warnings) == 1
+    assert sum("JPG" in w for w in png.warnings) == 1
 
 
 def test_already_under_target_copies(photo_jpg, tmp_path):

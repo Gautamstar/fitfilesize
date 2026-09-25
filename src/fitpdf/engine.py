@@ -275,14 +275,15 @@ def compress_to_target(
         target_path = dst.with_suffix(strategy.output_suffix(src, lossy=lossy))
         copy_through(produced, target_path)
         # A PNG that comes back as a JPG can be refused by a site that only
-        # takes PNG, so say so unless a transparency warning already has.
+        # takes PNG, and loses any see-through parts, so say which.
         before = src.suffix.lower().lstrip(".")
         after = target_path.suffix.lower().lstrip(".")
-        if (
-            strategy.kind == "image"
-            and before not in (after, "jpeg")
-            and not any("JPEG" in w for w in warnings)
-        ):
+        lost_transparency = getattr(strategy, "lost_transparency", None)
+        if lossy and lost_transparency is not None and lost_transparency(src):
+            warnings.append(
+                "saved as a JPG, which has no transparency: the see-through parts are now white"
+            )
+        elif strategy.kind == "image" and before not in (after, "jpeg"):
             name = {"tif": "TIFF", "webp": "WebP"}.get(before, before.upper())
             warnings.append(f"saved as a JPG: as a {name} it could not get under your limit")
         return CompressResult(

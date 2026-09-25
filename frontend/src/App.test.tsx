@@ -43,8 +43,8 @@ it('explains a slow upload instead of looking hung', async () => {
   const file = new File(['x'], 'scan.pdf', { type: 'application/pdf' })
   fireEvent.change(input, { target: { files: [file] } })
 
-  // Let the dropzone animate out and the "Reading your file" panel in.
-  await screen.findByText('Reading your file')
+  // Let the dropzone animate out and the upload panel in.
+  await screen.findByText('Uploading your file')
   expect(screen.queryByText(/wake up/)).toBeNull()
 
   // The note appears once the upload has been pending for 5 seconds.
