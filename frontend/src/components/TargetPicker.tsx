@@ -23,21 +23,21 @@ import {
 } from '../lib/format'
 
 /** The backend refuses sides longer than this (MAX_RESIZE_EDGE). */
-const MAX_PIXELS = 10_000
+const MAX_PIXELS = 4000
 
 /**
- * Slider span: from below the floor (so the hatched zone is visible) up to
- * the original size.
+ * Bottom of the slider: below the floor, so the hatched zone is visible.
+ * `top` is the largest target, the original size.
  */
-function sliderRange(floor: number, originalBytes: number, initialTarget?: number) {
+function sliderLow(floor: number, top: number, initialTarget?: number): number {
   let lo = Math.max(Math.floor(floor * 0.4), 1024)
   // Guard the degenerate case where the floor estimate is at or above the
-  // original file size.
-  if (lo >= originalBytes) lo = Math.max(Math.floor(originalBytes * 0.4), 512)
+  // top of the range.
+  if (lo >= top) lo = Math.max(Math.floor(top * 0.4), 512)
   // Stretch down to a landing page's preset so it is reachable, e.g. a 20 KB
   // signature page for a file whose floor is estimated at 100 KB.
   if (initialTarget && initialTarget < lo) lo = Math.max(initialTarget, 512)
-  return { lo, hi: originalBytes }
+  return lo
 }
 
 /** Both sides filled in with whole numbers the backend accepts, or null. */
@@ -91,7 +91,13 @@ export function TargetPicker({
   // count decides how small it can get.
   const floorFor = (r: Resize | null) => (r ? resizedFloor(r.width, r.height) : floor)
   const effectiveFloor = floorFor(resize)
-  const { lo, hi } = sliderRange(effectiveFloor, originalBytes, initialTarget)
+  const hi = originalBytes
+
+  // The slider's bottom only ever moves down. A large pixel size raises the
+  // floor estimate, and if that raised the bottom, a limit already picked
+  // below it (a 100 KB chip, say) would be pushed up with it, and the file
+  // would come back over the visitor's limit.
+  const [lo, setLo] = useState(() => sliderLow(effectiveFloor, hi, initialTarget))
 
   // Default target: the landing page's size when the file is bigger than it,
   // else 4 MB when that makes sense, else 60% of original. A preset below the
@@ -113,11 +119,14 @@ export function TargetPicker({
     setWidthText(w)
     setHeightText(h)
     setFit(f)
+    const next = parseResize(w, h, f)
+    setLo((current) => Math.min(current, sliderLow(floorFor(next), hi, initialTarget)))
   }
 
   const chipLimits = LIMIT_PRESETS.filter((bytes) => bytes < originalBytes)
 
-  // Everything below is derived from `chosen`. No manual DOM updates anywhere.
+  // Everything below is derived from `chosen`. `lo` never rises, so the
+  // clamp below never lifts a target the visitor picked.
   const target = Math.min(Math.max(chosen, lo), hi)
   const pos = presetToSlider(target, lo, hi)
   const hint = tierHint(target, originalBytes)
