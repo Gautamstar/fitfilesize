@@ -26,6 +26,7 @@ import { useProgressStream } from './hooks/useProgressStream'
 import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
 import { describeSource, isAcceptedFile } from './lib/format'
 import { keepUnits, pageForPath, pageTargetBytes } from './lib/landing'
+import type { MediaKind, Resize } from './types/api'
 
 type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
 
@@ -39,6 +40,7 @@ const SLOW_UPLOAD_MS = 5000
 interface JobInfo {
   jobId: string
   filename: string
+  kind: MediaKind
   originalBytes: number
   /** "2.4 MB, 3 pages" or "2.4 MB, 3000 x 2000", built once at upload. */
   meta: string
@@ -60,6 +62,9 @@ function App({ path }: AppProps) {
   const [phase, setPhase] = useState<Phase>('drop')
   const [job, setJob] = useState<JobInfo | null>(null)
   const [targetBytes, setTargetBytes] = useState(0)
+  // The exact pixel size of the last run, kept so "Try another size" does not
+  // make the visitor type it again.
+  const [resize, setResize] = useState<Resize | null>(null)
   const [dropError, setDropError] = useState<string | null>(null)
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
@@ -75,6 +80,7 @@ function App({ path }: AppProps) {
     setPhase('drop')
     setJob(null)
     setTargetBytes(0)
+    setResize(null)
     setTargetWarning(null)
     setFatalError(null)
     setDropError(message ?? null)
@@ -119,6 +125,7 @@ function App({ path }: AppProps) {
       setJob({
         jobId: up.job_id,
         filename: up.filename,
+        kind: up.kind,
         originalBytes: up.size_bytes,
         meta: describeSource(up.kind, up.size_bytes, up.pages, up.width, up.height),
         floor: an.floor_estimate,
@@ -131,12 +138,13 @@ function App({ path }: AppProps) {
   }
 
   // Queue the run and switch to the live progress view.
-  const handleCompress = async (target: number) => {
+  const handleCompress = async (target: number, nextResize: Resize | null) => {
     if (!job) return
     setTargetWarning(null)
     setTargetBytes(target)
+    setResize(nextResize)
     try {
-      await startCompress(job.jobId, target)
+      await startCompress(job.jobId, target, nextResize)
       setPhase('progress')
     } catch (err) {
       setTargetWarning(err instanceof Error ? err.message : 'could not start compression')
@@ -189,10 +197,12 @@ function App({ path }: AppProps) {
             meta={job.meta}
             originalBytes={job.originalBytes}
             floor={job.floor}
+            kind={job.kind}
             warning={targetWarning}
             onCompress={handleCompress}
             onCancel={() => reset()}
             initialTarget={limit ?? undefined}
+            initialResize={resize}
           />
         ) : null
 

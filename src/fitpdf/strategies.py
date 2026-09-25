@@ -46,6 +46,10 @@ class Probe:
 class Strategy(Protocol):
     kind: str
     rungs: list[dict]
+    always_render: bool
+    """True when every result must come from `render`: the output has to
+    change in a way the original and the lossless pass cannot, such as exact
+    pixel dimensions. The engine then skips both shortcuts."""
 
     def probe(self, src: Path) -> Probe: ...
 
@@ -107,6 +111,7 @@ def lossless_pass(src: Path | str, dst: Path | str, strip_metadata: bool = True)
 class PdfStrategy:
     kind = "pdf"
     rungs = PDF_RUNGS
+    always_render = False
 
     def probe(self, src: Path) -> Probe:
         warnings: list[str] = []
@@ -168,9 +173,48 @@ IMAGE_RUNGS: list[dict] = [
 ]
 
 
+# Exact pixel size, as exam and ID forms ask for ("200 x 230 pixels, under
+# 50 KB"). The dimensions are fixed, so JPEG quality is the only lever left.
+RESIZE_QUALITIES = (95, 90, 85, 80, 75, 70, 65, 60, 50, 40, 30, 20)
+
+FIT_MODES = ("crop", "pad")
+"""How an image meets a different aspect ratio: "crop" fills the frame and
+trims the overflow, "pad" keeps the whole image and fills the gap with white."""
+
+# Where "crop" cuts from. Horizontally centred; vertically a little above
+# centre, because in a portrait photo the head is in the upper part, and
+# trimming evenly from top and bottom is what cuts it off.
+CROP_CENTERING = (0.5, 0.35)
+
+MAX_RESIZE_EDGE = 10_000
+
+
+def fit_exact(im, size: tuple[int, int], fit: str):
+    """Return `im` at exactly `size` pixels, cropped or padded to get there."""
+    from PIL import Image, ImageOps
+
+    if fit == "crop":
+        return ImageOps.fit(im, size, Image.LANCZOS, centering=CROP_CENTERING)
+    return ImageOps.pad(im, size, Image.LANCZOS, color=(255, 255, 255))
+
+
 class ImageStrategy:
     kind = "image"
-    rungs = IMAGE_RUNGS
+
+    def __init__(self, resize: tuple[int, int] | None = None, fit: str = "crop") -> None:
+        """`resize`, if given, is the exact (width, height) of the result."""
+        if fit not in FIT_MODES:
+            raise ValueError(f"fit must be one of {', '.join(FIT_MODES)}, not {fit!r}")
+        if resize is not None and not all(1 <= n <= MAX_RESIZE_EDGE for n in resize):
+            raise ValueError(f"width and height must be between 1 and {MAX_RESIZE_EDGE} pixels")
+        self.resize = resize
+        self.fit = fit
+        self.always_render = resize is not None
+        if resize is None:
+            self.rungs = IMAGE_RUNGS
+        else:
+            width, height = resize
+            self.rungs = [{"width": width, "height": height, "quality": q} for q in RESIZE_QUALITIES]
 
     def probe(self, src: Path) -> Probe:
         from PIL import Image
@@ -178,6 +222,10 @@ class ImageStrategy:
         warnings: list[str] = []
         with Image.open(src) as im:
             width, height = im.size
+            upright = (width, height)
+            # Orientations 5-8 turn the photo a quarter, swapping its sides.
+            if im.getexif().get(0x0112, 1) in (5, 6, 7, 8):
+                upright = (height, width)
             fmt = im.format or ""
             if im.mode in ("RGBA", "LA", "P"):
                 warnings.append(
@@ -188,7 +236,32 @@ class ImageStrategy:
                 warnings.append(
                     f"{fmt} has multiple frames; only the first one is kept"
                 )
+        if self.resize is not None:
+            warnings.extend(self._resize_notes(*upright))
         return Probe(kind="image", pages=1, width=width, height=height, warnings=warnings)
+
+    def _resize_notes(self, src_w: int, src_h: int) -> list[str]:
+        """What an exact resize will do to the picture, beyond losing pixels."""
+        assert self.resize is not None
+        w, h = self.resize
+        notes: list[str] = []
+        src_ratio, dst_ratio = src_w / src_h, w / h
+        # The share of the longer side that does not fit the new shape.
+        mismatch = 1 - min(src_ratio, dst_ratio) / max(src_ratio, dst_ratio)
+        if mismatch > 0.02:
+            if self.fit == "crop":
+                side = "width" if src_ratio > dst_ratio else "height"
+                notes.append(
+                    f"trimmed about {round(mismatch * 100)}% of the {side} to fill "
+                    f"{w} x {h} pixels; choose the white border option to keep the "
+                    "whole image"
+                )
+            else:
+                notes.append(f"added a white border to keep the whole image at {w} x {h} pixels")
+        scale = (max if self.fit == "crop" else min)(w / src_w, h / src_h)
+        if scale > 1.05:
+            notes.append(f"enlarged from {src_w} x {src_h} pixels, so it may look soft")
+        return notes
 
     def ensure_available(self) -> None:
         from PIL import Image  # noqa: F401
@@ -246,10 +319,11 @@ class ImageStrategy:
             elif im.mode != "RGB":
                 im = im.convert("RGB")
 
-            max_edge = rung["max_edge"]
-            longest = max(im.size)
-            if longest > max_edge:
-                scale = max_edge / longest
+            if "width" in rung:
+                im = fit_exact(im, (rung["width"], rung["height"]), self.fit)
+            elif max(im.size) > rung["max_edge"]:
+                # Only ever shrink to the cap; smaller images keep their size.
+                scale = rung["max_edge"] / max(im.size)
                 new_size = (max(1, round(im.width * scale)), max(1, round(im.height * scale)))
                 im = im.resize(new_size, Image.LANCZOS)
 

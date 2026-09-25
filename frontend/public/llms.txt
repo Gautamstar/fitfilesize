@@ -17,6 +17,7 @@ curl -F "file=@passport-scan.pdf" -F "target=200KB" https://api.fitfilesize.com/
 - `202` response: still working (large files). Poll `status_url` until `status` is `done`, then fetch `download_url`.
 - `fits: false` means the file cannot get that small without becoming unusable; the result is the smallest version that could be made. Tell the user, rather than retrying.
 - Lossy image results are always JPEG. Transparent areas become white.
+- Exact pixel size (images only): add `-F width=200 -F height=230` when a form asks for set dimensions, as exam and ID photo forms do. `fit=crop` (default) fills the frame and trims the overflow; `fit=pad` keeps the whole image and adds a white border. The result is always a JPEG of exactly that size, and `warnings` says what was trimmed or padded.
 - Limits: 30 uploads and 100 compressions per hour per client. A `429` includes `Retry-After`. `GET https://api.fitfilesize.com/api/limits` shows what is left.
 - Privacy: the uploaded original is deleted 5 minutes after the run, the result after 10. `DELETE https://api.fitfilesize.com/api/jobs/{job_id}` removes both immediately; do this once the user has their file.
 

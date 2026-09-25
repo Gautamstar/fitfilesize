@@ -26,6 +26,12 @@ The same three steps regardless of what you feed it:
 3. **If even the harshest rung cannot fit**, you get the smallest achievable
    file plus a clear "floor" warning instead of a silent failure.
 
+**Exact pixel size (images).** Exam and ID forms often want both, say
+200 x 230 pixels and under 50 KB. Given a width and height, the image is
+cropped to fill that frame (or padded onto white, if asked) and the ladder
+becomes JPEG quality alone at that size. The lossless pass and the
+"already small enough" shortcut are skipped, since neither changes the size.
+
 Only step 1, the ladder's contents, and "render one rung" differ per media
 type. Those live behind one protocol in `src/fitpdf/strategies.py`, so the
 search itself is written once. Adding a third media type means implementing
@@ -217,10 +223,10 @@ they share an origin, so it is not.
 
 | Method | Path | What it does |
 | --- | --- | --- |
-| POST | `/api/fit` | one call for agents and scripts: multipart `file` + `target` (`200KB`, `1.5MB`, bytes; 1000-based), waits up to 80s and returns `download_url`, or `202` with `status_url` |
+| POST | `/api/fit` | one call for agents and scripts: multipart `file` + `target` (`200KB`, `1.5MB`, bytes; 1000-based), optional `width` + `height` (+ `fit`: `crop` or `pad`) for an exact pixel size, waits up to 80s and returns `download_url`, or `202` with `status_url` |
 | POST | `/api/upload` | multipart upload, returns job id, media kind and basic info |
 | POST | `/api/jobs/{id}/analyze` | estimates the floor, returns slider bounds |
-| POST | `/api/jobs/{id}/compress` | queues a run with `{"target_bytes": n}` |
+| POST | `/api/jobs/{id}/compress` | queues a run with `{"target_bytes": n}`, optionally `width`, `height` and `fit` for images |
 | GET | `/api/jobs/{id}` | job state, including seconds until auto-delete |
 | GET | `/api/jobs/{id}/events` | SSE stream of rung attempts and the final result |
 | GET | `/api/jobs/{id}/download` | the compressed file |

@@ -5,7 +5,7 @@
  * autocomplete and typo protection instead of guessing at response shapes.
  */
 
-import type { AnalyzeResponse, JobState, UploadResponse } from '../types/api'
+import type { AnalyzeResponse, JobState, Resize, UploadResponse } from '../types/api'
 
 /**
  * Base URL for the API.
@@ -78,16 +78,20 @@ export function analyzeJob(jobId: string, signal?: AbortSignal): Promise<Analyze
   return request<AnalyzeResponse>(`/api/jobs/${jobId}/analyze`, { method: 'POST', signal })
 }
 
-/** POST /api/jobs/{id}/compress. Queues the run; progress arrives over SSE. */
+/**
+ * POST /api/jobs/{id}/compress. Queues the run; progress arrives over SSE.
+ * With `resize`, an image comes back at exactly that many pixels.
+ */
 export function startCompress(
   jobId: string,
   targetBytes: number,
+  resize?: Resize | null,
   signal?: AbortSignal,
 ): Promise<{ job_id: string; status: string }> {
   return request(`/api/jobs/${jobId}/compress`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ target_bytes: targetBytes }),
+    body: JSON.stringify({ target_bytes: targetBytes, ...resize }),
     signal,
   })
 }

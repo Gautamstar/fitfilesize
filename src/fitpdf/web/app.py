@@ -4,6 +4,7 @@ import shutil
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
@@ -11,7 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
-from ..strategies import IMAGE_SUFFIXES, PDF_SUFFIXES
+from ..strategies import IMAGE_SUFFIXES, MAX_RESIZE_EDGE, PDF_SUFFIXES
 from ..units import human_size, parse_limit
 from . import limits, store
 from .config import Settings
@@ -45,6 +46,12 @@ ready (usually seconds), or `202` with a `status_url` to poll for large files.
 `GET /api/jobs/{job_id}` until `status` is `done`, then
 `GET /api/jobs/{job_id}/download`.
 
+**Exact pixel size (images only):** add `width` and `height` to either
+route to get a JPEG of exactly that many pixels, as exam and ID photo forms
+ask for. `fit` decides what happens when the shape differs: `crop` (default)
+fills the frame and trims the overflow, `pad` keeps the whole image and adds
+a white border.
+
 **Units:** KB and MB are 1000-based, so a `200KB` target aims under 200,000
 bytes and passes whichever way the destination counts.
 
@@ -76,8 +83,27 @@ MEDIA_TYPES = {
 }
 
 
+Fit = Literal["crop", "pad"]
+
+PIXELS = Field(None, ge=1, le=MAX_RESIZE_EDGE)
+
+
 class CompressRequest(BaseModel):
     target_bytes: int = Field(gt=0)
+    width: int | None = PIXELS
+    height: int | None = PIXELS
+    fit: Fit = "crop"
+
+
+def resize_for(job: dict, width: int | None, height: int | None) -> tuple[int, int] | None:
+    """The exact size a run asks for, or None. Refuses what cannot be done."""
+    if width is None and height is None:
+        return None
+    if width is None or height is None:
+        raise HTTPException(422, "give both width and height, or neither")
+    if job.get("kind") != "image":
+        raise HTTPException(422, "width and height apply to images only, not PDFs")
+    return (width, height)
 
 
 def _limit_headers(quota: limits.Quota) -> dict[str, str]:
@@ -504,11 +530,18 @@ def create_app(
         if job.get("status") in ("queued", "compressing"):
             raise HTTPException(409, "a compression run is already in progress for this file")
         src = require_input(job_id, job)
+        resize = resize_for(job, req.width, req.height)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        queue_run(job_id, src, req.target_bytes)
+        queue_run(job_id, src, req.target_bytes, resize, req.fit)
         return {"job_id": job_id, "status": "queued"}
 
-    def queue_run(job_id: str, src: Path, target_bytes: int) -> None:
+    def queue_run(
+        job_id: str,
+        src: Path,
+        target_bytes: int,
+        resize: tuple[int, int] | None = None,
+        fit: str = "crop",
+    ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back.
@@ -531,6 +564,8 @@ def create_app(
             settings.ttl_seconds,
             settings.pending_ttl_seconds,
             settings.gs_timeout,
+            resize,
+            fit,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,
@@ -564,6 +599,16 @@ def create_app(
             description="The limit to fit under, like 200KB, 1.5MB or 200000 (bytes). "
             "KB and MB are 1000-based.",
         ),
+        width: int | None = Form(
+            None, ge=1, le=MAX_RESIZE_EDGE, description="Exact width in pixels (images only)."
+        ),
+        height: int | None = Form(
+            None, ge=1, le=MAX_RESIZE_EDGE, description="Exact height in pixels (images only)."
+        ),
+        fit: Literal["crop", "pad"] = Form(
+            "crop",
+            description="When the shape differs: crop to fill, or pad with a white border.",
+        ),
     ):
         """Upload a file and compress it to fit under `target`.
 
@@ -578,8 +623,16 @@ def create_app(
         except ValueError as e:
             raise HTTPException(422, str(e)) from None
         job_id, _, _, _ = await receive_upload(file)
+        job = require_job(job_id)
+        try:
+            resize = resize_for(job, width, height)
+        except HTTPException:
+            # The upload is useless without a run; do not leave it waiting.
+            store.delete_job(r, job_id)
+            remove_tree(job_dir(job_id))
+            raise
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        queue_run(job_id, require_input(job_id, require_job(job_id)), target_bytes)
+        queue_run(job_id, require_input(job_id, job), target_bytes, resize, fit)
 
         waited = 0.0
         job = store.get_job(r, job_id) or {}

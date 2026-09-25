@@ -6,6 +6,7 @@ from pathlib import Path
 from rq import get_current_job
 
 from ..engine import compress_to_target
+from ..strategies import ImageStrategy
 from . import store
 
 
@@ -17,6 +18,8 @@ def run_compress(
     ttl: int,
     pending_ttl: int,
     gs_timeout: int,
+    resize: tuple[int, int] | None = None,
+    fit: str = "crop",
 ) -> None:
     rq_job = get_current_job()
     if rq_job is None:
@@ -46,8 +49,15 @@ def run_compress(
             pass  # progress is best-effort; never kill the compression over it
 
     try:
+        # The API only accepts a resize for images, so no PDF gets here with one.
+        strategy = ImageStrategy(resize=tuple(resize), fit=fit) if resize else None
         result = compress_to_target(
-            Path(src), Path(dst), target_bytes, timeout=gs_timeout, on_progress=on_progress
+            Path(src),
+            Path(dst),
+            target_bytes,
+            timeout=gs_timeout,
+            on_progress=on_progress,
+            strategy=strategy,
         )
     except Exception as e:
         store.update_job(r, job_id, status="error", error=str(e), completed_at=store.now_stamp())

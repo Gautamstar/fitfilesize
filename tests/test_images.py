@@ -1,5 +1,6 @@
 """Image compression: the same search harness, a Pillow strategy underneath."""
 
+import pytest
 from PIL import Image
 
 from fitpdf.engine import analyze, compress_to_target, estimate_floor
@@ -123,3 +124,71 @@ def test_image_path_needs_no_ghostscript(photo_jpg, tmp_path, monkeypatch):
     monkeypatch.setattr("fitpdf.strategies.gs_available", lambda: False)
     result = compress_to_target(photo_jpg, tmp_path / "out.jpg", 60_000)
     assert result.final_bytes <= 60_000
+
+
+# --------------------------------------------------------------------------- #
+# Exact pixel size
+
+def test_resize_hits_exact_dimensions_and_target(photo_jpg, tmp_path):
+    strategy = ImageStrategy(resize=(200, 230))
+    result = compress_to_target(photo_jpg, tmp_path / "out.jpg", 20_000, strategy=strategy)
+    assert result.hit_target
+    assert result.final_bytes <= 20_000
+    with Image.open(result.output) as im:
+        assert im.format == "JPEG"
+        assert im.size == (200, 230)
+
+
+def test_resize_applies_even_when_the_file_already_fits(photo_jpg, tmp_path):
+    """A form that wants 200 x 230 wants it whatever the file size."""
+    events = []
+    strategy = ImageStrategy(resize=(200, 230))
+    result = compress_to_target(
+        photo_jpg, tmp_path / "out.jpg", photo_jpg.stat().st_size * 10,
+        strategy=strategy, on_progress=events.append,
+    )
+    assert result.method.startswith("rung:")
+    assert not any(e["stage"] == "lossless" for e in events)
+    with Image.open(result.output) as im:
+        assert im.size == (200, 230)
+
+
+def test_resize_keeps_the_gentlest_quality_that_fits(photo_jpg, tmp_path):
+    events = []
+    strategy = ImageStrategy(resize=(400, 300))
+    compress_to_target(
+        photo_jpg, tmp_path / "out.jpg", 10**9, strategy=strategy, on_progress=events.append
+    )
+    starts = [e for e in events if e["stage"] == "rung_start"]
+    assert all(e["width"] == 400 and e["height"] == 300 for e in starts)
+    # Everything fits, so the search ends on the first, highest-quality rung.
+    assert min(e["rung"] for e in starts) == 0
+
+
+def test_resize_pad_keeps_the_whole_image_on_white(photo_jpg, tmp_path):
+    # photo_jpg is 3:2 landscape; a square frame leaves bands top and bottom.
+    out = tmp_path / "pad.jpg"
+    strategy = ImageStrategy(resize=(300, 300), fit="pad")
+    strategy.render(photo_jpg, out, strategy.rungs[0], timeout=60)
+    with Image.open(out) as im:
+        assert im.size == (300, 300)
+        r, g, b = im.getpixel((150, 5))
+        assert min(r, g, b) > 245
+
+
+def test_resize_notes_say_what_happened_to_the_picture(photo_jpg):
+    crop = ImageStrategy(resize=(200, 200)).probe(photo_jpg).warnings
+    assert any("trimmed about 33% of the width" in w for w in crop)
+    pad = ImageStrategy(resize=(200, 200), fit="pad").probe(photo_jpg).warnings
+    assert any("white border" in w for w in pad)
+    bigger = ImageStrategy(resize=(6000, 4000)).probe(photo_jpg).warnings
+    assert any("enlarged from 3000 x 2000" in w for w in bigger)
+    same_shape = ImageStrategy(resize=(600, 400)).probe(photo_jpg).warnings
+    assert same_shape == []
+
+
+def test_resize_rejects_bad_settings():
+    with pytest.raises(ValueError):
+        ImageStrategy(resize=(0, 100))
+    with pytest.raises(ValueError):
+        ImageStrategy(resize=(100, 100), fit="stretch")
