@@ -37,6 +37,19 @@ export interface AnalyzeResponse {
   floor_estimate: number
 }
 
+/* ---- POST /api/jobs/{id}/compress. Optional, images only. ---- */
+
+/**
+ * An exact pixel size for an image result, as exam and ID photo forms ask for.
+ * `fit` decides what happens when the shape differs: 'crop' fills the frame
+ * and trims the overflow, 'pad' keeps the whole image on a white border.
+ */
+export interface Resize {
+  width: number
+  height: number
+  fit: 'crop' | 'pad'
+}
+
 /* ---- GET /api/jobs/{id}, and the SSE `state` event. ---- */
 
 /**
@@ -129,10 +142,10 @@ export interface LosslessEvent {
  * A rung of the ladder is about to run. The settings come from whichever
  * strategy is driving, so a PDF run and an image run carry different fields.
  *
- * Both share `stage: 'rung_start'`, so `stage` alone cannot tell them apart.
+ * All share `stage: 'rung_start'`, so `stage` alone cannot tell them apart.
  * Narrow with the `in` operator on a field only one of them has:
  *
- *     if ('max_edge' in ev) { ev.quality } else { ev.jpeg_q }
+ *     if ('width' in ev) { ev.quality } else if ('max_edge' in ev) { ev.quality } else { ev.jpeg_q }
  */
 export interface PdfRungStartEvent {
   stage: 'rung_start'
@@ -151,7 +164,16 @@ export interface ImageRungStartEvent {
   quality: number
 }
 
-export type RungStartEvent = PdfRungStartEvent | ImageRungStartEvent
+/** An image run at an exact pixel size, where only quality changes. */
+export interface ResizeRungStartEvent {
+  stage: 'rung_start'
+  rung: number
+  width: number
+  height: number
+  quality: number
+}
+
+export type RungStartEvent = PdfRungStartEvent | ImageRungStartEvent | ResizeRungStartEvent
 
 /**
  * That rung finished.

@@ -166,7 +166,9 @@ def compress_to_target(
 
     Lossless pass first; if still over target, binary-search the strategy's rung
     ladder for the gentlest setting that fits. If no rung fits, return the best
-    achievable (the floor) with hit_target=False.
+    achievable (the floor) with hit_target=False. A strategy with
+    `always_render` set (an exact-size image) skips the lossless pass, so its
+    result always comes from the ladder.
 
     `dst` is used as given when the produced format matches its extension, and
     re-suffixed otherwise (a lossy image result is always JPEG). The path
@@ -197,18 +199,24 @@ def compress_to_target(
             target_path, original, size, target_bytes, hit, method, tried, warnings, strategy.kind
         )
 
-    if original <= target_bytes:
+    # A strategy that must transform the file (exact pixel dimensions, say)
+    # cannot hand back the original or a lossless copy, however small.
+    always_render = getattr(strategy, "always_render", False)
+
+    if original <= target_bytes and not always_render:
         return finish(src, original, True, "none", 0, lossy=False)
 
     with tempfile.TemporaryDirectory(prefix="fitpdf-") as tmp:
         tmpdir = Path(tmp)
 
+        loss_size: int | None = None
         loss_path = tmpdir / f"lossless{strategy.output_suffix(src, lossy=False)}"
-        loss_size = strategy.lossless(src, loss_path, strip_metadata=strip_metadata)
-        emit({"stage": "lossless", "size": loss_size})
+        if not always_render:
+            loss_size = strategy.lossless(src, loss_path, strip_metadata=strip_metadata)
+            emit({"stage": "lossless", "size": loss_size})
 
-        if loss_size <= target_bytes:
-            return finish(loss_path, loss_size, True, "lossless", 0, lossy=False)
+            if loss_size <= target_bytes:
+                return finish(loss_path, loss_size, True, "lossless", 0, lossy=False)
 
         strategy.ensure_available()
 
@@ -254,7 +262,12 @@ def compress_to_target(
             return finish(out, size, True, f"rung:{fit}", len(cache), lossy=True)
 
         candidates = [(s, p, True) for s, p in cache.values() if s is not None]
-        candidates.append((loss_size, loss_path, False))
+        if loss_size is not None:
+            candidates.append((loss_size, loss_path, False))
+        if not candidates:
+            # Only reachable with always_render, where there is no lossless
+            # copy to fall back on.
+            raise RuntimeError("could not produce a readable file at those settings")
         floor_size, floor_path, floor_lossy = min(candidates, key=lambda c: c[0])
         warnings.append(
             "target not reachable; returning the smallest achievable file (the floor)"

@@ -157,12 +157,14 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
         case 'rung_start': {
           setState((s) => ({ ...s, attempts: s.attempts + 1 }))
-          // Both media types share this stage, so `stage` cannot separate them.
-          // The `in` operator narrows the union to the right variant.
+          // Every kind of run shares this stage, so `stage` cannot separate
+          // them. The `in` operator narrows the union to the right variant.
           const label =
-            'max_edge' in ev
-              ? `Trying ${ev.max_edge}px wide, quality ${ev.quality}`
-              : `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`
+            'width' in ev
+              ? `Trying ${ev.width} x ${ev.height}, quality ${ev.quality}`
+              : 'max_edge' in ev
+                ? `Trying ${ev.max_edge}px wide, quality ${ev.quality}`
+                : `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`
           addStep(label, 'pending')
           break
         }

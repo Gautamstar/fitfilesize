@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import time
@@ -5,6 +6,7 @@ import time
 import fakeredis
 import pytest
 from fastapi.testclient import TestClient
+from PIL import Image
 from rq import Queue
 
 from fitpdf.gs import gs_available
@@ -699,3 +701,71 @@ def test_terminal_status_and_completion_time_land_together(web, photo_jpg, monke
         state = client.get(f"/api/jobs/{job_id}").json()
         assert state["status"] in ("done", "error")
         assert state["expires_in"] <= settings.ttl_seconds
+
+
+def test_compress_to_exact_pixels(web, photo_jpg):
+    client, _, _ = web
+    job_id = _upload(client, photo_jpg, name="photo.jpg").json()["job_id"]
+    res = client.post(
+        f"/api/jobs/{job_id}/compress",
+        json={"target_bytes": 50_000, "width": 200, "height": 230},
+    )
+    assert res.status_code == 202
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["status"] == "done"
+    assert state["hit_target"] is True
+    # photo_jpg is landscape, so a portrait frame trims its sides.
+    assert any("trimmed" in w for w in state["warnings"])
+    download = client.get(f"/api/jobs/{job_id}/download")
+    out = download.content
+    assert len(out) <= 50_000
+    with Image.open(io.BytesIO(out)) as im:
+        assert im.size == (200, 230)
+
+
+def test_compress_refuses_half_a_size_and_pdf_resizes(web, photo_jpg, image_pdf):
+    client, _, _ = web
+    job_id = _upload(client, photo_jpg, name="photo.jpg").json()["job_id"]
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 50_000, "width": 200})
+    assert res.status_code == 422
+    assert "both width and height" in res.json()["detail"]
+
+    pdf_id = _upload(client, image_pdf).json()["job_id"]
+    res = client.post(
+        f"/api/jobs/{pdf_id}/compress",
+        json={"target_bytes": 50_000, "width": 200, "height": 230},
+    )
+    assert res.status_code == 422
+    assert "images only" in res.json()["detail"]
+
+    res = client.post(
+        f"/api/jobs/{job_id}/compress",
+        json={"target_bytes": 50_000, "width": 200, "height": 230, "fit": "stretch"},
+    )
+    assert res.status_code == 422
+
+
+def test_fit_takes_exact_pixels_in_one_call(web, photo_jpg):
+    client, _, _ = web
+    with open(photo_jpg, "rb") as f:
+        res = client.post(
+            "/api/fit",
+            files={"file": ("a.jpg", f.read(), "image/jpeg")},
+            data={"target": "30KB", "width": "150", "height": "150", "fit": "pad"},
+        )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["fits"] is True
+    assert any("white border" in w for w in body["warnings"])
+
+
+def test_fit_drops_the_upload_when_the_size_is_refused(web, image_pdf):
+    client, _, settings = web
+    with open(image_pdf, "rb") as f:
+        res = client.post(
+            "/api/fit",
+            files={"file": ("a.pdf", f.read(), "application/pdf")},
+            data={"target": "200KB", "width": "200", "height": "200"},
+        )
+    assert res.status_code == 422
+    assert not any(settings.data_dir.iterdir())

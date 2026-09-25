@@ -84,6 +84,15 @@ export function parseLimit(text: string, unit: LimitUnit): number | null {
 }
 
 /** Plain-language description of what a given target will do. */
+/**
+ * Rough smallest size of a JPEG at these pixel dimensions, at the lowest
+ * quality the backend tries: about half a bit per pixel for a photo, plus
+ * the file's fixed overhead. Only an estimate, like the file's own floor.
+ */
+export function resizedFloor(width: number, height: number): number {
+  return Math.max(1500, Math.round((width * height) / 16))
+}
+
 export function tierHint(target: number, originalBytes: number): string {
   const ratio = target / originalBytes
   if (ratio >= 0.75) return 'Light work. Your images stay sharp at this size.'

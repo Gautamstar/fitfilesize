@@ -527,6 +527,71 @@ input[type='range']::-moz-range-thumb {
   font-size: 13px;
 }
 
+/* ---------- exact pixel size (images) ---------- */
+
+.resize {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+.resize summary {
+  color: var(--ink-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.resize-note {
+  margin: 8px 0 12px;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+.resize-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 280px;
+}
+.resize-row label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.resize-x {
+  padding-bottom: 11px;
+  color: var(--ink-muted);
+}
+.resize-fit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+  font-size: 14px;
+}
+.resize-fit legend {
+  margin-bottom: 6px;
+  padding: 0;
+  color: var(--ink-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+.resize-fit label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.resize-fit input {
+  accent-color: var(--accent);
+}
+
 /* ---------- chips ---------- */
 
 .chips {
