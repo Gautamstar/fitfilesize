@@ -94,3 +94,17 @@ describe('TargetPicker pixel size', () => {
     expect(onCompress.mock.calls.at(-1)![1]).toEqual({ width: 140, height: 60, fit: 'crop' })
   })
 })
+
+describe('TargetPicker when the file already fits', () => {
+  it('says so when the chosen limit is above the file size', () => {
+    setup('image', undefined, { originalBytes: 111_000, floor: 20_000, initialTarget: 500_000 })
+    expect(screen.getByText(/already under 500 KB/)).toBeTruthy()
+  })
+
+  it('says nothing when the file is bigger than the limit', () => {
+    setup('image', undefined, { originalBytes: 3_000_000, floor: 20_000, initialTarget: 500_000 })
+    expect(screen.queryByText(/already under/)).toBeNull()
+    // The landing page's round limit keeps its own number.
+    expect(screen.getByText('500 KB', { selector: '.target-value' })).toBeTruthy()
+  })
+})

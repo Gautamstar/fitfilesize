@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { eventsUrl, getJob } from '../lib/api'
-import { fmt } from '../lib/format'
+import { fmt, fmtLimit } from '../lib/format'
 import type { DoneEvent, JobState, ProgressEvent } from '../types/api'
 
 /** How long to let the stream prove itself before polling as well. */
@@ -185,7 +185,7 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
         case 'start': {
           const target = ev.target_bytes
           setState((s) => ({ ...s, search: { ...s.search, target } }))
-          addStep(`Starting, target ${fmt(target)}`)
+          addStep(`Starting, target ${fmtLimit(target)}`)
           break
         }
 

@@ -15,7 +15,9 @@ import {
   SLIDER_STEPS,
   bytesToSlider,
   fmt,
+  fmtLimit,
   limitLabel,
+  sentence,
   presetToSlider,
   resizedFloor,
   sliderToBytes,
@@ -123,6 +125,8 @@ export function TargetPicker({
     setLo((current) => Math.min(current, sliderLow(floorFor(next), hi, initialTarget)))
   }
 
+  const alreadyFits = initialTarget !== undefined && initialTarget >= originalBytes
+
   const chipLimits = LIMIT_PRESETS.filter((bytes) => bytes < originalBytes)
 
   // Everything below is derived from `chosen`. `lo` never rises, so the
@@ -143,7 +147,19 @@ export function TargetPicker({
         <p className="file-meta">{meta}</p>
       </header>
 
-      <p className="target-value">{fmt(target)}</p>
+      {/* The limit picked before upload (or the landing page's size) is at or
+          above the file itself: say it already fits rather than quietly
+          suggesting a smaller size and squeezing a file that needed nothing. */}
+      {alreadyFits ? (
+        <p className="already-fits">
+          <strong>
+            Your file is {fmt(originalBytes)}, already under {fmtLimit(initialTarget as number)}.
+          </strong>{' '}
+          You can upload it as it is. To make it smaller anyway, pick a size below.
+        </p>
+      ) : null}
+
+      <p className="target-value">{fmtLimit(target)}</p>
       <p className="target-hint">{hint}</p>
 
       <div className="slider-wrap">
@@ -274,7 +290,7 @@ export function TargetPicker({
         </details>
       ) : null}
 
-      {warning ? <p className="error-text">{warning}</p> : null}
+      {warning ? <p className="error-text">{sentence(warning)}</p> : null}
 
       <div className="actions">
         <button

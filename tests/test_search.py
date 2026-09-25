@@ -142,12 +142,16 @@ def test_a_typical_slope_makes_the_first_guess_count(tmp_path):
     # With only the floor measured, the strategy's typical per-rung drop aims
     # the first render at the likely boundary instead of the middle.
     sizes = _curves()["exponential"]  # drops by ln(1/0.8) ~ 0.22 per rung
-    src = _source(tmp_path)
+    # The original sits one step above the gentlest rung, as on a real file
+    # that follows the curve; the search also uses its size to aim.
+    original = int(sizes[0] / 0.8)
+    src = tmp_path / "in.pdf"
+    src.write_bytes(b"x" * original)
     floor = tmp_path / "floor.pdf"
     floor.write_bytes(b"x" * sizes[-1])
     guided = bisect = 0
-    for target in _targets(sizes):
-        strategy = FakeStrategy(sizes, original=ORIGINAL)
+    for target in [t for t in _targets(sizes) if t < original]:
+        strategy = FakeStrategy(sizes, original=original)
         strategy.typical_log_step = 0.21  # what PdfStrategy uses: close, not exact
         result = compress_to_target(
             src, tmp_path / "out.pdf", target, strategy=strategy,
@@ -222,3 +226,26 @@ def test_search_is_announced_with_the_ladder_and_what_is_known(tmp_path):
     search = events[stages.index("search")]
     assert search["rungs"] == len(sizes)
     assert search["known"] == [{"rung": len(sizes) - 1, "size": sizes[-1]}]
+
+
+def test_the_original_size_steers_the_first_guess(tmp_path):
+    # Measured rung sizes of a 7.8 MB, 6-page 300 dpi scan. The typical PDF
+    # slope alone aimed a 2 MB target at rung 0, which renders the whole scan
+    # at its original resolution for nothing; the original size says the
+    # boundary is a few rungs down.
+    sizes = [7_850_780, 2_453_348, 1_366_000, 946_064, 607_813, 366_036,
+             254_013, 177_726, 130_356, 91_163, 63_744, 47_742]
+    original = 7_848_387
+    src = tmp_path / "scan.pdf"
+    src.write_bytes(b"x" * original)
+    floor = tmp_path / "floor.pdf"
+    floor.write_bytes(b"x" * sizes[-1])
+    strategy = FakeStrategy(sizes, original=original)
+    strategy.typical_log_step = 0.21
+    result = compress_to_target(
+        src, tmp_path / "out.pdf", 2_000_000, strategy=strategy,
+        prerendered={len(sizes) - 1: floor},
+    )
+    assert result.method == "rung:2"
+    assert 0 not in strategy.renders
+    assert len(strategy.renders) <= 3

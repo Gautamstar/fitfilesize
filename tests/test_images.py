@@ -106,6 +106,27 @@ def test_lossy_output_is_rejigged_to_jpg(transparent_png, tmp_path):
     assert result.output.exists()
 
 
+def test_a_png_that_becomes_a_jpg_says_so(photo_jpg, tmp_path):
+    # An opaque PNG has no transparency warning to mention the change, and a
+    # site that only takes PNG would refuse the result without one.
+    png = tmp_path / "screenshot.png"
+    Image.open(photo_jpg).save(png, "PNG")
+    result = compress_to_target(png, tmp_path / "out.png", png.stat().st_size // 20)
+    assert result.output.suffix == ".jpg"
+    assert any(w.startswith("saved as a JPG: as a PNG") for w in result.warnings)
+
+
+def test_a_jpg_or_a_transparent_png_gets_no_extra_format_warning(
+    photo_jpg, transparent_png, tmp_path
+):
+    jpg = compress_to_target(photo_jpg, tmp_path / "a.jpg", photo_jpg.stat().st_size // 10)
+    assert not any("saved as a JPG" in w for w in jpg.warnings)
+    png = compress_to_target(
+        transparent_png, tmp_path / "b.png", transparent_png.stat().st_size // 10
+    )
+    assert sum("JPEG" in w or "JPG" in w for w in png.warnings) == 1
+
+
 def test_already_under_target_copies(photo_jpg, tmp_path):
     original = photo_jpg.stat().st_size
     result = compress_to_target(photo_jpg, tmp_path / "out.jpg", original * 10)
