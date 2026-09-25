@@ -113,4 +113,27 @@ Production measurements after deploy: see "After deploy" below.
 
 ## After deploy
 
-_Filled in from production once this change is live._
+Measured on production on 2026-09-25, same files and method as the baseline.
+Each run produced the same file as before, to the byte or within a few bytes
+of Ghostscript's embedded metadata.
+
+| File → target | Run before | Run after | Renders before → after |
+|---|---|---|---|
+| 5.0 MB photo → 200 KB | 9.2 s | **4.2–4.6 s** | lossless pass + 3 → **2** |
+| 4.9 MB scan → 500 KB | 11.3 s | **4.9 s** | 4 → **2** |
+| 0.23 MB PDF → 100 KB | 3.7 s | **1.6 s** | 4 → **2** |
+
+On the photo, the guided search's first render, seeded by the floor and the
+typical image slope, landed on the answer (setting 7 of 12) and the second
+confirmed the gentler neighbour was too big.
+
+Locally with Ghostscript installed (PDF numbers the first pass could not
+measure): on the scan, 5 steps to 3 for the 500 and 200 KB targets and 5 to
+1 below the floor; on the one-page PDF, 5 to 3, and 5 to 1 below the floor.
+
+One regression was caught before release: the first version of the search
+shadowed the engine's `probe` variable, so every PDF render failed
+validation. The Ghostscript tests that catch it are skipped on a machine
+without Ghostscript, which is how it passed locally; CI caught it. The fake
+strategy in `tests/test_search.py` now asserts it receives a real Probe, so
+the same mistake fails without Ghostscript too.
