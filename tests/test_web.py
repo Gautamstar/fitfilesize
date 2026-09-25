@@ -681,3 +681,21 @@ def test_openapi_describes_the_one_call_route(web):
     # Generated clients refuse a spec with repeated operation ids.
     ids = [op["operationId"] for ops in spec["paths"].values() for op in ops.values()]
     assert len(ids) == len(set(ids))
+
+
+def test_terminal_status_and_completion_time_land_together(web, photo_jpg, monkeypatch):
+    # Seen on production: /api/fit read a job between the worker's "done" write
+    # and its completion stamp, and reported the 30-minute pending window as
+    # expires_in instead of the 10 minutes the file actually lives.
+    client, r, settings = web
+    monkeypatch.setattr(store, "mark_completed", lambda *a, **k: None)  # freeze in the gap
+    done = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    target = int(photo_jpg.stat().st_size * 0.5)
+    client.post(f"/api/jobs/{done}/compress", json={"target_bytes": target})
+    failed = _upload(client, photo_jpg, "b.jpg").json()["job_id"]
+    store.fail_job(r, failed, "boom", settings.ttl_seconds, settings.pending_ttl_seconds)
+
+    for job_id in (done, failed):
+        state = client.get(f"/api/jobs/{job_id}").json()
+        assert state["status"] in ("done", "error")
+        assert state["expires_in"] <= settings.ttl_seconds

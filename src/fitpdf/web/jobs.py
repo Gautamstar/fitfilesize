@@ -50,7 +50,7 @@ def run_compress(
             Path(src), Path(dst), target_bytes, timeout=gs_timeout, on_progress=on_progress
         )
     except Exception as e:
-        store.update_job(r, job_id, status="error", error=str(e))
+        store.update_job(r, job_id, status="error", error=str(e), completed_at=store.now_stamp())
         store.push_event(r, job_id, {"stage": "error", "message": str(e)}, pending_ttl)
         store.mark_completed(r, job_id, ttl)
         raise
@@ -59,6 +59,10 @@ def run_compress(
         r,
         job_id,
         status="done",
+        # In the same write as the status, so nobody reads "done" without a
+        # completion time (see store.fail_job). mark_completed below restamps
+        # it and resets the key TTLs.
+        completed_at=store.now_stamp(),
         hit_target=int(result.hit_target),
         final_bytes=result.final_bytes,
         target_bytes=target_bytes,
