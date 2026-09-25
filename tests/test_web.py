@@ -769,3 +769,25 @@ def test_fit_drops_the_upload_when_the_size_is_refused(web, image_pdf):
         )
     assert res.status_code == 422
     assert not any(settings.data_dir.iterdir())
+
+
+def test_compression_reuses_the_floor_render_from_analyze(web, photo_jpg):
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/analyze")
+    floors = list((settings.data_dir / job_id).glob("floor.*"))
+    assert len(floors) == 1
+
+    # A target below the floor: nothing fits, and the answer is the floor
+    # render itself, so the run needs no render at all.
+    floor_bytes = floors[0].stat().st_size
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": floor_bytes - 1})
+    events = store.get_events(r, job_id)
+    assert [e for e in events if e["stage"] == "rung_start"] == []
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["status"] == "done"
+    assert state["hit_target"] is False
+    assert state["final_bytes"] == floor_bytes
+    # The floor file is never offered as the download.
+    assert client.get(f"/api/jobs/{job_id}/download").status_code == 200
+    assert not any(p.name.startswith("floor") for p in (settings.data_dir / job_id).glob("output.*"))

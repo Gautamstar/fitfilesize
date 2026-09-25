@@ -112,6 +112,9 @@ class PdfStrategy:
     kind = "pdf"
     rungs = PDF_RUNGS
     always_render = False
+    # Typical drop in log(output size) per rung down PDF_RUNGS, measured on
+    # production scans. Only seeds the search's first guess; see engine.
+    typical_log_step = 0.21
 
     def probe(self, src: Path) -> Probe:
         warnings: list[str] = []
@@ -204,6 +207,8 @@ def fit_exact(im, size: tuple[int, int], fit: str):
 
 class ImageStrategy:
     kind = "image"
+    # As PdfStrategy.typical_log_step, measured on a 12 MP phone photo.
+    typical_log_step = 0.44
 
     def __init__(self, resize: tuple[int, int] | None = None, fit: str = "crop") -> None:
         """`resize`, if given, is the exact (width, height) of the result."""
@@ -268,6 +273,25 @@ class ImageStrategy:
 
     def ensure_available(self) -> None:
         from PIL import Image  # noqa: F401
+
+    # A lossless JPEG pass only re-optimises entropy coding and drops
+    # metadata: a few percent. Below half the original it cannot help.
+    LOSSLESS_JPEG_REACH = 0.5
+
+    def lossless_hopeless(self, src: Path, original: int, target: int) -> bool:
+        """True when the lossless pass cannot get a JPEG down to the target.
+
+        Only JPEGs: a PNG, TIFF or BMP can shrink a great deal losslessly.
+        """
+        if target >= original * self.LOSSLESS_JPEG_REACH:
+            return False
+        from PIL import Image
+
+        try:
+            with Image.open(src) as im:  # header only; no pixels are decoded
+                return (im.format or "").upper() == "JPEG"
+        except Exception:
+            return False
 
     def lossless(self, src: Path, dst: Path, *, strip_metadata: bool) -> int:
         """Re-encode with no visible change: strip EXIF, optimise the entropy coding.

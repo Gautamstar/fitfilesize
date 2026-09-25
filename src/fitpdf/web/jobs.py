@@ -6,8 +6,20 @@ from pathlib import Path
 from rq import get_current_job
 
 from ..engine import compress_to_target
-from ..strategies import ImageStrategy
+from ..strategies import ImageStrategy, detect_strategy
 from . import store
+
+
+def _floor_render(src: Path) -> dict[int, Path] | None:
+    """The analyze step's harshest-rung render, keyed by its rung index.
+
+    Only for the default ladder: an exact-size run renders a different picture
+    at every rung, so the floor render says nothing about it.
+    """
+    floors = sorted(src.parent.glob("floor.*"))
+    if not floors:
+        return None
+    return {len(detect_strategy(src).rungs) - 1: floors[0]}
 
 
 def run_compress(
@@ -58,6 +70,7 @@ def run_compress(
             timeout=gs_timeout,
             on_progress=on_progress,
             strategy=strategy,
+            prerendered=_floor_render(Path(src)) if strategy is None else None,
         )
     except Exception as e:
         store.update_job(r, job_id, status="error", error=str(e), completed_at=store.now_stamp())

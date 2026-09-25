@@ -516,7 +516,11 @@ def create_app(
         job = require_job(job_id)
         src = require_input(job_id, job)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        floor = await run_in_threadpool(estimate_floor, src, timeout=settings.gs_timeout)
+        # The floor render is kept next to the upload: the compression run
+        # reuses it as its harshest rung instead of rendering it again.
+        floor = await run_in_threadpool(
+            estimate_floor, src, timeout=settings.gs_timeout, keep=job_dir(job_id) / "floor"
+        )
         store.update_job(r, job_id, floor_estimate=floor, status="analyzed")
         return {
             "job_id": job_id,
