@@ -203,3 +203,22 @@ def test_lossless_pass_still_runs_for_png_whatever_the_target(transparent_png, t
         on_progress=events.append,
     )
     assert events[0]["stage"] == "lossless"
+
+
+def test_search_is_announced_with_the_ladder_and_what_is_known(tmp_path):
+    sizes = _curves()["exponential"]
+    src = _source(tmp_path)
+    floor = tmp_path / "floor.pdf"
+    floor.write_bytes(b"x" * sizes[-1])
+    events = []
+    compress_to_target(
+        src, tmp_path / "out.pdf", sizes[5], strategy=FakeStrategy(sizes, original=ORIGINAL),
+        prerendered={len(sizes) - 1: floor}, on_progress=events.append,
+    )
+    stages = [e["stage"] for e in events]
+    # After the lossless pass, before the first render.
+    assert stages.index("search") == stages.index("lossless") + 1
+    assert stages.index("search") < stages.index("rung_start")
+    search = events[stages.index("search")]
+    assert search["rungs"] == len(sizes)
+    assert search["known"] == [{"rung": len(sizes) - 1, "size": sizes[-1]}]

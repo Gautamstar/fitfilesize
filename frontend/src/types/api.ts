@@ -139,6 +139,18 @@ export interface LosslessEvent {
 }
 
 /**
+ * The rung search is starting. `rungs` is the ladder's length (the same for
+ * PDFs and images today, but read it rather than assume it), and `known` lists
+ * rungs measured before this run, such as the analyze step's floor render,
+ * which the search uses without rendering them again.
+ */
+export interface SearchEvent {
+  stage: 'search'
+  rungs: number
+  known: { rung: number; size: number }[]
+}
+
+/**
  * A rung of the ladder is about to run. The settings come from whichever
  * strategy is driving, so a PDF run and an image run carry different fields.
  *
@@ -198,6 +210,8 @@ export interface DoneEvent {
   target_bytes: number
   method: CompressMethod
   warnings: string[]
+  /** Seconds until the files are deleted, counted from completion. */
+  expires_in?: number
 }
 
 /** Terminal failure, carrying the message shown to the user. */
@@ -215,6 +229,7 @@ export interface ErrorEvent {
 export type ProgressEvent =
   | StartEvent
   | LosslessEvent
+  | SearchEvent
   | RungStartEvent
   | RungResultEvent
   | DoneEvent

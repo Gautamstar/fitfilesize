@@ -231,6 +231,7 @@ def compress_to_target(
 
     on_progress, if given, is called with a dict per step:
       {"stage": "lossless", "size": int}
+      {"stage": "search", "rungs": int, "known": [{"rung": int, "size": int}]}
       {"stage": "rung_start", "rung": int, ...rung settings}
       {"stage": "rung_result", "rung": int, "size": int | None, "fits": bool}
     """
@@ -321,6 +322,20 @@ def compress_to_target(
                 hi = min(hi, i - 1)
             elif size is not None:
                 lo = max(lo, i + 1)
+        # Announce the ladder before searching it, with anything already known,
+        # so a client can draw every rung (and the analyze step's floor) from
+        # the start rather than only the ones this run happens to render.
+        emit(
+            {
+                "stage": "search",
+                "rungs": len(strategy.rungs),
+                "known": [
+                    {"rung": i, "size": size}
+                    for i, (size, _) in sorted(cache.items())
+                    if size is not None
+                ],
+            }
+        )
         misses = 0
         while lo <= hi:
             guess = (

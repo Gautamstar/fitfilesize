@@ -135,6 +135,49 @@ describe('useProgressStream', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('restarts the deletion countdown when the job completes', () => {
+    vi.setSystemTime(new Date('2026-09-25T12:00:00Z'))
+    const { result } = renderHook(() => useProgressStream('j1', true))
+    act(() => {
+      // On connect the job is still queued: the 30-minute pending window.
+      FakeEventSource.last!.emitState({ ...DONE_STATE, status: 'queued', expires_in: 1800 })
+    })
+    expect(result.current.expiresAt).toBe(Date.now() + 1_800_000)
+    act(() => {
+      FakeEventSource.last!.emit({
+        stage: 'done', hit_target: true, final_bytes: 1, original_bytes: 2,
+        target_bytes: 3, method: 'rung:6', warnings: [], expires_in: 600,
+      })
+    })
+    expect(result.current.expiresAt).toBe(Date.now() + 600_000)
+  })
+
+  it('builds the search state the ladder draws from', () => {
+    const { result } = renderHook(() => useProgressStream('j1', true))
+    const es = () => FakeEventSource.last!
+
+    act(() => {
+      es().emit({ stage: 'start', target_bytes: 200_000 })
+      es().emit({ stage: 'search', rungs: 12, known: [{ rung: 11, size: 17_000 }] })
+      es().emit({ stage: 'rung_start', rung: 6, max_edge: 1800, quality: 70 })
+    })
+    let s = result.current.search
+    expect(s.rungs).toBe(12)
+    expect(s.target).toBe(200_000)
+    expect(s.points[11]).toMatchObject({ size: 17_000, fits: true, known: true, order: null })
+    expect(s.current).toEqual({ rung: 6, label: '1800 px, quality 70' })
+
+    act(() => {
+      es().emit({ stage: 'rung_result', rung: 6, size: 154_861, fits: true })
+      es().emit({ stage: 'rung_start', rung: 5, max_edge: 2000, quality: 75 })
+      es().emit({ stage: 'rung_result', rung: 5, size: 242_255, fits: false })
+    })
+    s = result.current.search
+    expect(s.current).toBeNull()
+    expect(s.points[6]).toMatchObject({ fits: true, order: 1, label: '1800 px, quality 70', known: false })
+    expect(s.points[5]).toMatchObject({ fits: false, order: 2, label: '2000 px, quality 75' })
+  })
+
   it('labels a PDF rung with DPI rather than pixel width', () => {
     const { result } = renderHook(() => useProgressStream('j1', true))
     act(() => {
