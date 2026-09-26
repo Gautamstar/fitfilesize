@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
-from ..strategies import IMAGE_SUFFIXES, MAX_RESIZE_EDGE, PDF_SUFFIXES
+from ..strategies import IMAGE_SUFFIXES, MAX_RESIZE_EDGE, PDF_SUFFIXES, image_too_big
 from ..units import human_size, parse_limit
 from . import limits, store
 from .config import Settings
@@ -21,6 +21,11 @@ from .jobs import run_compress
 SWEEP_INTERVAL = 60
 UPLOAD_CHUNK = 1024 * 1024
 
+# /health counts a missing worker only after this long: the worker process
+# starts next to the API and takes a few seconds to register.
+WORKER_GRACE_SECONDS = 60
+# Free disk kept for uploads in flight; see receive_upload.
+MIN_FREE_BYTES = 500 * 1024 * 1024
 # /api/fit waits this long for the run before answering 202 with a status URL.
 # Kept under the ~100s a proxy in front of the API (Cloudflare, on Render) lets
 # a request sit without a response before cutting it off.
@@ -266,11 +271,15 @@ def create_app(
     *,
     prepare_queue=None,
     background_sweep: bool = True,
+    worker_grace: float = WORKER_GRACE_SECONDS,
 ) -> FastAPI:
     """Build the API. background_sweep=False skips the once-a-minute sweep and
     recovery loop; tests turn it off and call those functions directly, since
-    a loop racing the test's own calls makes results depend on timing."""
+    a loop racing the test's own calls makes results depend on timing.
+    worker_grace is how long after start /health waits for a worker to
+    register before counting its absence (see health())."""
     settings = settings or Settings.from_env()
+    started = time.monotonic()
 
     if redis_conn is None:
         if settings.inline:
@@ -278,9 +287,7 @@ def create_app(
 
             redis_conn = fakeredis.FakeRedis()
         else:
-            import redis
-
-            redis_conn = redis.Redis.from_url(settings.redis_url)
+            redis_conn = store.connect(settings.redis_url)
     r = redis_conn
 
     if queue is None:
@@ -331,6 +338,18 @@ def create_app(
 
     # Registered before CORS so CORS wraps it: a refusal from here still gets
     # the Access-Control headers, and the browser can show its message.
+    import redis as _redis
+
+    @app.exception_handler(_redis.ConnectionError)
+    @app.exception_handler(_redis.TimeoutError)
+    async def redis_unavailable(request: Request, exc: Exception):
+        # The client already retried with backoff (store.connect); Redis is
+        # really away. A 503 tells the page to retry, where a bare 500 reads
+        # as broken for good.
+        return JSONResponse(
+            {"detail": "the server is busy for a moment; try again"}, status_code=503
+        )
+
     @app.middleware("http")
     async def limit_uploads(request: Request, call_next):
         """Refuse over-budget uploads before their body is read.
@@ -365,9 +384,52 @@ def create_app(
             allow_headers=["*"],
         )
 
-    @app.get("/health", summary="Liveness check")
-    async def health():
-        return {"ok": True}
+    def worker_alive() -> bool:
+        """Whether a worker is registered on the main queue.
+
+        RQ keeps a worker's registration alive with heartbeats and lets it
+        expire when they stop (worker.WORKER_TTL), so a hung or dead worker
+        drops out of Worker.all() within about two minutes.
+        """
+        if settings.inline:
+            return True  # runs happen in the API process; there is no worker
+        from rq import Worker
+
+        return any(settings.queue_name in w.queue_names() for w in Worker.all(connection=r))
+
+    @app.get(
+        "/health",
+        summary="Health check",
+        responses={503: {"description": "Redis or the worker is not working."}},
+    )
+    async def health(response: Response):
+        """Whether the service can take and finish work.
+
+        Render restarts the container when this keeps failing, and holds a
+        new deploy back from traffic until it passes, so a stuck worker or a
+        lost Redis connection mends itself; UptimeRobot, which polls it,
+        emails when it does not. A worker gets `worker_grace` seconds after
+        start to register before its absence counts, so a deploy is not
+        refused for booting.
+        """
+
+        def check() -> dict:
+            try:
+                if not r.ping():
+                    raise ConnectionError("no PONG")
+            except Exception:
+                return {"ok": False, "redis": False, "worker": False}
+            try:
+                worker_ok = worker_alive()
+            except Exception:
+                worker_ok = False
+            booting = not worker_ok and time.monotonic() - started < worker_grace
+            return {"ok": worker_ok or booting, "redis": True, "worker": worker_ok}
+
+        state = await run_in_threadpool(check)
+        if not state["ok"]:
+            response.status_code = 503
+        return state
 
     # HEAD as well: uptime monitors (UptimeRobot by default) probe with HEAD,
     # and a 405 there reads as the service being down. Kept out of the OpenAPI
@@ -476,6 +538,17 @@ def create_app(
                 "(JPEG, PNG, WebP, TIFF, BMP)",
             )
 
+        # Out of disk, an upload fails halfway with a raw error. Clear expired
+        # jobs now rather than at the next sweep, and if that is not enough,
+        # say so before reading the file.
+        needed = max(MIN_FREE_BYTES, 4 * settings.max_upload_bytes)
+        if shutil.disk_usage(settings.data_dir).free < needed:
+            await run_in_threadpool(sweep_expired, settings.data_dir, settings, r)
+            if shutil.disk_usage(settings.data_dir).free < needed:
+                raise HTTPException(
+                    503, "the server is short on space right now; try again in a minute"
+                )
+
         job_id = store.new_job_id()
         d = job_dir(job_id)
         d.mkdir(parents=True)
@@ -504,6 +577,10 @@ def create_app(
                 raise HTTPException(
                     422, "this PDF is password protected; remove the password first"
                 )
+            # Past these, a run would need more memory than the server has
+            # and be killed partway; refuse it up front with the reason.
+            if info.kind == "image" and (reason := image_too_big(dest)):
+                raise HTTPException(422, reason)
         except HTTPException:
             remove_tree(d)
             raise

@@ -28,6 +28,38 @@ RESTARTED_MESSAGE = (
 )
 
 
+# Shown when the run itself was killed: by the operating system, in practice,
+# when a file needs more memory than the small server has.
+KILLED_MESSAGE = (
+    "This file was too much for the server to process. "
+    "Try a smaller file or a larger size limit."
+)
+
+
+def connect(url: str):
+    """A Redis client that rides out short blips instead of failing requests.
+
+    Timeouts so a dead connection is noticed in seconds, not minutes;
+    retries with backoff on connection and timeout errors, so a Redis restart
+    or a dropped socket costs a retry rather than an error page; and a
+    liveness check on connections idle for 30 s, which catches sockets the
+    host dropped silently. RQ raises the socket timeout on the worker's own
+    connection where it blocks waiting for jobs.
+    """
+    import redis
+    from redis.backoff import ExponentialBackoff
+    from redis.retry import Retry
+
+    return redis.Redis.from_url(
+        url,
+        socket_timeout=5,
+        socket_connect_timeout=5,
+        health_check_interval=30,
+        retry=Retry(ExponentialBackoff(cap=2, base=0.2), 3),
+        retry_on_error=[redis.ConnectionError, redis.TimeoutError],
+    )
+
+
 def new_job_id() -> str:
     return uuid.uuid4().hex
 

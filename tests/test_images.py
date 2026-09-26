@@ -254,7 +254,9 @@ def test_a_run_decodes_the_source_once(photo_jpg, tmp_path, monkeypatch):
 
     calls = []
     real = ImageOps.exif_transpose
-    monkeypatch.setattr(ImageOps, "exif_transpose", lambda im: calls.append(1) or real(im))
+    monkeypatch.setattr(
+        ImageOps, "exif_transpose", lambda im, **kw: calls.append(1) or real(im, **kw)
+    )
     # Every rung of this search needs more than half the source's pixels,
     # so all of them share one full-size decode.
     target = int(photo_jpg.stat().st_size * 0.4)
@@ -311,3 +313,24 @@ def test_a_run_holds_one_decode_even_when_the_decoder_cannot_shrink(tmp_path):
     decodes = [k for k in strategy._pixels if k[0] == "decoded"]
     assert len(decodes) == 1
     assert strategy._pixels[decodes[0]][0] == 1
+
+
+def test_a_photo_too_big_to_decode_in_full_skips_the_lossless_pass(tmp_path):
+    # The pass decodes every pixel; above MAX_DECODE_PIXELS that is too much
+    # memory, however close the target, and the ladder decodes it small.
+    from fitpdf.strategies import MAX_DECODE_PIXELS
+
+    big = tmp_path / "big.jpg"
+    Image.new("RGB", (6000, 4500)).save(big, quality=90)  # 27 MP
+    assert 6000 * 4500 > MAX_DECODE_PIXELS
+    size = big.stat().st_size
+    assert ImageStrategy().lossless_hopeless(big, size, int(size * 0.9))
+
+
+def test_a_png_is_shrunk_after_decoding_to_what_the_rung_needs(tmp_path):
+    png = tmp_path / "wide.png"
+    Image.new("RGB", (4000, 3000), (40, 90, 160)).save(png)
+    strategy = ImageStrategy()
+    im = strategy._decoded(png, {"max_edge": 800, "quality": 60})
+    # Twice the output kept (1600 px), from a box reduce by 2: 2000 px.
+    assert im.size == (2000, 1500)

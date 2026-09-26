@@ -160,6 +160,43 @@ class PdfStrategy:
 # Two levers, pixel dimensions and JPEG quality, tightened together so the
 # ladder stays monotonic and the binary search stays valid. max_edge caps the
 # longest side; images smaller than the cap are never upscaled.
+# Largest picture decoded in full. Pillow holds RGB at four bytes a pixel, so
+# a 48 MP photo is about 190 MB, and the free server has 512 MB for
+# everything. A JPEG bigger than this decodes at reduced size (see
+# ImageStrategy._decoded) and skips the lossless pass; other formats cannot
+# decode small, so uploads above MAX_IMAGE_PIXELS are refused instead.
+MAX_DECODE_PIXELS = 24_000_000
+
+# Largest image taken at all, in pixels. A JPEG decodes at reduced size, so
+# 64 MP (every phone camera up to 64 MP sensors) peaks around 250 MB. Other
+# formats decode in full first, four bytes a pixel, so they stop at 34 MP
+# (an 8K screenshot), about 220 MB. Measured on the web worker's code path.
+MAX_IMAGE_PIXELS = {"JPEG": 64_000_000}
+MAX_OTHER_IMAGE_PIXELS = 34_000_000
+
+
+def image_too_big(src: Path) -> str | None:
+    """Why an image has too many pixels to process safely, or None.
+
+    Reads the header only.
+    """
+    from PIL import Image
+
+    with Image.open(src) as im:
+        fmt = (im.format or "").upper()
+        pixels = im.width * im.height
+    limit = MAX_IMAGE_PIXELS.get(fmt, MAX_OTHER_IMAGE_PIXELS)
+    if pixels <= limit:
+        return None
+    mp, cap = pixels / 1e6, limit // 1_000_000
+    if fmt == "JPEG":
+        return f"this photo is {mp:.0f} megapixels; the most we can take is {cap}. Make it smaller first"
+    return (
+        f"this image is {mp:.0f} megapixels; the most we can take for a {fmt or 'non-JPEG'} "
+        f"is {cap} ({MAX_IMAGE_PIXELS['JPEG'] // 1_000_000} for a JPEG). "
+        "Save it as a JPEG or make it smaller first"
+    )
+
 IMAGE_RUNGS: list[dict] = [
     {"max_edge": 4000, "quality": 92},
     {"max_edge": 3500, "quality": 88},
@@ -301,6 +338,11 @@ class ImageStrategy:
             with Image.open(src) as im:
                 fmt = (im.format or "").upper()
                 reach = self.LOSSLESS_REACH.get(fmt)
+                if fmt == "JPEG" and im.width * im.height > MAX_DECODE_PIXELS:
+                    # Not about reach: the pass decodes and re-encodes every
+                    # pixel, too much memory for a photo this big on a small
+                    # server. The ladder, which decodes it small, takes over.
+                    return True
                 if reach is None or target >= original * reach:
                     return False
                 if fmt == "PNG":
@@ -408,8 +450,14 @@ class ImageStrategy:
             scale = max(sx, sy) if self.fit == "crop" else min(sx, sy)
         else:
             scale = rung["max_edge"] / max(width, height)
+        # Keep twice the output, as thumbnail() does. A source too big to hold
+        # in full on a small server (see MAX_DECODE_PIXELS) settles for the
+        # output size itself: a JPEG's scaled decode already averages the
+        # pixels it drops, so the quality cost is small, and a 48 MP photo is
+        # held at 12 MP instead of 48.
+        need = scale if width * height > MAX_DECODE_PIXELS else 2 * scale
         reduce = 1
-        while reduce < 8 and reduce * 2 * 2 * scale <= 1:
+        while reduce < 8 and reduce * 2 * need <= 1:
             reduce *= 2
 
         key = ("decoded", src)
@@ -428,13 +476,28 @@ class ImageStrategy:
                         None,
                         (max(1, opened.width // reduce), max(1, opened.height // reduce)),
                     )
-                im = ImageOps.exif_transpose(opened)
+                opened.load()
+                # What the decoder actually did: nothing for a PNG, and for a
+                # JPEG possibly less than asked.
+                actual = round(full_width / opened.width)
+                im = opened
+                if actual < reduce and reduce % actual == 0:
+                    # Formats with no scaled decode (PNG, WebP, TIFF, BMP)
+                    # shrink right after it instead, with a box filter as the
+                    # JPEG decoder does, so the run holds the small copy and
+                    # not the full one.
+                    im = im.reduce(reduce // actual)
+                    actual = reduce
+                # In place, so an upright picture (every PNG, most photos
+                # taken the right way up) is never copied. Pixels stay usable
+                # once loaded, after the `with` closes the file.
+                ImageOps.exif_transpose(im, in_place=True)
 
                 if im.mode in ("RGBA", "LA", "P"):
                     # JPEG has no alpha. Composite onto white rather than
                     # letting Pillow drop the channel and produce black
                     # fringing.
-                    converted = im.convert("RGBA")
+                    converted = im if im.mode == "RGBA" else im.convert("RGBA")
                     alpha = converted.getchannel("A")
                     # One pass over pixels already in memory: only a pixel
                     # that is actually see-through turns white.
@@ -449,9 +512,6 @@ class ImageStrategy:
                     self.flattened = False
                     if im.mode != "RGB":
                         im = im.convert("RGB")
-                # What the decoder actually did: nothing for a PNG, and for a
-                # JPEG possibly less than asked.
-                actual = round(full_width / opened.width)
             self._pixels[key] = (actual, im)
         return self._pixels[key][1]
 
