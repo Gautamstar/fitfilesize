@@ -10,3 +10,4 @@ corpus/*
 *.fit.pdf
 data/
 FitPDF-Overview.pdf
+deploy/.env

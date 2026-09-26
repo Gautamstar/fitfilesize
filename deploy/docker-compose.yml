@@ -1,0 +1,89 @@
+# FitFileSize API on a VPS: the API, two workers, Redis, and a Cloudflare
+# Tunnel in front. No port is published: visitors reach the API only through
+# the tunnel, which connects out to Cloudflare.
+#
+#   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
+#
+# Memory caps add up to about 3.2 GB of the 4 GB box, leaving room for the
+# system and a small second site. Each worker runs one compression at a time,
+# so two workers means two at once.
+
+x-app: &app
+  build: ..
+  image: fitfilesize-api
+  restart: unless-stopped
+  environment: &env
+    REDIS_URL: redis://redis:6379/0
+    FITPDF_DATA_DIR: /data
+    ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+    FITPDF_MAX_UPLOAD: ${FITPDF_MAX_UPLOAD:-26214400}
+    FITPDF_GS_TIMEOUT: "120"
+    FITPDF_TTL_SECONDS: "600"
+    FITPDF_INPUT_GRACE_SECONDS: "300"
+    # Must stay above the queue's per-job timeout, FITPDF_GS_TIMEOUT * 8 + 120.
+    FITPDF_PENDING_TTL_SECONDS: "1800"
+    FITPDF_UPLOADS_PER_HOUR: "30"
+    FITPDF_RUNS_PER_HOUR: "100"
+  volumes:
+    - data:/data
+  depends_on:
+    - redis
+  # Ghostscript reads strangers' PDFs: no extra privileges, ever.
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  pids_limit: 256
+  logging: &logs
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  api:
+    <<: *app
+    command: ["uvicorn", "fitpdf.web.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "fitpdf.web.worker"]
+    # Two copies: two compressions at once. Lower CPU weight than the API, so
+    # a busy compression never makes the API slow to answer.
+    deploy:
+      replicas: 2
+    mem_limit: 1g
+    cpu_shares: 512
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Jobs live minutes; nothing here needs to survive a restart.
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "200mb", "--maxmemory-policy", "noeviction"]
+    mem_limit: 256m
+    security_opt:
+      - no-new-privileges:true
+    logging: *logs
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on:
+      - api
+    mem_limit: 128m
+    security_opt:
+      - no-new-privileges:true
+    logging: *logs
+
+volumes:
+  data:
