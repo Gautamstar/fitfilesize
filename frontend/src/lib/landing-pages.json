@@ -868,45 +868,8 @@
         "tips": [
           "Combine all the pages into one PDF first. If you upload several files to one field, IRCC keeps only the last one.",
           "Scanning at 150 to 300 DPI is plenty; higher only makes a bigger file to shrink.",
-          "Some IRCC forms set a lower limit, as low as 2 MB. If the upload page states one, choose that size instead."
-        ]
-      }
-    },
-    {
-      "slug": "canada-pr-card-photo",
-      "kind": "image",
-      "group": "Forms and applications",
-      "linkLabel": "Canada PR card photo",
-      "targetKb": 4000,
-      "pixels": {
-        "width": 1000,
-        "height": 1400
-      },
-      "heading": "Canada PR card photo for the PR confirmation portal: 1000 x 1400, under 4 MB",
-      "title": "Canada PR card photo",
-      "spec": [
-        "JPEG",
-        "1000 × 1400 pixels",
-        "4 MB or less"
-      ],
-      "org": "Immigration, Refugees and Citizenship Canada (IRCC)",
-      "description": "Resize your PR card photo to 1000 x 1400 pixels and under 4 MB for the Canadian PR confirmation portal. Free, no sign-up, files deleted minutes after.",
-      "blurb": "The PR confirmation portal takes a JPEG or PNG between 715 x 1000 and 2000 x 2800 pixels and no larger than 4 MB. This page makes it 1000 x 1400, the same shape, well inside both limits.",
-      "source": {
-        "label": "IRCC's PR confirmation portal photo requirements",
-        "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/pr-confirmation-portal.html",
-        "checked": "2026-09-26"
-      },
-      "guide": {
-        "title": "Getting a PR card photo to the portal's size",
-        "paragraphs": [
-          "IRCC asks for the photo as a JPEG or PNG between 715 x 1000 and 2000 x 2800 pixels, no larger than 4 MB. Both ends of that range have the same 5 to 7 shape, so the photo has to be that shape too.",
-          "This page crops the photo to 5 by 7 where you place the crop box, resizes it to 1000 x 1400 pixels and saves it as a JPEG well under 4 MB. If you prefer another size inside the range, change the pixel size in the options before you press Compress."
-        ],
-        "tips": [
-          "IRCC wants the photo taken by a professional photographer, within the last 12 months, on a plain white background. Check the full list on IRCC's page before you upload.",
-          "Use the photographer's digital file rather than a phone photo of a printed one.",
-          "Keep the whole head and the top of the shoulders inside the crop box."
+          "Some IRCC forms set a lower limit, as low as 2 MB. If the upload page states one, choose that size instead.",
+          "This page is for documents. IRCC photos must be the photographer's original file, not altered in any way, so upload those as they are."
         ]
       }
     }
