@@ -6,6 +6,7 @@
  */
 
 import type { AnalyzeResponse, JobState, Resize, UploadResponse } from '../types/api'
+import { setFileLimits } from './fileCheck'
 
 /**
  * Base URL for the API.
@@ -84,15 +85,29 @@ const TRANSIENT_STATUSES = new Set([502, 503, 504])
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
- * GET /health, fire and forget, as soon as the page loads.
+ * GET /api/limits, fire and forget, as soon as the page loads.
  *
  * A free-tier backend sleeps when idle and takes up to a minute to wake. Poking
  * it here starts that clock while the visitor is still choosing a file,
- * instead of when they drop it. The answer does not matter, so errors are
- * swallowed: a failed upload reports itself later with a real message.
+ * instead of when they drop it. The answer also carries the largest file the
+ * server takes, which the page then checks before uploading (lib/fileCheck).
+ * Errors are swallowed: the page keeps its built-in limits, and a failed
+ * upload reports itself later with a real message.
  */
 export function warmUp(): void {
-  fetch(API_BASE + '/health').catch(() => {})
+  fetch(API_BASE + '/api/limits')
+    .then((res) => (res.ok ? res.json() : null))
+    .then((body) => {
+      const files = body?.files
+      if (
+        typeof files?.max_bytes === 'number' &&
+        typeof files?.max_pixels?.jpeg === 'number' &&
+        typeof files?.max_pixels?.other === 'number'
+      ) {
+        setFileLimits({ maxBytes: files.max_bytes, maxPixels: files.max_pixels })
+      }
+    })
+    .catch(() => {})
 }
 
 /** POST /api/upload. Sends the PDF or image, gets back a job id and basic info. */

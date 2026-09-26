@@ -1131,3 +1131,37 @@ def test_a_large_phone_photo_is_still_taken(web, tmp_path):
     jpg = tmp_path / "48mp.jpg"
     Image.new("RGB", (8000, 6000)).save(jpg, quality=50)
     assert _upload(client, jpg, "48mp.jpg").status_code == 200
+
+
+def test_limits_say_which_files_the_server_takes(web):
+    # The page reads these to refuse a file before uploading it.
+    from fitpdf.strategies import MAX_IMAGE_PIXELS, MAX_OTHER_IMAGE_PIXELS
+
+    client, _, settings = web
+    files = client.get("/api/limits").json()["files"]
+    assert files == {
+        "max_bytes": settings.max_upload_bytes,
+        "max_pixels": {"jpeg": MAX_IMAGE_PIXELS["JPEG"], "other": MAX_OTHER_IMAGE_PIXELS},
+    }
+
+
+def test_an_image_too_big_for_pillow_to_open_gets_the_pixel_message(web, tmp_path):
+    # Over Pillow's own bomb limit (about 179 MP) it refuses to open the
+    # file at all; the visitor should still hear why, not "not readable".
+    import struct
+    import zlib
+
+    def chunk(kind, data):
+        body = kind + data
+        return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body))
+
+    png = tmp_path / "200mp.png"
+    png.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", 20000, 10000, 8, 2, 0, 0, 0))
+        + chunk(b"IEND", b"")
+    )
+    client, _, _ = web
+    res = _upload(client, png, "200mp.png")
+    assert res.status_code == 422
+    assert "too many pixels" in res.json()["detail"]

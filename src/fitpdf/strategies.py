@@ -182,9 +182,17 @@ def image_too_big(src: Path) -> str | None:
     """
     from PIL import Image
 
-    with Image.open(src) as im:
-        fmt = (im.format or "").upper()
-        pixels = im.width * im.height
+    try:
+        with Image.open(src) as im:
+            fmt = (im.format or "").upper()
+            pixels = im.width * im.height
+    except Image.DecompressionBombError:
+        # Pillow will not even open an image this big (over twice its own
+        # 89 MP safety limit), so it is certainly over ours.
+        cap = MAX_IMAGE_PIXELS["JPEG"] // 1_000_000
+        return f"this image has far too many pixels; the most we can take is {cap} megapixels"
+    except Exception:
+        return None  # not an image this can read; analyze says so
     limit = MAX_IMAGE_PIXELS.get(fmt, MAX_OTHER_IMAGE_PIXELS)
     if pixels <= limit:
         return None
