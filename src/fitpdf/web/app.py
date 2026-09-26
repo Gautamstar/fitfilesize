@@ -264,6 +264,7 @@ def create_app(
     redis_conn=None,
     queue=None,
     *,
+    prepare_queue=None,
     background_sweep: bool = True,
 ) -> FastAPI:
     """Build the API. background_sweep=False skips the once-a-minute sweep and
@@ -287,6 +288,16 @@ def create_app(
 
         queue = Queue(settings.queue_name, connection=r, is_async=not settings.inline)
     q = queue
+    # Head-start runs wait on their own queue, which the worker only reads
+    # when the main one is empty: one visitor's guess never holds up another
+    # visitor's Compress. Same connection and mode as the main queue.
+    if prepare_queue is None:
+        from rq import Queue
+
+        prepare_queue = Queue(
+            settings.prepare_queue_name, connection=q.connection, is_async=q._is_async
+        )
+    pq = prepare_queue
 
     settings.data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -569,8 +580,16 @@ def create_app(
             if job.get("status") not in ("uploaded", "analyzed"):
                 raise HTTPException(409, "this file already has a compression run")
         elif head_start:
+            same = job.get("run_params") == params
+            if same and job.get("status") == "queued":
+                # Still waiting on the low-priority queue: requeue it as a
+                # real run so it is not stuck behind other visitors' runs.
+                # Nothing had started, so nothing is lost, and the budget was
+                # already spent on the head-start.
+                queue_run(job_id, require_input(job_id, job), req.target_bytes, resize, req.fit)
+                return {"job_id": job_id, "status": "queued"}
             done_ok = job.get("status") == "done" and output_path(job_id, job) is not None
-            if job.get("run_params") == params and (running or done_ok):
+            if same and (running or done_ok):
                 if store.adopt(r, job_id, settings.ttl_seconds):
                     return {"job_id": job_id, "status": "queued"}
             # Different settings (or a head-start that failed): replace it.
@@ -614,7 +633,7 @@ def create_app(
         # A re-run ("try another size") is no longer a finished job, so drop the
         # completion stamp and put the key back on the pending clock.
         store.clear_completion(r, job_id, settings.pending_ttl_seconds)
-        q.enqueue(
+        (pq if prepared else q).enqueue(
             run_compress,
             job_id,
             str(src),

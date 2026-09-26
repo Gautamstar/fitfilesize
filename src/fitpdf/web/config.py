@@ -57,6 +57,11 @@ class Settings:
     """Run jobs in-process against a fake Redis. Dev convenience for machines
     without Redis or Docker; needs the fakeredis package (dev extra)."""
 
+    @property
+    def prepare_queue_name(self) -> str:
+        """Queue for head-start runs, below real ones: see worker.queues()."""
+        return f"{self.queue_name}-prepare"
+
     @classmethod
     def from_env(cls) -> "Settings":
         origins = tuple(
