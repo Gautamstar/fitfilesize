@@ -28,7 +28,9 @@ echo "== SSH: keys only, once a key is installed"
 if [ -s "$HOME/.ssh/authorized_keys" ]; then
   echo "PasswordAuthentication no" | sudo tee /etc/ssh/sshd_config.d/10-keys-only.conf >/dev/null
   echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config.d/10-keys-only.conf >/dev/null
-  sudo systemctl reload ssh
+  sudo sshd -t
+  # 24.04 starts sshd per connection (ssh.socket), so there may be nothing to reload.
+  sudo systemctl try-reload-or-restart ssh
 else
   echo "   no key in ~/.ssh/authorized_keys yet: password login left on"
 fi
