@@ -225,6 +225,25 @@ def test_resize_pad_keeps_the_whole_image_on_white(photo_jpg, tmp_path):
         assert min(r, g, b) > 245
 
 
+def test_resize_crop_cuts_where_the_focus_says(tmp_path):
+    # Left half red, right half blue: a square crop of this 2:1 picture keeps
+    # one half or the other, depending on where it cuts from.
+    src = tmp_path / "halves.png"
+    im = Image.new("RGB", (400, 200), (220, 0, 0))
+    im.paste((0, 0, 220), (200, 0, 400, 200))
+    im.save(src)
+
+    def middle(focus):
+        out = tmp_path / "out.jpg"
+        strategy = ImageStrategy(resize=(100, 100), focus=focus)
+        strategy.render(src, out, strategy.rungs[0], timeout=60)
+        with Image.open(out) as res:
+            return res.getpixel((50, 50))
+
+    assert middle((0, 0.5))[0] > 200  # red: the left edge kept
+    assert middle((1, 0.5))[2] > 200  # blue: the right edge kept
+
+
 def test_resize_notes_say_what_happened_to_the_picture(photo_jpg):
     crop = ImageStrategy(resize=(200, 200)).probe(photo_jpg).warnings
     assert any("trimmed about 33% of the width" in w for w in crop)
@@ -244,6 +263,8 @@ def test_resize_rejects_bad_settings():
         ImageStrategy(resize=(4001, 100))
     with pytest.raises(ValueError):
         ImageStrategy(resize=(100, 100), fit="stretch")
+    with pytest.raises(ValueError):
+        ImageStrategy(resize=(100, 100), focus=(0.5, 1.5))
 
 
 # --------------------------------------------------------------------------- #

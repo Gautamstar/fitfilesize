@@ -10,6 +10,8 @@
 
 import { useId, useState } from 'react'
 import type { MediaKind, Resize } from '../types/api'
+import { CropBox } from './CropBox'
+import { DEFAULT_FOCUS, type Focus } from '../lib/crop'
 import {
   LIMIT_PRESETS,
   SLIDER_STEPS,
@@ -67,6 +69,8 @@ interface TargetPickerProps {
   initialResize?: Resize | null
   /** A form's minimum size, when the page has one; the file is padded up to it. */
   minBytes?: number | null
+  /** The dropped image, read locally, to place an exact-size crop on. */
+  preview?: string | null
 }
 
 export function TargetPicker({
@@ -82,13 +86,23 @@ export function TargetPicker({
   initialTarget,
   initialResize,
   minBytes = null,
+  preview = null,
 }: TargetPickerProps) {
   // Exact pixel size, images only. Kept as typed text so a half-typed number
   // is not rewritten under the cursor; `resize` is the parsed result.
   const [widthText, setWidthText] = useState(initialResize ? String(initialResize.width) : '')
   const [heightText, setHeightText] = useState(initialResize ? String(initialResize.height) : '')
   const [fit, setFit] = useState<Resize['fit']>(initialResize?.fit ?? 'crop')
-  const resize = kind === 'image' ? parseResize(widthText, heightText, fit) : null
+  // Where the crop cuts from. Null until the visitor moves the box, so an
+  // untouched crop asks for the server's default and matches a head-start.
+  const [focus, setFocus] = useState<Focus | null>(
+    initialResize?.crop_x !== undefined && initialResize.crop_y !== undefined
+      ? { x: initialResize.crop_x, y: initialResize.crop_y }
+      : null,
+  )
+  const parsed = kind === 'image' ? parseResize(widthText, heightText, fit) : null
+  const resize =
+    parsed && fit === 'crop' && focus ? { ...parsed, crop_x: focus.x, crop_y: focus.y } : parsed
   const resizeIncomplete = kind === 'image' && !resize && Boolean(widthText || heightText)
   const fitName = useId()
 
@@ -296,6 +310,15 @@ export function TargetPicker({
               Add a white border
             </label>
           </fieldset>
+          {preview && resize && fit === 'crop' ? (
+            <CropBox
+              src={preview}
+              width={resize.width}
+              height={resize.height}
+              focus={focus ?? DEFAULT_FOCUS}
+              onChange={setFocus}
+            />
+          ) : null}
           {resizeIncomplete ? (
             <p className="custom-limit-error">
               Enter both width and height, as whole numbers up to {MAX_PIXELS.toLocaleString('en')}.

@@ -34,6 +34,7 @@ def run_compress(
     fit: str = "crop",
     run_id: str = "",
     min_bytes: int | None = None,
+    focus: tuple[float, float] | None = None,
 ) -> None:
     rq_job = get_current_job()
     if rq_job is None:
@@ -75,7 +76,11 @@ def run_compress(
 
         try:
             # The API only accepts a resize for images, so no PDF gets here with one.
-            strategy = ImageStrategy(resize=tuple(resize), fit=fit) if resize else None
+            strategy = (
+                ImageStrategy(resize=tuple(resize), fit=fit, focus=tuple(focus) if focus else None)
+                if resize
+                else None
+            )
             result = compress_to_target(
                 Path(src),
                 Path(dst),

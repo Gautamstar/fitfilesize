@@ -48,6 +48,9 @@ export interface Resize {
   width: number
   height: number
   fit: 'crop' | 'pad'
+  /** Where a crop cuts from, 0 to 1; left out for the server's default. */
+  crop_x?: number
+  crop_y?: number
 }
 
 /* ---- GET /api/jobs/{id}, and the SSE `state` event. ---- */
