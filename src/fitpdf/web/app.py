@@ -107,6 +107,12 @@ class CompressRequest(BaseModel):
     width: int | None = PIXELS
     height: int | None = PIXELS
     fit: Fit = "crop"
+    min_bytes: int | None = Field(
+        None,
+        gt=0,
+        description="For forms that also set a minimum: a JPEG result under this is padded "
+        "up to it with comment blocks, the picture unchanged. Must be below target_bytes.",
+    )
     prepare: bool = Field(
         False,
         description="Start the run ahead of time, before the visitor has confirmed "
@@ -115,9 +121,18 @@ class CompressRequest(BaseModel):
     )
 
 
-def run_params(target_bytes: int, resize: tuple[int, int] | None, fit: str) -> str:
+def run_params(
+    target_bytes: int, resize: tuple[int, int] | None, fit: str, min_bytes: int | None = None
+) -> str:
     """What a run was asked for, to tell whether a head-start matches."""
-    return json.dumps([target_bytes, list(resize) if resize else None, fit if resize else None])
+    return json.dumps(
+        [target_bytes, list(resize) if resize else None, fit if resize else None, min_bytes]
+    )
+
+
+def check_min(min_bytes: int | None, target_bytes: int) -> None:
+    if min_bytes is not None and min_bytes >= target_bytes:
+        raise HTTPException(422, "the minimum size must be below the limit")
 
 
 def resize_for(job: dict, width: int | None, height: int | None) -> tuple[int, int] | None:
@@ -678,7 +693,8 @@ def create_app(
         """
         job = require_job(job_id)
         resize = resize_for(job, req.width, req.height)
-        params = run_params(req.target_bytes, resize, req.fit)
+        check_min(req.min_bytes, req.target_bytes)
+        params = run_params(req.target_bytes, resize, req.fit, req.min_bytes)
         head_start = job.get("prepared") == "1"
         running = job.get("status") in ("queued", "compressing")
 
@@ -693,7 +709,10 @@ def create_app(
                 # real run so it is not stuck behind other visitors' runs.
                 # Nothing had started, so nothing is lost, and the budget was
                 # already spent on the head-start.
-                queue_run(job_id, require_input(job_id, job), req.target_bytes, resize, req.fit)
+                queue_run(
+                    job_id, require_input(job_id, job), req.target_bytes, resize, req.fit,
+                    min_bytes=req.min_bytes,
+                )
                 return {"job_id": job_id, "status": "queued"}
             done_ok = job.get("status") == "done" and output_path(job_id, job) is not None
             if same and (running or done_ok):
@@ -705,7 +724,10 @@ def create_app(
 
         src = require_input(job_id, job)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        queue_run(job_id, src, req.target_bytes, resize, req.fit, prepared=req.prepare)
+        queue_run(
+            job_id, src, req.target_bytes, resize, req.fit,
+            prepared=req.prepare, min_bytes=req.min_bytes,
+        )
         return {"job_id": job_id, "status": "queued"}
 
     def queue_run(
@@ -715,6 +737,7 @@ def create_app(
         resize: tuple[int, int] | None = None,
         fit: str = "crop",
         prepared: bool = False,
+        min_bytes: int | None = None,
     ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
         # The new run id goes in first: from this write on, any earlier run of
@@ -727,7 +750,7 @@ def create_app(
             status="queued",
             target_bytes=target_bytes,
             prepared="1" if prepared else "0",
-            run_params=run_params(target_bytes, resize, fit),
+            run_params=run_params(target_bytes, resize, fit, min_bytes),
         )
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back. Named for
@@ -752,6 +775,7 @@ def create_app(
             resize,
             fit,
             run_id=run_id,  # by name: the worker's killed-run handler reads it
+            min_bytes=min_bytes,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,
@@ -795,6 +819,11 @@ def create_app(
             "crop",
             description="When the shape differs: crop to fill, or pad with a white border.",
         ),
+        minimum: str | None = Form(
+            None,
+            description="For forms that also set a minimum, like 10KB: a JPEG result under it "
+            "is padded up to it, the picture unchanged. Same units as target.",
+        ),
     ):
         """Upload a file and compress it to fit under `target`.
 
@@ -806,8 +835,10 @@ def create_app(
         """
         try:
             target_bytes = parse_limit(target)
+            min_bytes = parse_limit(minimum) if minimum else None
         except ValueError as e:
             raise HTTPException(422, str(e)) from None
+        check_min(min_bytes, target_bytes)
         job_id, _, _, _ = await receive_upload(file)
         job = require_job(job_id)
         try:
@@ -818,7 +849,7 @@ def create_app(
             remove_tree(job_dir(job_id))
             raise
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        queue_run(job_id, require_input(job_id, job), target_bytes, resize, fit)
+        queue_run(job_id, require_input(job_id, job), target_bytes, resize, fit, min_bytes=min_bytes)
 
         waited = 0.0
         job = store.get_job(r, job_id) or {}

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { presetToSlider, sliderToBytes } from './format'
-import { LANDING_PAGES, keepUnits, pageForPath, pageSizeLabel, pageTargetBytes } from './landing'
+import {
+  LANDING_PAGES,
+  keepUnits,
+  pageForPath,
+  pageMinBytes,
+  pageSizeLabel,
+  pageTargetBytes,
+} from './landing'
 
 describe('pageForPath', () => {
   it('finds a landing page with or without a trailing slash', () => {
@@ -18,10 +25,27 @@ describe('landing page data', () => {
   it('has unique slugs that name their own size', () => {
     const slugs = LANDING_PAGES.map((p) => p.slug)
     expect(new Set(slugs).size).toBe(slugs.length)
-    for (const page of LANDING_PAGES) {
+    for (const page of LANDING_PAGES.filter((p) => !p.source)) {
       // The URL and the preset must agree: /…-to-200kb targets 200 KB.
+      // (Form pages are named for their form instead.)
       const label = pageSizeLabel(page).replace(' ', '').toLowerCase()
       expect(page.slug.endsWith(label)).toBe(true)
+    }
+  })
+
+  it('gives every form page a source, a name and rules that can all hold', () => {
+    const forms = LANDING_PAGES.filter((p) => p.source || p.linkLabel || p.minKb || p.pixels)
+    expect(forms.length).toBeGreaterThan(0)
+    for (const page of forms) {
+      expect(page.source?.url).toMatch(/^https:\/\//)
+      expect(page.source?.checked).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      expect(page.linkLabel).toBeTruthy()
+      // The minimum (read as 1024-byte KB) must sit under the limit (1000-byte KB).
+      const min = pageMinBytes(page)
+      if (min !== null) expect(min).toBeLessThan(pageTargetBytes(page))
+      // Pixels only make sense for images; PDFs cannot be padded up to a minimum.
+      if (page.pixels) expect(page.kind).toBe('image')
+      if (page.minKb) expect(page.kind).toBe('image')
     }
   })
 

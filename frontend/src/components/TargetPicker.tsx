@@ -65,6 +65,8 @@ interface TargetPickerProps {
   initialTarget?: number
   /** Exact pixel size carried over from the last run ("Try another size"). */
   initialResize?: Resize | null
+  /** A form's minimum size, when the page has one; the file is padded up to it. */
+  minBytes?: number | null
 }
 
 export function TargetPicker({
@@ -79,6 +81,7 @@ export function TargetPicker({
   busy = false,
   initialTarget,
   initialResize,
+  minBytes = null,
 }: TargetPickerProps) {
   // Exact pixel size, images only. Kept as typed text so a half-typed number
   // is not rewritten under the cursor; `resize` is the parsed result.
@@ -93,7 +96,10 @@ export function TargetPicker({
   // count decides how small it can get.
   const floorFor = (r: Resize | null) => (r ? resizedFloor(r.width, r.height) : floor)
   const effectiveFloor = floorFor(resize)
-  const hi = originalBytes
+  // A form's exact pixel size changes the file whatever its size, so its own
+  // limit stays on offer even for a file already under it.
+  const formPixels = kind === 'image' && Boolean(initialResize) && initialTarget !== undefined
+  const hi = formPixels ? Math.max(originalBytes, initialTarget as number) : originalBytes
 
   // The slider's bottom only ever moves down. A large pixel size raises the
   // floor estimate, and if that raised the bottom, a limit already picked
@@ -110,7 +116,7 @@ export function TargetPicker({
   // size moves the slider's range, and a position would then point at a
   // different size. A preset or chip stays exactly its limit this way.
   const [chosen, setChosen] = useState(() => {
-    if (initialTarget && initialTarget < originalBytes) return initialTarget
+    if (initialTarget && (initialTarget < originalBytes || formPixels)) return initialTarget
     const fourMB = 4 * 1024 * 1024
     const def =
       fourMB > effectiveFloor && fourMB < originalBytes ? fourMB : Math.round(originalBytes * 0.6)
@@ -125,7 +131,7 @@ export function TargetPicker({
     setLo((current) => Math.min(current, sliderLow(floorFor(next), hi, initialTarget)))
   }
 
-  const alreadyFits = initialTarget !== undefined && initialTarget >= originalBytes
+  const alreadyFits = !formPixels && initialTarget !== undefined && initialTarget >= originalBytes
 
   const chipLimits = LIMIT_PRESETS.filter((bytes) => bytes < originalBytes)
 
@@ -160,7 +166,15 @@ export function TargetPicker({
       ) : null}
 
       <p className="target-value">{fmtLimit(target)}</p>
-      <p className="target-hint">{hint}</p>
+      {minBytes && kind === 'image' && target > minBytes ? (
+        <p className="target-min">
+          This form also needs at least {fmtLimit(Math.round(minBytes / 1024) * 1000)}. If the
+          file comes out smaller, we pad it up to that without changing the picture.
+        </p>
+      ) : null}
+      {/* The hint compares the limit with the file as it is; at a set pixel
+          size the file is rebuilt, and the comparison says nothing. */}
+      {resize ? null : <p className="target-hint">{hint}</p>}
 
       <div className="slider-wrap">
         <div className="track">

@@ -577,6 +577,32 @@ def detect_strategy(src: Path | str) -> Strategy:
     return ImageStrategy()
 
 
+def pad_jpeg(path: Path, min_bytes: int) -> int:
+    """Grow a JPEG to at least min_bytes with comment blocks. Returns the new size.
+
+    Some upload forms set a minimum size as well as a maximum (a signature
+    "between 10 and 20 KB"), and a small image at its required pixel size can
+    come out under it. JPEG comment segments (COM) are skipped by every
+    decoder, so the picture is exactly as it was; only the byte count rises.
+    They go after the APPn headers (JFIF, EXIF), where a strict reader expects
+    them, and may overshoot the minimum by at most three bytes.
+    """
+    data = path.read_bytes()
+    need = min_bytes - len(data)
+    if need <= 0 or data[:2] != b"\xff\xd8":
+        return len(data)
+    at = 2
+    while at + 4 <= len(data) and data[at] == 0xFF and 0xE0 <= data[at + 1] <= 0xEF:
+        at += 2 + int.from_bytes(data[at + 2 : at + 4], "big")
+    blocks = bytearray()
+    while need > 0:
+        payload = min(65533, max(0, need - 4))  # a segment is 4 bytes plus its payload
+        blocks += b"\xff\xfe" + (payload + 2).to_bytes(2, "big") + b" " * payload
+        need -= 4 + payload
+    path.write_bytes(data[:at] + bytes(blocks) + data[at:])
+    return path.stat().st_size
+
+
 def copy_through(src: Path, dst: Path) -> int:
     shutil.copyfile(src, dst)
     return dst.stat().st_size

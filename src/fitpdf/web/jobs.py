@@ -33,6 +33,7 @@ def run_compress(
     resize: tuple[int, int] | None = None,
     fit: str = "crop",
     run_id: str = "",
+    min_bytes: int | None = None,
 ) -> None:
     rq_job = get_current_job()
     if rq_job is None:
@@ -83,6 +84,7 @@ def run_compress(
                 on_progress=on_progress,
                 strategy=strategy,
                 prerendered=_floor_render(Path(src)) if strategy is None else None,
+                min_bytes=min_bytes,
             )
         except store.Superseded:
             raise
