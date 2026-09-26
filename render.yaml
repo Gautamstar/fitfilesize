@@ -5,6 +5,19 @@ services:
     plan: free
     dockerCommand: ./start.sh
     healthCheckPath: /health
+    # Deploy only when the image changes. A deploy restarts the container,
+    # which drops every run in progress and the uploads on its disk, so a
+    # push that only touches the website (frontend/, on Vercel), the docs or
+    # the MCP package must not cause one. Keep this in step with what the
+    # Dockerfile copies.
+    buildFilter:
+      paths:
+        - src/**
+        - pyproject.toml
+        - README.md
+        - start.sh
+        - Dockerfile
+        - .dockerignore
     envVars:
       - key: REDIS_URL
         fromService:

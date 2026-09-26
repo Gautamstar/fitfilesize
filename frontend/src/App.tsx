@@ -79,6 +79,14 @@ function App({ path }: AppProps) {
   // Upload progress, 0 to 1, while the file is being sent; null after.
   const [uploaded, setUploaded] = useState<number | null>(null)
   const [fileBytes, setFileBytes] = useState(0)
+  // The dropped image, read locally for the crop box. Released when replaced.
+  const [preview, setPreview] = useState<string | null>(null)
+  useEffect(
+    () => () => {
+      if (preview) URL.revokeObjectURL(preview)
+    },
+    [preview],
+  )
   // The limit picked before upload. A landing page preselects its own; null
   // means "Other", and the picker then suggests a size from the file.
   const [limit, setLimit] = useState<number | null>(landing ? pageTargetBytes(landing) : 1_000_000)
@@ -95,6 +103,7 @@ function App({ path }: AppProps) {
     setJob(null)
     setTargetBytes(0)
     setResize(formResize)
+    setPreview(null)
     setTargetWarning(null)
     setFatalError(null)
     setDropError(message ?? null)
@@ -197,6 +206,7 @@ function App({ path }: AppProps) {
         meta: describeSource(up.kind, up.size_bytes, up.pages, up.width, up.height),
         floor: an.floor_estimate,
       })
+      setPreview(up.kind === 'image' ? URL.createObjectURL(file) : null)
       setPhase('target')
       // Head-start: a size the visitor chose before upload (a landing page's,
       // or a chip they clicked) is what they usually go on to compress with,
@@ -293,6 +303,7 @@ function App({ path }: AppProps) {
             initialTarget={limit ?? undefined}
             minBytes={formMin}
             initialResize={resize}
+            preview={preview}
           />
         ) : null
 

@@ -786,6 +786,39 @@ def test_compress_refuses_half_a_size_and_pdf_resizes(web, photo_jpg, image_pdf)
     assert res.status_code == 422
 
 
+def test_compress_crops_where_the_visitor_placed_the_box(web, tmp_path):
+    client, _, _ = web
+    src = tmp_path / "halves.png"
+    im = Image.new("RGB", (400, 200), (220, 0, 0))
+    im.paste((0, 0, 220), (200, 0, 400, 200))
+    im.save(src)
+    job_id = _upload(client, src, name="halves.png").json()["job_id"]
+    res = client.post(
+        f"/api/jobs/{job_id}/compress",
+        json={"target_bytes": 50_000, "width": 100, "height": 100, "crop_x": 1, "crop_y": 0.5},
+    )
+    assert res.status_code == 202
+    out = client.get(f"/api/jobs/{job_id}/download").content
+    with Image.open(io.BytesIO(out)) as res_im:
+        assert res_im.getpixel((50, 50))[2] > 200  # the blue right half
+
+
+def test_compress_refuses_a_crop_position_it_cannot_use(web, photo_jpg):
+    client, _, _ = web
+    job_id = _upload(client, photo_jpg, name="photo.jpg").json()["job_id"]
+    url = f"/api/jobs/{job_id}/compress"
+    size = {"target_bytes": 50_000, "width": 200, "height": 230}
+    res = client.post(url, json={**size, "crop_x": 0.2})
+    assert res.status_code == 422
+    assert "both crop_x and crop_y" in res.json()["detail"]
+    res = client.post(url, json={**size, "fit": "pad", "crop_x": 0.2, "crop_y": 0.5})
+    assert "exact-size crop" in res.json()["detail"]
+    res = client.post(url, json={"target_bytes": 50_000, "crop_x": 0.2, "crop_y": 0.5})
+    assert "exact-size crop" in res.json()["detail"]
+    res = client.post(url, json={**size, "crop_x": 2, "crop_y": 0.5})
+    assert res.status_code == 422
+
+
 def test_fit_takes_exact_pixels_in_one_call(web, photo_jpg):
     client, _, _ = web
     with open(photo_jpg, "rb") as f:

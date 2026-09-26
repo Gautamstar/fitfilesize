@@ -64,7 +64,8 @@ ready (usually seconds), or `202` with a `status_url` to poll for large files.
 route to get a JPEG of exactly that many pixels, as exam and ID photo forms
 ask for. `fit` decides what happens when the shape differs: `crop` (default)
 fills the frame and trims the overflow, `pad` keeps the whole image and adds
-a white border.
+a white border. On the compress route, `crop_x` and `crop_y` (0 to 1) choose
+where a crop cuts from.
 
 **Units:** KB and MB are 1000-based, so a `200KB` target aims under 200,000
 bytes and passes whichever way the destination counts.
@@ -100,6 +101,14 @@ MEDIA_TYPES = {
 Fit = Literal["crop", "pad"]
 
 PIXELS = Field(None, ge=1, le=MAX_RESIZE_EDGE)
+CROP_AT = Field(
+    None,
+    ge=0,
+    le=1,
+    description="Where a crop cuts from, as a fraction: 0 keeps the left (or top) edge, "
+    "1 the right (or bottom). Give both crop_x and crop_y, or neither for the default "
+    "(centred, a little above the middle for portraits).",
+)
 
 
 class CompressRequest(BaseModel):
@@ -107,6 +116,8 @@ class CompressRequest(BaseModel):
     width: int | None = PIXELS
     height: int | None = PIXELS
     fit: Fit = "crop"
+    crop_x: float | None = CROP_AT
+    crop_y: float | None = CROP_AT
     min_bytes: int | None = Field(
         None,
         gt=0,
@@ -122,12 +133,33 @@ class CompressRequest(BaseModel):
 
 
 def run_params(
-    target_bytes: int, resize: tuple[int, int] | None, fit: str, min_bytes: int | None = None
+    target_bytes: int,
+    resize: tuple[int, int] | None,
+    fit: str,
+    min_bytes: int | None = None,
+    focus: tuple[float, float] | None = None,
 ) -> str:
     """What a run was asked for, to tell whether a head-start matches."""
-    return json.dumps(
-        [target_bytes, list(resize) if resize else None, fit if resize else None, min_bytes]
-    )
+    return json.dumps([
+        target_bytes,
+        list(resize) if resize else None,
+        fit if resize else None,
+        min_bytes,
+        list(focus) if focus else None,
+    ])
+
+
+def focus_for(
+    resize: tuple[int, int] | None, fit: str, x: float | None, y: float | None
+) -> tuple[float, float] | None:
+    """Where an exact-size crop cuts from, or None for the default."""
+    if x is None and y is None:
+        return None
+    if x is None or y is None:
+        raise HTTPException(422, "give both crop_x and crop_y, or neither")
+    if resize is None or fit != "crop":
+        raise HTTPException(422, "crop_x and crop_y apply only to an exact-size crop")
+    return (round(x, 4), round(y, 4))
 
 
 def check_min(min_bytes: int | None, target_bytes: int) -> None:
@@ -694,7 +726,8 @@ def create_app(
         job = require_job(job_id)
         resize = resize_for(job, req.width, req.height)
         check_min(req.min_bytes, req.target_bytes)
-        params = run_params(req.target_bytes, resize, req.fit, req.min_bytes)
+        focus = focus_for(resize, req.fit, req.crop_x, req.crop_y)
+        params = run_params(req.target_bytes, resize, req.fit, req.min_bytes, focus)
         head_start = job.get("prepared") == "1"
         running = job.get("status") in ("queued", "compressing")
 
@@ -711,7 +744,7 @@ def create_app(
                 # already spent on the head-start.
                 queue_run(
                     job_id, require_input(job_id, job), req.target_bytes, resize, req.fit,
-                    min_bytes=req.min_bytes,
+                    min_bytes=req.min_bytes, focus=focus,
                 )
                 return {"job_id": job_id, "status": "queued"}
             done_ok = job.get("status") == "done" and output_path(job_id, job) is not None
@@ -726,7 +759,7 @@ def create_app(
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
         queue_run(
             job_id, src, req.target_bytes, resize, req.fit,
-            prepared=req.prepare, min_bytes=req.min_bytes,
+            prepared=req.prepare, min_bytes=req.min_bytes, focus=focus,
         )
         return {"job_id": job_id, "status": "queued"}
 
@@ -738,6 +771,7 @@ def create_app(
         fit: str = "crop",
         prepared: bool = False,
         min_bytes: int | None = None,
+        focus: tuple[float, float] | None = None,
     ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
         # The new run id goes in first: from this write on, any earlier run of
@@ -750,7 +784,7 @@ def create_app(
             status="queued",
             target_bytes=target_bytes,
             prepared="1" if prepared else "0",
-            run_params=run_params(target_bytes, resize, fit, min_bytes),
+            run_params=run_params(target_bytes, resize, fit, min_bytes, focus),
         )
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back. Named for
@@ -776,6 +810,7 @@ def create_app(
             fit,
             run_id=run_id,  # by name: the worker's killed-run handler reads it
             min_bytes=min_bytes,
+            focus=focus,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,

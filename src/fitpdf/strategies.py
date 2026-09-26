@@ -241,12 +241,17 @@ CROP_CENTERING = (0.5, 0.35)
 MAX_RESIZE_EDGE = 4000
 
 
-def fit_exact(im, size: tuple[int, int], fit: str):
-    """Return `im` at exactly `size` pixels, cropped or padded to get there."""
+def fit_exact(im, size: tuple[int, int], fit: str, focus: tuple[float, float] | None = None):
+    """Return `im` at exactly `size` pixels, cropped or padded to get there.
+
+    `focus` is where a crop cuts from, as ImageOps.fit's centering: (0, 0)
+    keeps the top-left, (1, 1) the bottom-right. The visitor sets it by
+    dragging the crop box; without it, CROP_CENTERING.
+    """
     from PIL import Image, ImageOps
 
     if fit == "crop":
-        return ImageOps.fit(im, size, Image.LANCZOS, centering=CROP_CENTERING)
+        return ImageOps.fit(im, size, Image.LANCZOS, centering=focus or CROP_CENTERING)
     return ImageOps.pad(im, size, Image.LANCZOS, color=(255, 255, 255))
 
 
@@ -255,10 +260,19 @@ class ImageStrategy:
     # As PdfStrategy.typical_log_step, measured on a 12 MP phone photo.
     typical_log_step = 0.44
 
-    def __init__(self, resize: tuple[int, int] | None = None, fit: str = "crop") -> None:
-        """`resize`, if given, is the exact (width, height) of the result."""
+    def __init__(
+        self,
+        resize: tuple[int, int] | None = None,
+        fit: str = "crop",
+        focus: tuple[float, float] | None = None,
+    ) -> None:
+        """`resize`, if given, is the exact (width, height) of the result;
+        `focus` is where a crop cuts from (see fit_exact)."""
         if fit not in FIT_MODES:
             raise ValueError(f"fit must be one of {', '.join(FIT_MODES)}, not {fit!r}")
+        if focus is not None and not all(0 <= n <= 1 for n in focus):
+            raise ValueError("focus must be two fractions between 0 and 1")
+        self.focus = focus
         if resize is not None and not all(1 <= n <= MAX_RESIZE_EDGE for n in resize):
             raise ValueError(f"width and height must be between 1 and {MAX_RESIZE_EDGE} pixels")
         self.resize = resize
@@ -406,7 +420,7 @@ class ImageStrategy:
             size = (rung["width"], rung["height"])
             key = ("fit", src, size)
             if key not in self._pixels:
-                self._pixels[key] = fit_exact(self._decoded(src, rung), size, self.fit)
+                self._pixels[key] = fit_exact(self._decoded(src, rung), size, self.fit, self.focus)
             im = self._pixels[key]
         else:
             im = self._decoded(src, rung)
