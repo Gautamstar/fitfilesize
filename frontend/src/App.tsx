@@ -138,6 +138,14 @@ function App({ path }: AppProps) {
         floor: an.floor_estimate,
       })
       setPhase('target')
+      // Head-start: the size picked before upload (a landing page's, or a
+      // chip) is what most visitors go on to compress with, so start that run
+      // now, while they look at the picker. Their Compress adopts it when the
+      // settings match and replaces it when not. Best effort: if this fails,
+      // Compress simply starts the run as it always did.
+      if (limit !== null && limit < up.size_bytes) {
+        startCompress(up.job_id, limit, null, undefined, true).catch(() => {})
+      }
     } catch (err) {
       setDropError(err instanceof Error ? err.message : 'upload failed')
       setPhase('drop')
@@ -197,7 +205,12 @@ function App({ path }: AppProps) {
             kind={job.kind}
             warning={targetWarning}
             onCompress={handleCompress}
-            onCancel={() => reset()}
+            onCancel={() => {
+              // Delete the upload rather than leave it waiting, which also
+              // stops a head-start run working on a file nobody wants.
+              deleteJob(job.jobId).catch(() => {})
+              reset()
+            }}
             initialTarget={limit ?? undefined}
             initialResize={resize}
           />

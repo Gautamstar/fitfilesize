@@ -134,3 +134,94 @@ def clear_completion(r, job_id: str, pending_ttl: int) -> None:
 
 def delete_job(r, job_id: str) -> None:
     r.delete(job_key(job_id), events_key(job_id))
+
+
+# --------------------------------------------------------------------------- #
+# Runs. Each queued run gets an id, stored on the job. A newer run (a
+# different size picked after a head-start began) replaces it, and the old
+# run's writes must then land nowhere: not its events in the new run's
+# stream, not its "done" over the new run's status. Every write a run makes
+# goes through run_write, which checks the id and writes in one transaction.
+# --------------------------------------------------------------------------- #
+
+
+class Superseded(Exception):
+    """This run has been replaced by a newer one, or its job deleted."""
+
+
+def new_run_id() -> str:
+    return uuid.uuid4().hex
+
+
+def run_write(
+    r,
+    job_id: str,
+    run_id: str,
+    fields: dict | None = None,
+    event: dict | None = None,
+    *,
+    pending_ttl: int,
+    complete_ttl: int | None = None,
+) -> None:
+    """Write a run's fields and event, only while it is the job's current run.
+
+    With `complete_ttl`, the run is finishing: the completion stamp and the
+    key TTLs are set as mark_completed does, unless the run is a head-start
+    nobody has asked for yet (`prepared`). That one keeps the pending clock,
+    so a visitor still looking at the size picker does not find their upload
+    deleted five minutes after a run they never saw; adopt() starts the
+    clocks when they press Compress.
+
+    Raises Superseded when the job has another run or is gone. WATCH makes
+    the check and the write one step: a replacement landing in between
+    aborts the write and the check runs again.
+    """
+    jk, ek = job_key(job_id), events_key(job_id)
+
+    def attempt(p) -> None:
+        current = p.hget(jk, "run_id")
+        if current is None or current.decode() != run_id:
+            raise Superseded(job_id)
+        prepared = p.hget(jk, "prepared") == b"1"
+        completing = complete_ttl is not None and not prepared
+        p.multi()
+        mapping = {k: str(v) for k, v in (fields or {}).items()}
+        if completing:
+            mapping["completed_at"] = now_stamp()
+        if mapping:
+            p.hset(jk, mapping=mapping)
+        if event is not None:
+            p.rpush(ek, json.dumps(event))
+            p.expire(ek, pending_ttl)
+        if completing:
+            p.expire(jk, complete_ttl)
+            p.expire(ek, complete_ttl)
+
+    # redis-py's transaction(): WATCH, run attempt(), EXEC, and start over if
+    # the watched key changed in between.
+    r.transaction(attempt, jk)
+
+
+def adopt(r, job_id: str, ttl: int) -> bool:
+    """Turn a head-start into the visitor's run. False if there is none.
+
+    A run still going just loses its `prepared` mark, and finishes as any
+    run does. One already finished gets the completion stamp it held back,
+    so the download window starts now. Watched, like run_write, so a run
+    finishing at the same moment cannot slip between the two.
+    """
+    jk, ek = job_key(job_id), events_key(job_id)
+
+    def attempt(p) -> bool:
+        if p.hget(jk, "prepared") != b"1":
+            return False
+        status = (p.hget(jk, "status") or b"").decode()
+        p.multi()
+        p.hset(jk, "prepared", "0")
+        if status in TERMINAL_STATUSES:
+            p.hset(jk, "completed_at", now_stamp())
+            p.expire(jk, ttl)
+            p.expire(ek, ttl)
+        return True
+
+    return r.transaction(attempt, jk, value_from_callable=True)
