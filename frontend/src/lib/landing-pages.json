@@ -452,10 +452,10 @@
         "title": "Getting a DS-160 photo to 600 x 600 and under 240 KB",
         "paragraphs": [
           "The State Department sets four technical rules for the digital photo: JPEG format, 240 KB or less, a square shape, and 600 x 600 pixels. A file that misses any of them cannot be uploaded.",
-          "This page is set up for all four. Your photo is cropped to a square from the middle, scaled to exactly 600 x 600 pixels and saved as a JPEG at the highest quality that stays under 240 KB. At that size a photo usually fits with room to spare, so very little quality is lost."
+          "This page is set up for all four. Your photo is cropped to a square, where you place the crop box, scaled to exactly 600 x 600 pixels and saved as a JPEG at the highest quality that stays under 240 KB. At that size a photo usually fits with room to spare, so very little quality is lost."
         ],
         "tips": [
-          "Crop the photo square yourself before uploading if your head is not in the middle of the frame. The crop here takes the centre.",
+          "If your head is not in the middle of the photo, drag the crop box over it before you press Compress.",
           "The picture itself has rules too, such as the background, your expression and glasses. Check them on the State Department page before you take it.",
           "If the upload still complains, check that it is a JPEG. A PNG or HEIC from a phone is converted here, but a renamed file is not."
         ]
@@ -524,10 +524,10 @@
         "title": "Getting an e-Visa photo square and under 1 MB",
         "paragraphs": [
           "The e-Visa form asks for a JPEG of at least 10 KB and at most 1 MB, with equal height and width. It does not name a pixel size, so this page makes it 1000 x 1000: square, detailed, and comfortably under 1 MB.",
-          "The photo is cropped to a square from the middle, resized, and saved at the highest JPEG quality that fits. You can change the pixel size in the options before you compress if you prefer another."
+          "The photo is cropped to a square where you place the crop box, resized, and saved at the highest JPEG quality that fits. You can change the pixel size in the options before you compress if you prefer another."
         ],
         "tips": [
-          "Crop the photo square yourself first if your face is not in the centre. The crop here takes the middle of the picture.",
+          "If your face is not in the middle, drag the crop box over it before you press Compress.",
           "The form also asks for a full face, front view, eyes open, without glasses, on a plain light background, with no shadows and no border.",
           "A photo taken for a printed visa is fine to use; photograph or scan it in good light."
         ]
@@ -563,11 +563,11 @@
         "title": "Getting an IBPS photo to 200 x 230 and 20 KB to 50 KB",
         "paragraphs": [
           "IBPS guidelines ask for the photograph at 200 x 230 pixels with a file size between 20 KB and 50 KB. Most tools get the maximum right and miss the minimum: at 200 x 230 pixels a good-quality JPEG is often only 15 KB or so, and the form turns it away as too small.",
-          "Here the photo is cropped from the middle to 200 x 230, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it. The padding is an invisible comment inside the file, so the picture is exactly the same."
+          "Here the photo is cropped to 200 x 230 where you place the crop box, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it. The padding is an invisible comment inside the file, so the picture is exactly the same."
         ],
         "tips": [
           "Recent IBPS notifications also ask for a live photo taken during registration, besides this upload. Check the notification for your exam.",
-          "Use a recent photo, face centred, on a light background. Crop it yourself first if your face is off to one side.",
+          "Use a recent photo, face centred, on a light background. If your face is off to one side, drag the crop box over it.",
           "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
         ]
       }
@@ -602,11 +602,11 @@
         "title": "Getting an IBPS signature to 140 x 60 and 10 KB to 20 KB",
         "paragraphs": [
           "IBPS guidelines ask for the signature at 140 x 60 pixels with a file size between 10 KB and 20 KB. A signature at 140 x 60 pixels is a tiny image, usually 3 to 5 KB even at the best quality, which is under the minimum and gets refused.",
-          "Here the signature is cropped from the middle to 140 x 60, saved at the best quality under 20 KB, and padded up to 10 KB with an invisible comment inside the file. The signature itself is exactly the same."
+          "Here the signature is cropped to 140 x 60 where you place the crop box, saved at the best quality under 20 KB, and padded up to 10 KB with an invisible comment inside the file. The signature itself is exactly the same."
         ],
         "tips": [
           "Sign with a black pen on plain white paper, and photograph or scan it in good light.",
-          "Crop the photo close around the signature before uploading, so the 140 x 60 crop from the middle keeps all of it.",
+          "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
           "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
         ]
       }
@@ -641,7 +641,7 @@
         "title": "Getting an SBI photo to 200 x 230 and 20 KB to 50 KB",
         "paragraphs": [
           "SBI's recruitment notice asks for a recent passport-style colour photo, 200 x 230 pixels preferred, with a file size between 20 KB and 50 KB, as a JPG or JPEG.",
-          "Here the photo is cropped from the middle to 200 x 230, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it with an invisible comment inside the file. The picture is exactly the same."
+          "Here the photo is cropped to 200 x 230 where you place the crop box, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it with an invisible comment inside the file. The picture is exactly the same."
         ],
         "tips": [
           "Use a light, preferably white, background and look straight at the camera. Caps, hats and dark glasses are not accepted.",
@@ -680,11 +680,11 @@
         "title": "Getting an SBI signature to 140 x 60 and 10 KB to 20 KB",
         "paragraphs": [
           "SBI's recruitment notice asks for your signature in black ink on white paper, 140 x 60 pixels preferred, with a file size between 10 KB and 20 KB.",
-          "A signature at 140 x 60 pixels is usually 3 to 5 KB even at the best quality, which is under the minimum. Here it is cropped from the middle, saved at the best quality under 20 KB and padded up to 10 KB with an invisible comment inside the file."
+          "A signature at 140 x 60 pixels is usually 3 to 5 KB even at the best quality, which is under the minimum. Here it is cropped where you place the crop box, saved at the best quality under 20 KB and padded up to 10 KB with an invisible comment inside the file."
         ],
         "tips": [
           "Sign with a black pen on plain white paper, and photograph or scan it in good light.",
-          "Crop the photo close around the signature first, so the crop from the middle keeps all of it.",
+          "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
           "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
         ]
       }
@@ -719,7 +719,7 @@
         "title": "Getting a thumb impression to 240 x 240 and 20 KB to 50 KB",
         "paragraphs": [
           "SBI's recruitment notice asks for your left thumb impression in black or blue ink on white paper, 240 x 240 pixels preferred, with a file size between 20 KB and 50 KB, as a JPG or JPEG.",
-          "Here the image is cropped square from the middle, resized to 240 x 240, saved at the best quality under 50 KB, and padded up to 20 KB with an invisible comment inside the file if it comes out smaller."
+          "Here the image is cropped square where you place the crop box, resized to 240 x 240, saved at the best quality under 50 KB, and padded up to 20 KB with an invisible comment inside the file if it comes out smaller."
         ],
         "tips": [
           "Press the thumb once, firmly and evenly, so the ridges are clear rather than a smudge.",
@@ -758,11 +758,11 @@
         "title": "Getting the declaration to 800 x 400 and 50 KB to 100 KB",
         "paragraphs": [
           "SBI's recruitment notice asks you to write the declaration in English, in black ink on white paper, and upload it at 800 x 400 pixels preferred, with a file size between 50 KB and 100 KB, as a JPG or JPEG. The notice gives the exact wording to copy.",
-          "Here the photo of your page is cropped from the middle to the 2 to 1 shape of 800 x 400, saved at the best quality under 100 KB, and padded up to 50 KB with an invisible comment inside the file if it comes out smaller."
+          "Here the photo of your page is cropped where you place the crop box to the 2 to 1 shape of 800 x 400, saved at the best quality under 100 KB, and padded up to 50 KB with an invisible comment inside the file if it comes out smaller."
         ],
         "tips": [
           "Write the declaration in your own handwriting, not in capital letters, and copy the wording from the notice exactly.",
-          "Crop the photo close around the text first, so the crop from the middle keeps every line.",
+          "Take the photo close around the text, then drag the crop box so it keeps every line.",
           "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
         ]
       }
@@ -801,7 +801,7 @@
         ],
         "tips": [
           "Sign in running (joined-up) handwriting. The notice rejects block, capital or disjointed letters.",
-          "Crop the photo close around the signature first, so the crop from the middle keeps all of it.",
+          "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
           "Each notification sets its own rules. The RRB photo is captured live in the application, so there is no photo to upload."
         ]
       }
@@ -836,6 +836,77 @@
           "Scan the certificate flat and in good light, with the whole page in the frame.",
           "If your certificate is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
           "The certificate must be the latest valid one as on the closing date of the application."
+        ]
+      }
+    },
+    {
+      "slug": "ircc-document-pdf",
+      "kind": "pdf",
+      "group": "Forms and applications",
+      "linkLabel": "Canada IRCC documents (PDF)",
+      "targetKb": 4000,
+      "heading": "IRCC document upload: PDF under 4 MB for Canadian immigration",
+      "title": "IRCC document upload",
+      "spec": [
+        "PDF",
+        "4 MB or less"
+      ],
+      "org": "Immigration, Refugees and Citizenship Canada (IRCC)",
+      "description": "Compress a scanned document to a PDF under 4 MB for IRCC: the secure account, Permanent Residence Portal, citizenship and asylum uploads. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Most IRCC accounts take files up to 4 MB, and the IRCC Portal up to 5 MB. A PDF under 4 MB uploads to any of them. Multi-page scans are usually far bigger.",
+      "source": {
+        "label": "the IRCC Help Centre's file size limits",
+        "url": "https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1123&top=23",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an IRCC document under 4 MB",
+        "paragraphs": [
+          "IRCC sets the limit per account: 4 MB for the IRCC secure account, the Permanent Residence Portal, the online citizenship application and the asylum portal, and 5 MB for the IRCC Portal. Aiming under 4 MB means the same file works wherever you upload it.",
+          "Each upload field takes one file, so a document with several pages, such as a passport or a set of bank statements, has to be a single PDF. Scanned at full quality that is often 10 to 30 MB. Here the scan's resolution is lowered step by step and the first step that fits is kept, so text stays as sharp as 4 MB allows."
+        ],
+        "tips": [
+          "Combine all the pages into one PDF first. If you upload several files to one field, IRCC keeps only the last one.",
+          "Scanning at 150 to 300 DPI is plenty; higher only makes a bigger file to shrink.",
+          "Some IRCC forms set a lower limit, as low as 2 MB. If the upload page states one, choose that size instead."
+        ]
+      }
+    },
+    {
+      "slug": "canada-pr-card-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "Canada PR card photo",
+      "targetKb": 4000,
+      "pixels": {
+        "width": 1000,
+        "height": 1400
+      },
+      "heading": "Canada PR card photo for the PR confirmation portal: 1000 x 1400, under 4 MB",
+      "title": "Canada PR card photo",
+      "spec": [
+        "JPEG",
+        "1000 × 1400 pixels",
+        "4 MB or less"
+      ],
+      "org": "Immigration, Refugees and Citizenship Canada (IRCC)",
+      "description": "Resize your PR card photo to 1000 x 1400 pixels and under 4 MB for the Canadian PR confirmation portal. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The PR confirmation portal takes a JPEG or PNG between 715 x 1000 and 2000 x 2800 pixels and no larger than 4 MB. This page makes it 1000 x 1400, the same shape, well inside both limits.",
+      "source": {
+        "label": "IRCC's PR confirmation portal photo requirements",
+        "url": "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/pr-confirmation-portal.html",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting a PR card photo to the portal's size",
+        "paragraphs": [
+          "IRCC asks for the photo as a JPEG or PNG between 715 x 1000 and 2000 x 2800 pixels, no larger than 4 MB. Both ends of that range have the same 5 to 7 shape, so the photo has to be that shape too.",
+          "This page crops the photo to 5 by 7 where you place the crop box, resizes it to 1000 x 1400 pixels and saves it as a JPEG well under 4 MB. If you prefer another size inside the range, change the pixel size in the options before you press Compress."
+        ],
+        "tips": [
+          "IRCC wants the photo taken by a professional photographer, within the last 12 months, on a plain white background. Check the full list on IRCC's page before you upload.",
+          "Use the photographer's digital file rather than a phone photo of a printed one.",
+          "Keep the whole head and the top of the shoulders inside the crop box."
         ]
       }
     }
