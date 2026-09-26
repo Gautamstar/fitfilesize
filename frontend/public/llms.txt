@@ -19,12 +19,25 @@ curl -F "file=@passport-scan.pdf" -F "target=200KB" https://api.fitfilesize.com/
 - Lossy image results are always JPEG. Transparent areas become white.
 - Exact pixel size (images only): add `-F width=200 -F height=230` when a form asks for set dimensions, as exam and ID photo forms do. `fit=crop` (default) fills the frame and trims the overflow; `fit=pad` keeps the whole image and adds a white border. The result is always a JPEG of exactly that size, and `warnings` says what was trimmed or padded.
 - Limits: 30 uploads and 100 compressions per hour per client. A `429` includes `Retry-After`. `GET https://api.fitfilesize.com/api/limits` shows what is left.
+- Minimum size: add `-F minimum=10KB` for forms that also set one (a signature "between 10 and 20 KB"). A JPEG result under it is padded up to it; the picture is unchanged.
 - Privacy: the uploaded original is deleted 5 minutes after the run, the result after 10. `DELETE https://api.fitfilesize.com/api/jobs/{job_id}` removes both immediately; do this once the user has their file.
+
+## Using it from an AI assistant (MCP)
+
+The `fitfilesize-mcp` package is an MCP server for Claude Desktop, Claude Code, Cursor, VS Code and other MCP clients. It compresses a file on the user's computer and saves the result next to it.
+
+```
+claude mcp add fitfilesize -- npx -y fitfilesize-mcp
+```
+
+Other clients: `{"mcpServers": {"fitfilesize": {"command": "npx", "args": ["-y", "fitfilesize-mcp"]}}}`. Tools: `fit_file` (a path plus a limit like `200KB`, or a form preset like `ibps-signature`) and `list_forms`. Form presets, with each form's size limit, minimum, pixels and official source, are also at https://fitfilesize.com/forms.json.
 
 ## Docs
 
 - [API reference (OpenAPI, interactive)](https://api.fitfilesize.com/docs): every endpoint, including the step-by-step flow the website uses
 - [OpenAPI schema (JSON)](https://api.fitfilesize.com/openapi.json)
+- [MCP server (npm)](https://www.npmjs.com/package/fitfilesize-mcp)
+- [Form presets (JSON)](https://fitfilesize.com/forms.json)
 - [Privacy](https://fitfilesize.com/privacy.html): what happens to uploaded files
 - [Terms](https://fitfilesize.com/terms.html)
 - [Source code](https://github.com/Gautamstar/fitfilesize)
