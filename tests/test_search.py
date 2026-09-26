@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from fitpdf.engine import compress_to_target
+from fitpdf.engine import CLOSE_ENOUGH, compress_to_target
 from fitpdf.strategies import Probe
 
 
@@ -108,7 +108,11 @@ def test_guided_search_picks_the_same_rung_as_bisection(tmp_path, curve):
         result = compress_to_target(src, tmp_path / "out.pdf", target, strategy=strategy)
         expected, bisect_n = _bisect_renders(sizes, target)
         got = int(result.method.split(":")[1]) if result.method.startswith("rung:") else None
-        assert got == expected, f"target {target}: rung {got}, bisection says {expected}"
+        # The gentlest fit, or a fit close enough to the target to stop at.
+        assert got == expected or (
+            got is not None and expected is not None and got > expected
+            and target >= sizes[got] >= CLOSE_ENOUGH * target
+        ), f"target {target}: rung {got}, bisection says {expected}"
         assert len(set(strategy.renders)) == len(strategy.renders)  # no rung twice
         # Never meaningfully worse than bisection on any single target.
         assert len(strategy.renders) <= bisect_n + 2
@@ -271,3 +275,36 @@ def test_the_original_size_steers_the_first_guess(tmp_path):
     assert result.method == "rung:2"
     assert 0 not in strategy.renders
     assert len(strategy.renders) <= 3
+
+
+def test_a_fit_close_to_the_target_ends_the_search(tmp_path):
+    # Rung 5 fits at 95% of the target: rung 4 would be a quarter bigger, so
+    # rendering it only to confirm it is too big is skipped.
+    sizes = _curves()["exponential"]
+    target = int(sizes[5] / 0.95)
+    assert sizes[4] > target
+    # An original one step above the gentlest rung and the curve's own
+    # slope, so the first guess lands on rung 5.
+    original = int(sizes[0] / 0.8)
+    src = tmp_path / "in.pdf"
+    src.write_bytes(b"x" * original)
+    floor = tmp_path / "floor.pdf"
+    floor.write_bytes(b"x" * sizes[-1])
+    strategy = FakeStrategy(sizes, original=original)
+    strategy.typical_log_step = 0.22
+    result = compress_to_target(
+        src, tmp_path / "out.pdf", target, strategy=strategy,
+        prerendered={len(sizes) - 1: floor},
+    )
+    assert result.method == "rung:5"
+    assert strategy.renders == [5]
+
+
+def test_a_fit_well_under_the_target_still_checks_the_gentler_rung(tmp_path):
+    sizes = _curves()["exponential"]
+    target = int(sizes[5] / 0.8)  # rung 5 at 80%: rung 4 (at 100%) might fit
+    src = _source(tmp_path)
+    strategy = FakeStrategy(sizes, original=ORIGINAL)
+    result = compress_to_target(src, tmp_path / "out.pdf", target, strategy=strategy)
+    assert result.method == "rung:4"
+    assert 4 in strategy.renders
