@@ -20,7 +20,9 @@ from .strategies import (
     copy_through,
     detect_strategy,
     lossless_pass,
+    pad_jpeg,
 )
+from .units import human_size
 
 # `RUNGS` is the PDF ladder. Named without a prefix because the CLI and the
 # public package API treat PDFs as the default media type.
@@ -234,6 +236,7 @@ def compress_to_target(
     on_progress: ProgressFn | None = None,
     strategy: Strategy | None = None,
     prerendered: dict[int, Path] | None = None,
+    min_bytes: int | None = None,
 ) -> CompressResult:
     """Compress src to fit under target_bytes, degrading as little as possible.
 
@@ -246,6 +249,10 @@ def compress_to_target(
     `dst` is used as given when the produced format matches its extension, and
     re-suffixed otherwise (a lossy image result is always JPEG). The path
     actually written is on the returned result's `output`.
+
+    `min_bytes`, for forms that also set a minimum size: a JPEG result under
+    it is padded up to it with comment blocks (see strategies.pad_jpeg), the
+    picture unchanged. Other formats are left as they are, with a warning.
 
     `prerendered` maps rung indexes to files already rendered at that rung for
     this same source and strategy (the analyze step's floor render). They are
@@ -283,6 +290,18 @@ def compress_to_target(
     ) -> CompressResult:
         target_path = dst.with_suffix(strategy.output_suffix(src, lossy=lossy))
         copy_through(produced, target_path)
+        if min_bytes and size < min_bytes:
+            if target_path.suffix.lower() in (".jpg", ".jpeg"):
+                size = pad_jpeg(target_path, min_bytes)
+                warnings.append(
+                    f"padded to {human_size(size)} to meet the minimum size; "
+                    "the picture itself is unchanged"
+                )
+            else:
+                warnings.append(
+                    f"this is under the {human_size(min_bytes)} minimum, and only a JPEG "
+                    "can be padded up to it"
+                )
         # A PNG that comes back as a JPG can be refused by a site that only
         # takes PNG, and loses any see-through parts, so say which.
         before = src.suffix.lower().lstrip(".")

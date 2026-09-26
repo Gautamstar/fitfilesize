@@ -192,13 +192,19 @@ export function startCompress(
   resize?: Resize | null,
   signal?: AbortSignal,
   prepare = false,
+  minBytes: number | null = null,
 ): Promise<{ job_id: string; status: string }> {
   return request(
     `/api/jobs/${jobId}/compress`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target_bytes: targetBytes, ...resize, ...(prepare ? { prepare } : {}) }),
+      body: JSON.stringify({
+        target_bytes: targetBytes,
+        ...resize,
+        ...(minBytes ? { min_bytes: minBytes } : {}),
+        ...(prepare ? { prepare } : {}),
+      }),
       signal,
     },
     // A retried Compress that finds a run already going: the first try got

@@ -6,7 +6,7 @@
  * cannot hold two values.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
@@ -27,7 +27,7 @@ import { useProgressStream } from './hooks/useProgressStream'
 import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
 import { fileProblem } from './lib/fileCheck'
 import { describeSource, isAcceptedFile } from './lib/format'
-import { keepUnits, pageForPath, pageTargetBytes } from './lib/landing'
+import { keepUnits, pageForPath, pageMinBytes, pageResize, pageTargetBytes } from './lib/landing'
 import type { MediaKind, Resize } from './types/api'
 
 type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
@@ -61,12 +61,17 @@ interface AppProps {
 function App({ path }: AppProps) {
   // Set on a search landing page such as /compress-pdf-to-200kb.
   const landing = pageForPath(path)
+  // A form page's own rules: exact pixels and a minimum size, besides its limit.
+  const formResize = useMemo(() => (landing ? pageResize(landing) : null), [landing])
+  const formMin = landing ? pageMinBytes(landing) : null
   const [phase, setPhase] = useState<Phase>('drop')
   const [job, setJob] = useState<JobInfo | null>(null)
   const [targetBytes, setTargetBytes] = useState(0)
   // The exact pixel size of the last run, kept so "Try another size" does not
   // make the visitor type it again.
-  const [resize, setResize] = useState<Resize | null>(null)
+  const [resize, setResize] = useState<Resize | null>(formResize)
+  // The minimum sent with the last run, for an automatic restart to reuse.
+  const [minBytes, setMinBytes] = useState<number | null>(null)
   const [dropError, setDropError] = useState<string | null>(null)
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
@@ -89,11 +94,11 @@ function App({ path }: AppProps) {
     setPhase('drop')
     setJob(null)
     setTargetBytes(0)
-    setResize(null)
+    setResize(formResize)
     setTargetWarning(null)
     setFatalError(null)
     setDropError(message ?? null)
-  }, [])
+  }, [formResize])
 
   const secondsLeft = useCountdown(phase === 'result' ? stream.expiresAt : null, () =>
     reset('We deleted that file. Upload it again if you still need it.'),
@@ -111,15 +116,15 @@ function App({ path }: AppProps) {
   const [restarting, setRestarting] = useState(false)
   // What a restart needs, read when an error arrives. Through a ref so the
   // effect below runs for a new error, not for every change in these.
-  const runRef = useRef({ job, targetBytes, resize })
+  const runRef = useRef({ job, targetBytes, resize, minBytes })
   useEffect(() => {
-    runRef.current = { job, targetBytes, resize }
-  }, [job, targetBytes, resize])
+    runRef.current = { job, targetBytes, resize, minBytes }
+  }, [job, targetBytes, resize, minBytes])
 
   useEffect(() => {
     if (!stream.error) return
     const file = fileRef.current
-    const { job, targetBytes, resize } = runRef.current
+    const { job, targetBytes, resize, minBytes } = runRef.current
     const lostByServer = /server restarted|lost track/i.test(stream.error)
     if (!lostByServer || !file || !job || autoRestarted.current) {
       setFatalError(stream.error)
@@ -138,7 +143,7 @@ function App({ path }: AppProps) {
       try {
         const up = await uploadFile(file, undefined, setUploaded)
         setUploaded(null)
-        await startCompress(up.job_id, targetBytes, resize)
+        await startCompress(up.job_id, targetBytes, resize, undefined, false, minBytes)
         setJob({ ...job, jobId: up.job_id })
         setPhase('progress')
       } catch {
@@ -198,8 +203,11 @@ function App({ path }: AppProps) {
       // so start that run now, while they look at the picker. Their Compress
       // adopts it when the settings match and replaces it when not. Best
       // effort: if this fails, Compress starts the run as it always did.
-      if (limitChosen && limit !== null && limit < up.size_bytes) {
-        startCompress(up.job_id, limit, null, undefined, true).catch(() => {})
+      // On a form page, with the form's pixel size and minimum too, which is
+      // what the picker opens with.
+      const headResize = up.kind === 'image' ? resize : null
+      if (limitChosen && limit !== null && (limit < up.size_bytes || headResize)) {
+        startCompress(up.job_id, limit, headResize, undefined, true, minFor(limit)).catch(() => {})
       }
     } catch (err) {
       setDropError(err instanceof Error ? err.message : 'upload failed')
@@ -207,14 +215,20 @@ function App({ path }: AppProps) {
     }
   }
 
+  // A form page's minimum, for any limit above it. (Below it the two cannot
+  // both hold, and the visitor's own choice wins.)
+  const minFor = (target: number) => (formMin !== null && target > formMin ? formMin : null)
+
   // Queue the run and switch to the live progress view.
   const handleCompress = async (target: number, nextResize: Resize | null) => {
     if (!job) return
     setTargetWarning(null)
     setTargetBytes(target)
     setResize(nextResize)
+    const min = minFor(target)
+    setMinBytes(min)
     try {
-      await startCompress(job.jobId, target, nextResize)
+      await startCompress(job.jobId, target, nextResize, undefined, false, min)
       setPhase('progress')
     } catch (err) {
       setTargetWarning(err instanceof Error ? err.message : 'could not start compression')
@@ -277,6 +291,7 @@ function App({ path }: AppProps) {
               reset()
             }}
             initialTarget={limit ?? undefined}
+            minBytes={formMin}
             initialResize={resize}
           />
         ) : null

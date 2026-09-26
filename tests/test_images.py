@@ -334,3 +334,41 @@ def test_a_png_is_shrunk_after_decoding_to_what_the_rung_needs(tmp_path):
     im = strategy._decoded(png, {"max_edge": 800, "quality": 60})
     # Twice the output kept (1600 px), from a box reduce by 2: 2000 px.
     assert im.size == (2000, 1500)
+
+
+def test_a_minimum_size_pads_a_small_jpeg_without_touching_the_picture(photo_jpg, tmp_path):
+    # A signature at a form's 140 x 60 pixels is a few KB; the form wants
+    # 10-20 KB. Padding makes it pass and leaves every pixel as it was.
+    from fitpdf.strategies import pad_jpeg
+
+    plain = tmp_path / "plain.jpg"
+    compress_to_target(photo_jpg, plain, 20_000, strategy=ImageStrategy(resize=(140, 60)))
+    padded = compress_to_target(
+        photo_jpg, tmp_path / "padded.jpg", 20_000,
+        strategy=ImageStrategy(resize=(140, 60)), min_bytes=10_240,
+    )
+    assert plain.stat().st_size < 10_240
+    assert padded.final_bytes == padded.output.stat().st_size
+    assert 10_240 <= padded.output.stat().st_size <= 20_000
+    with Image.open(plain) as a, Image.open(padded.output) as b:
+        assert a.size == b.size == (140, 60)
+        assert a.tobytes() == b.tobytes()
+    assert any("padded to" in w for w in padded.warnings)
+    # Already big enough: left alone.
+    before = padded.output.read_bytes()
+    assert pad_jpeg(padded.output, 5_000) == len(before)
+    assert padded.output.read_bytes() == before
+
+
+def test_padding_reaches_the_minimum_across_segment_boundaries(photo_jpg, tmp_path):
+    from fitpdf.strategies import pad_jpeg
+
+    small = tmp_path / "s.jpg"
+    Image.new("RGB", (20, 20)).save(small, quality=50)
+    for want in (small.stat().st_size + 1, 70_000, 200_001):
+        f = tmp_path / f"p{want}.jpg"
+        f.write_bytes(small.read_bytes())
+        size = pad_jpeg(f, want)
+        assert want <= size <= want + 3
+        with Image.open(f) as im:
+            im.load()  # still a valid JPEG

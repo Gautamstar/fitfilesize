@@ -1165,3 +1165,35 @@ def test_an_image_too_big_for_pillow_to_open_gets_the_pixel_message(web, tmp_pat
     res = _upload(client, png, "200mp.png")
     assert res.status_code == 422
     assert "too many pixels" in res.json()["detail"]
+
+
+def test_a_run_with_a_minimum_pads_up_to_it(web, photo_jpg):
+    client, _, _ = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    res = client.post(
+        f"/api/jobs/{job_id}/compress",
+        json={"target_bytes": 20_000, "width": 140, "height": 60, "min_bytes": 10_240},
+    )
+    assert res.status_code == 202
+    out = client.get(f"/api/jobs/{job_id}/download")
+    assert 10_240 <= len(out.content) <= 20_000
+
+
+def test_a_minimum_at_or_above_the_limit_is_refused(web, photo_jpg):
+    client, _, _ = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 20_000, "min_bytes": 20_000})
+    assert res.status_code == 422
+
+
+def test_fit_takes_a_minimum(web, photo_jpg):
+    client, _, _ = web
+    with open(photo_jpg, "rb") as f:
+        res = client.post(
+            "/api/fit",
+            files={"file": ("a.jpg", f, "image/jpeg")},
+            data={"target": "20KB", "minimum": "10KB", "width": "140", "height": "60"},
+        )
+    assert res.status_code == 200, res.text
+    size = len(client.get(res.json()["download_url"].split("testserver")[-1]).content)
+    assert 10_000 <= size <= 20_000

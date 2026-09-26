@@ -74,7 +74,7 @@ it('starts a lost run again with the same size', async () => {
   await compressOnLandingPage()
   await screen.findByText('Finding the best quality that fits') // job2's progress
   expect(uploadFile).toHaveBeenCalledTimes(2)
-  expect(startCompress).toHaveBeenLastCalledWith('job2', 200_000, null)
+  expect(startCompress).toHaveBeenLastCalledWith('job2', 200_000, null, undefined, false, null)
   expect(screen.queryByText(/That did not work/)).toBeNull()
 })
 

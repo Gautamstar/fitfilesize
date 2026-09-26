@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-25",
+  "updated": "2026-09-26",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
@@ -420,6 +420,160 @@
           "Sharp text and thin lines, as in screenshots, show JPEG artifacts first. Zoom in on small text in the result before you upload it.",
           "If you control the export, a JPEG export straight from your design tool is often smaller still.",
           "Images with large flat areas of one color, like diagrams, shrink the most."
+        ]
+      }
+    },
+    {
+      "slug": "us-visa-photo-ds160",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "US visa photo (DS-160)",
+      "targetKb": 240,
+      "pixels": {
+        "width": 600,
+        "height": 600
+      },
+      "heading": "US visa photo for the DS-160: 600 x 600, under 240 KB",
+      "description": "Make your DS-160 visa photo a 600 x 600 pixel JPEG under 240 KB, as the U.S. Department of State requires. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The DS-160 takes a square JPEG, 600 x 600 pixels and no more than 240 KB. A phone photo is several megabytes and the wrong shape, so it gets cropped, resized and compressed in one go.",
+      "source": {
+        "label": "the U.S. Department of State's photo requirements",
+        "url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting a DS-160 photo to 600 x 600 and under 240 KB",
+        "paragraphs": [
+          "The State Department sets four technical rules for the digital photo: JPEG format, 240 KB or less, a square shape, and 600 x 600 pixels. A file that misses any of them cannot be uploaded.",
+          "This page is set up for all four. Your photo is cropped to a square from the middle, scaled to exactly 600 x 600 pixels and saved as a JPEG at the highest quality that stays under 240 KB. At that size a photo usually fits with room to spare, so very little quality is lost."
+        ],
+        "tips": [
+          "Crop the photo square yourself before uploading if your head is not in the middle of the frame. The crop here takes the centre.",
+          "The picture itself has rules too, such as the background, your expression and glasses. Check them on the State Department page before you take it.",
+          "If the upload still complains, check that it is a JPEG. A PNG or HEIC from a phone is converted here, but a renamed file is not."
+        ]
+      }
+    },
+    {
+      "slug": "indian-evisa-passport-pdf",
+      "kind": "pdf",
+      "group": "Forms and applications",
+      "linkLabel": "Indian e-Visa passport page (PDF)",
+      "targetKb": 300,
+      "heading": "Indian e-Visa passport page: PDF under 300 KB",
+      "description": "Compress the scanned bio page of your passport to a PDF under 300 KB for the Indian e-Visa application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The Indian e-Visa asks for the bio page of your passport as a PDF between 10 KB and 300 KB. A scan or phone photo of it is usually far bigger.",
+      "source": {
+        "label": "the Indian e-Visa site (Instructions for Applicant)",
+        "url": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting a passport page PDF under 300 KB",
+        "paragraphs": [
+          "The e-Visa form takes the scanned bio page of your passport, the page with your photograph and details, as a PDF of at least 10 KB and at most 300 KB. Documents for a business or medical e-Visa have the same limits.",
+          "A single scanned page fits in 300 KB comfortably. We lower the resolution of the scan step by step and keep the first step that fits, so the text and your photo stay as sharp as the limit allows. The 10 KB minimum is never a problem for a real scan."
+        ],
+        "tips": [
+          "Scan or photograph only the bio page, flat and in good light, with the whole page in the frame.",
+          "If your passport page is a JPG, save it as a PDF first (most phones can print to PDF), then compress it here.",
+          "Keep one page per file. The form asks for the bio page on its own."
+        ]
+      }
+    },
+    {
+      "slug": "indian-evisa-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "Indian e-Visa photo",
+      "targetKb": 1000,
+      "minKb": 10,
+      "pixels": {
+        "width": 1000,
+        "height": 1000
+      },
+      "heading": "Indian e-Visa photo: square JPEG under 1 MB",
+      "description": "Make your Indian e-Visa photo a square JPEG between 10 KB and 1 MB, as the e-Visa application requires. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The Indian e-Visa takes a JPEG photo between 10 KB and 1 MB whose height and width are equal. A phone photo is rarely square, so it is cropped to 1000 x 1000 pixels and compressed to fit.",
+      "source": {
+        "label": "the Indian e-Visa site (Instructions for Applicant)",
+        "url": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an e-Visa photo square and under 1 MB",
+        "paragraphs": [
+          "The e-Visa form asks for a JPEG of at least 10 KB and at most 1 MB, with equal height and width. It does not name a pixel size, so this page makes it 1000 x 1000: square, detailed, and comfortably under 1 MB.",
+          "The photo is cropped to a square from the middle, resized, and saved at the highest JPEG quality that fits. You can change the pixel size in the options before you compress if you prefer another."
+        ],
+        "tips": [
+          "Crop the photo square yourself first if your face is not in the centre. The crop here takes the middle of the picture.",
+          "The form also asks for a full face, front view, eyes open, without glasses, on a plain light background, with no shadows and no border.",
+          "A photo taken for a printed visa is fine to use; photograph or scan it in good light."
+        ]
+      }
+    },
+    {
+      "slug": "ibps-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "IBPS photo",
+      "targetKb": 50,
+      "minKb": 20,
+      "pixels": {
+        "width": 200,
+        "height": 230
+      },
+      "heading": "IBPS photo: 200 x 230 pixels, 20 KB to 50 KB",
+      "description": "Resize your photo to 200 x 230 pixels and 20 KB to 50 KB for IBPS bank exam applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "IBPS applications ask for a photo of 200 x 230 pixels and between 20 KB and 50 KB. A photo that small often comes out under 20 KB, so it is padded up to the minimum without changing the picture.",
+      "source": {
+        "label": "IBPS guidelines for scanning and uploading documents",
+        "url": "https://ibpsreg.ibps.in/crpcsaxvjl25/uploads/loadpdf.php?file=k7m5p+fQ15erzNvW1Mrd4NPSnJp9sc%2FKYaao1bWrpok%3D&t=1LHArOLA2di0yczXwNDa083LmNWypw%3D%3D",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an IBPS photo to 200 x 230 and 20 KB to 50 KB",
+        "paragraphs": [
+          "IBPS guidelines ask for the photograph at 200 x 230 pixels with a file size between 20 KB and 50 KB. Most tools get the maximum right and miss the minimum: at 200 x 230 pixels a good-quality JPEG is often only 15 KB or so, and the form turns it away as too small.",
+          "Here the photo is cropped from the middle to 200 x 230, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it. The padding is an invisible comment inside the file, so the picture is exactly the same."
+        ],
+        "tips": [
+          "Recent IBPS notifications also ask for a live photo taken during registration, besides this upload. Check the notification for your exam.",
+          "Use a recent photo, face centred, on a light background. Crop it yourself first if your face is off to one side.",
+          "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
+        ]
+      }
+    },
+    {
+      "slug": "ibps-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "IBPS signature",
+      "targetKb": 20,
+      "minKb": 10,
+      "pixels": {
+        "width": 140,
+        "height": 60
+      },
+      "heading": "IBPS signature: 140 x 60 pixels, 10 KB to 20 KB",
+      "description": "Resize your signature to 140 x 60 pixels and 10 KB to 20 KB for IBPS bank exam applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "IBPS applications ask for a signature image of 140 x 60 pixels and between 10 KB and 20 KB. An image that small is only a few KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "IBPS guidelines for scanning and uploading documents",
+        "url": "https://ibpsreg.ibps.in/crpcsaxvjl25/uploads/loadpdf.php?file=k7m5p+fQ15erzNvW1Mrd4NPSnJp9sc%2FKYaao1bWrpok%3D&t=1LHArOLA2di0yczXwNDa083LmNWypw%3D%3D",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an IBPS signature to 140 x 60 and 10 KB to 20 KB",
+        "paragraphs": [
+          "IBPS guidelines ask for the signature at 140 x 60 pixels with a file size between 10 KB and 20 KB. A signature at 140 x 60 pixels is a tiny image, usually 3 to 5 KB even at the best quality, which is under the minimum and gets refused.",
+          "Here the signature is cropped from the middle to 140 x 60, saved at the best quality under 20 KB, and padded up to 10 KB with an invisible comment inside the file. The signature itself is exactly the same."
+        ],
+        "tips": [
+          "Sign with a black pen on plain white paper, and photograph or scan it in good light.",
+          "Crop the photo close around the signature before uploading, so the 140 x 60 crop from the middle keeps all of it.",
+          "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
         ]
       }
     }

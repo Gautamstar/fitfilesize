@@ -43,6 +43,13 @@ function groupOf(page: LandingPage): string {
   return page.group ?? KIND_GROUP[page.kind]
 }
 
+/** "2026-09-26" as "26 September 2026", the same in every time zone. */
+function checkedOn(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const month = new Date(Date.UTC(y, m - 1, d)).toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' })
+  return `${d} ${month} ${y}`
+}
+
 export function Landing({ page }: { page?: LandingPage }) {
   return (
     <div className="landing">
@@ -62,6 +69,17 @@ export function Landing({ page }: { page?: LandingPage }) {
               <li key={tip}>{keepUnits(tip)}</li>
             ))}
           </ul>
+          {page.source ? (
+            // Forms change their rules; say where these came from and when.
+            <p className="guide-source">
+              Requirements from{' '}
+              <a href={page.source.url} rel="noopener" target="_blank">
+                {page.source.label}
+              </a>
+              , checked {checkedOn(page.source.checked)}. Forms change their rules, so check the
+              form itself if something is rejected.
+            </p>
+          ) : null}
         </section>
       ) : null}
 
@@ -107,7 +125,7 @@ export function Landing({ page }: { page?: LandingPage }) {
                   {/* Plain links, not client-side routing: each page is its own
                       prerendered HTML with its own title, which is the point. */}
                   <a href={`/${p.slug}`} aria-current={p.slug === page?.slug ? 'page' : undefined}>
-                    {pageSizeLabel(p)}
+                    {p.linkLabel ?? pageSizeLabel(p)}
                   </a>
                 </li>
               ))}

@@ -6,6 +6,7 @@
  * stamp each page's <title>, meta tags and the sitemap at build time.
  */
 
+import type { Resize } from '../types/api'
 import { limitLabel } from './format'
 import data from './landing-pages.json'
 
@@ -20,6 +21,14 @@ export interface LandingPage {
   group?: string
   /** The limit as a portal states it: 200 for "200 KB", 1000 for "1 MB". */
   targetKb: number
+  /** A form's minimum, as it states it ("at least 10 KB"); see pageMinBytes. */
+  minKb?: number
+  /** Exact pixel size a form requires, for image pages. */
+  pixels?: { width: number; height: number }
+  /** Link text under "Common size limits" when the size alone is not the point. */
+  linkLabel?: string
+  /** Where a form's requirements come from, shown on the page. */
+  source?: { label: string; url: string; checked: string }
   heading: string
   description: string
   blurb: string
@@ -52,6 +61,19 @@ export function pageForPath(pathname: string): LandingPage | undefined {
  */
 export function pageTargetBytes(page: LandingPage): number {
   return page.targetKb * 1000
+}
+
+/**
+ * A form's minimum in bytes. The opposite of pageTargetBytes: to pass a check
+ * done either way, a minimum takes the larger reading, 1024 bytes a KB.
+ */
+export function pageMinBytes(page: LandingPage): number | null {
+  return page.minKb ? page.minKb * 1024 : null
+}
+
+/** The exact pixel size a page presets, cropping to fill as forms expect. */
+export function pageResize(page: LandingPage): Resize | null {
+  return page.pixels ? { ...page.pixels, fit: 'crop' } : null
 }
 
 /** Short chip label: "200 KB", "1 MB". */
