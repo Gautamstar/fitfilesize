@@ -52,7 +52,8 @@ describe('landing page data', () => {
 
   it('never lists the same size twice under one link group', () => {
     const seen = new Set<string>()
-    for (const page of LANDING_PAGES) {
+    // Size pages are listed by size; form pages by name, so sizes may repeat.
+    for (const page of LANDING_PAGES.filter((p) => !p.linkLabel)) {
       const key = `${page.group ?? page.kind} ${page.targetKb}`
       expect(seen.has(key)).toBe(false)
       seen.add(key)
