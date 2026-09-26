@@ -539,16 +539,18 @@ def test_worker_explains_a_queued_job_that_lost_its_upload(web, photo_jpg):
     job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
     src = next((settings.data_dir / job_id).glob("input.*"))
     src.unlink()
+    store.update_job(r, job_id, run_id="run1", status="queued")
     q = Queue(settings.queue_name, connection=r, is_async=False)
     q.enqueue(
         run_compress,
         job_id,
         str(src),
-        str(settings.data_dir / job_id / "output"),
+        str(settings.data_dir / job_id / "output-run1"),
         1000,
         settings.ttl_seconds,
         settings.pending_ttl_seconds,
         settings.gs_timeout,
+        run_id="run1",
     )
     state = store.get_job(r, job_id)
     assert state["status"] == "error"
@@ -801,3 +803,131 @@ def test_done_event_carries_the_completion_deletion_window(web, photo_jpg):
     client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": photo_jpg.stat().st_size // 2})
     done = next(e for e in store.get_events(r, job_id) if e["stage"] == "done")
     assert done["expires_in"] == settings.ttl_seconds
+
+
+# --------------------------------------------------------------------------- #
+# Head-start runs: `prepare` starts the run while the visitor looks at the
+# size picker; their Compress adopts it or replaces it. The test queue runs
+# jobs synchronously, so a prepared run has finished by the time its request
+# returns, the case where the visitor takes longer than the run.
+# --------------------------------------------------------------------------- #
+
+
+def _events(client, job_id):
+    body = client.get(f"/api/jobs/{job_id}/events").text
+    data = [json.loads(line[6:]) for line in body.splitlines() if line.startswith("data: ")]
+    return [d for d in data if "stage" in d]  # progress events, not the state snapshots
+
+
+def test_a_head_start_holds_back_the_deletion_clock_until_adopted(web, photo_jpg):
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    target = photo_jpg.stat().st_size // 5
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target, "prepare": True})
+    assert res.status_code == 202
+    job = store.get_job(r, job_id)
+    assert job["status"] == "done"
+    # Nobody has seen this run yet: no completion stamp, still the pending clock.
+    assert "completed_at" not in job
+    assert client.get(f"/api/jobs/{job_id}").json()["expires_in"] > settings.ttl_seconds
+
+
+def test_compress_with_the_same_settings_adopts_the_head_start(web, photo_jpg):
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    target = photo_jpg.stat().st_size // 5
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target, "prepare": True})
+    run_id = store.get_job(r, job_id)["run_id"]
+    runs_left = client.get("/api/limits").json()["runs"]["remaining"]
+
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target})
+    assert res.status_code == 202
+    job = store.get_job(r, job_id)
+    assert job["run_id"] == run_id  # the same run, not a second one
+    assert job["prepared"] == "0"
+    assert "completed_at" in job  # the download window starts now
+    assert 0 < client.get(f"/api/jobs/{job_id}").json()["expires_in"] <= settings.ttl_seconds
+    assert client.get("/api/limits").json()["runs"]["remaining"] == runs_left
+    # The page's stream replays the whole run and its result.
+    assert [e["stage"] for e in _events(client, job_id)][-1] == "done"
+    assert client.get(f"/api/jobs/{job_id}/download").status_code == 200
+
+
+def test_compress_with_other_settings_replaces_the_head_start(web, photo_jpg):
+    client, r, _ = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    size = photo_jpg.stat().st_size
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": size // 5, "prepare": True})
+    old = store.get_job(r, job_id)["run_id"]
+
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": size // 20})
+    assert res.status_code == 202
+    job = store.get_job(r, job_id)
+    assert job["run_id"] != old
+    assert int(job["target_bytes"]) == size // 20
+    starts = [e for e in _events(client, job_id) if e["stage"] == "start"]
+    assert [e["target_bytes"] for e in starts] == [size // 20]  # none of the old run's events
+    out = client.get(f"/api/jobs/{job_id}/download")
+    assert out.status_code == 200
+    assert len(out.content) <= size // 20
+    # The old run's file is gone, not left to be served.
+    files = [p.name for p in (web[2].data_dir / job_id).glob("output*")]
+    assert all(job["run_id"] in name for name in files)
+
+
+def test_a_head_start_never_replaces_a_run_the_visitor_asked_for(web, photo_jpg):
+    client, r, _ = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    target = photo_jpg.stat().st_size // 5
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target})
+    run_id = store.get_job(r, job_id)["run_id"]
+    res = client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target // 2, "prepare": True})
+    assert res.status_code == 409
+    assert store.get_job(r, job_id)["run_id"] == run_id
+
+
+def test_a_replaced_run_stops_and_writes_nothing(web, photo_jpg, monkeypatch):
+    # The visitor picks another size while the head-start is mid-run: the old
+    # run must stop at its next step and leave the new run's state alone.
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    src = next((settings.data_dir / job_id).glob("input.*"))
+    store.update_job(r, job_id, run_id="old", status="queued")
+
+    def replaced_mid_run(*args, on_progress, **kwargs):
+        store.update_job(r, job_id, run_id="new", status="queued")
+        store.clear_events(r, job_id)
+        on_progress({"stage": "lossless", "size": 1})
+        raise AssertionError("the run should have stopped")
+
+    monkeypatch.setattr("fitpdf.web.jobs.compress_to_target", replaced_mid_run)
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    q.enqueue(
+        run_compress, job_id, str(src), str(settings.data_dir / job_id / "output-old"),
+        1000, settings.ttl_seconds, settings.pending_ttl_seconds, settings.gs_timeout,
+        run_id="old",
+    )
+    job = store.get_job(r, job_id)
+    assert job["status"] == "queued"  # the new run's, untouched
+    assert store.get_events(r, job_id) == []
+
+
+def test_deleting_the_file_stops_its_run(web, photo_jpg, monkeypatch):
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    src = next((settings.data_dir / job_id).glob("input.*"))
+    store.update_job(r, job_id, run_id="r1", status="queued")
+
+    def deleted_mid_run(*args, on_progress, **kwargs):
+        client.delete(f"/api/jobs/{job_id}")
+        on_progress({"stage": "lossless", "size": 1})
+        raise AssertionError("the run should have stopped")
+
+    monkeypatch.setattr("fitpdf.web.jobs.compress_to_target", deleted_mid_run)
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    q.enqueue(
+        run_compress, job_id, str(src), str(settings.data_dir / job_id / "output-r1"),
+        1000, settings.ttl_seconds, settings.pending_ttl_seconds, settings.gs_timeout,
+        run_id="r1",
+    )
+    assert store.get_job(r, job_id) is None  # nothing written back after the delete

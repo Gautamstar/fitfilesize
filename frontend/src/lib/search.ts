@@ -51,9 +51,15 @@ export function narrate(search: SearchState, chosenRung?: number | null): string
   if (chosenRung !== undefined || settled) {
     const keep = chosenRung ?? gentlestFit
     const tries = `${tried.length} ${tried.length === 1 ? 'try' : 'tries'}`
-    return keep === null || keep === undefined
-      ? `No setting gets under your limit, so we kept the smallest version (${tries}).`
-      : `Found it in ${tries} out of ${n} settings: setting ${keep + 1}, the gentlest that fits.`
+    if (keep === null || keep === undefined) {
+      return `No setting gets under your limit, so we kept the smallest version (${tries}).`
+    }
+    // The search stops without trying the next gentler setting when the fit
+    // is already within 10% of the limit (CLOSE_ENOUGH in the engine).
+    const confirmed = keep === 0 || search.points[keep - 1] !== undefined
+    return confirmed
+      ? `Found it in ${tries} out of ${n} settings: setting ${keep + 1}, the gentlest that fits.`
+      : `Found it in ${tries} out of ${n} settings: setting ${keep + 1}, close enough to your limit to stop there.`
   }
   const last = tried.sort((a, b) => (b.order ?? 0) - (a.order ?? 0))[0]
   if (!last) return `Searching ${n} settings for the gentlest one that fits...`

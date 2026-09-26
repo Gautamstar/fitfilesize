@@ -93,6 +93,17 @@ class CompressRequest(BaseModel):
     width: int | None = PIXELS
     height: int | None = PIXELS
     fit: Fit = "crop"
+    prepare: bool = Field(
+        False,
+        description="Start the run ahead of time, before the visitor has confirmed "
+        "the size. A later request with the same settings adopts it; one with "
+        "different settings replaces it.",
+    )
+
+
+def run_params(target_bytes: int, resize: tuple[int, int] | None, fit: str) -> str:
+    """What a run was asked for, to tell whether a head-start matches."""
+    return json.dumps([target_bytes, list(resize) if resize else None, fit if resize else None])
 
 
 def resize_for(job: dict, width: int | None, height: int | None) -> tuple[int, int] | None:
@@ -390,6 +401,15 @@ def create_app(
             raise HTTPException(410, store.RESTARTED_MESSAGE)
         return src
 
+    def output_path(job_id: str, job: dict) -> Path | None:
+        """The current run's result file, if it has one.
+
+        The suffix depends on what the run produced: a lossy image result is
+        JPEG even when a PNG went in.
+        """
+        run_id = job.get("run_id", "")
+        return next(iter(sorted(job_dir(job_id).glob(f"output-{run_id}.*"))), None)
+
     def require_job(job_id: str) -> dict:
         job = store.get_job(r, job_id)
         if job is None:
@@ -530,13 +550,36 @@ def create_app(
 
     @app.post("/api/jobs/{job_id}/compress", status_code=202)
     async def compress(job_id: str, req: CompressRequest, request: Request, response: Response):
+        """Queue a run, or with `prepare`, start one ahead of time.
+
+        The page sends a `prepare` run as soon as the file is read, for the
+        size picked before upload (a landing page's size or a chip), so the
+        work happens while the visitor looks at the size picker. Their
+        Compress then adopts that run if the settings match, and replaces it
+        if not: the old run stops at its next step (see jobs.run_compress).
+        """
         job = require_job(job_id)
-        if job.get("status") in ("queued", "compressing"):
-            raise HTTPException(409, "a compression run is already in progress for this file")
-        src = require_input(job_id, job)
         resize = resize_for(job, req.width, req.height)
+        params = run_params(req.target_bytes, resize, req.fit)
+        head_start = job.get("prepared") == "1"
+        running = job.get("status") in ("queued", "compressing")
+
+        if req.prepare:
+            # Only ahead of a first run: never over one the visitor asked for.
+            if job.get("status") not in ("uploaded", "analyzed"):
+                raise HTTPException(409, "this file already has a compression run")
+        elif head_start:
+            done_ok = job.get("status") == "done" and output_path(job_id, job) is not None
+            if job.get("run_params") == params and (running or done_ok):
+                if store.adopt(r, job_id, settings.ttl_seconds):
+                    return {"job_id": job_id, "status": "queued"}
+            # Different settings (or a head-start that failed): replace it.
+        elif running:
+            raise HTTPException(409, "a compression run is already in progress for this file")
+
+        src = require_input(job_id, job)
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        queue_run(job_id, src, req.target_bytes, resize, req.fit)
+        queue_run(job_id, src, req.target_bytes, resize, req.fit, prepared=req.prepare)
         return {"job_id": job_id, "status": "queued"}
 
     def queue_run(
@@ -545,20 +588,32 @@ def create_app(
         target_bytes: int,
         resize: tuple[int, int] | None = None,
         fit: str = "crop",
+        prepared: bool = False,
     ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
+        # The new run id goes in first: from this write on, any earlier run of
+        # this job is superseded and its writes land nowhere.
+        run_id = store.new_run_id()
+        store.update_job(
+            r,
+            job_id,
+            run_id=run_id,
+            status="queued",
+            target_bytes=target_bytes,
+            prepared="1" if prepared else "0",
+            run_params=run_params(target_bytes, resize, fit),
+        )
         # No suffix: compress_to_target picks the right one for what it produced
-        # (a lossy image result is always JPEG) and reports it back.
-        dst = job_dir(job_id) / "output"
-        # A previous run may have left an output with a different suffix; clear
-        # it so a stale file can never be served as this run's result.
-        for stale in job_dir(job_id).glob("output.*"):
+        # (a lossy image result is always JPEG) and reports it back. Named for
+        # the run, so a superseded run finishing late can never have its file
+        # served as this one's.
+        dst = job_dir(job_id) / f"output-{run_id}"
+        for stale in job_dir(job_id).glob("output*"):
             stale.unlink(missing_ok=True)
         store.clear_events(r, job_id)
         # A re-run ("try another size") is no longer a finished job, so drop the
         # completion stamp and put the key back on the pending clock.
         store.clear_completion(r, job_id, settings.pending_ttl_seconds)
-        store.update_job(r, job_id, status="queued", target_bytes=target_bytes)
         q.enqueue(
             run_compress,
             job_id,
@@ -570,6 +625,7 @@ def create_app(
             settings.gs_timeout,
             resize,
             fit,
+            run_id,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,
@@ -718,9 +774,7 @@ def create_app(
     @app.get("/api/jobs/{job_id}/download")
     async def download(job_id: str):
         job = require_job(job_id)
-        # The suffix depends on what the run produced: a lossy image result is
-        # JPEG even when a PNG went in.
-        out = next(iter(sorted(job_dir(job_id).glob("output.*"))), None)
+        out = output_path(job_id, job)
         if out is None:
             raise HTTPException(404, "no compressed file yet for this job")
         stem = Path(job.get("filename", "input")).stem or "output"

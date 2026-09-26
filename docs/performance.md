@@ -153,3 +153,27 @@ and averages the two. Simulated over every target on the measured ladders
 of eight real files (264 runs), renders per run fell from 2.73 to 2.36; the
 6-page scan from 3.62 to 2.09 (to 2 MB: 4 renders to 2), while the 3-page
 scan rose from 2.00 to 2.72. Answers are unchanged in every case.
+
+## Head-start runs and stopping close to the target (2026-09-25)
+
+Two changes to the search logic, after the first-guess experiments above
+showed the guess itself had little left to give (15 files, 623 simulated
+runs: no rule beat the live one by more than 0.02 renders per run).
+
+- **Head-start.** The size picked before upload (a landing page's, or a chip)
+  is known once the file is read, so the page starts that run straight away
+  (`prepare`), while the visitor looks at the size picker. Compress with the
+  same settings adopts the run; different settings replace it, and the old
+  run stops at its next step. Locally at production-like render speed:
+
+  | Visitor | Wait after Compress, before | After |
+  |---|---|---|
+  | Looks at the picker 6 s, keeps the size (photo to 200 KB) | ~3.9 s | **0.3 s** |
+  | Presses Compress at once | ~3.9 s | 3.5 s |
+  | Picks another size after 2 s | ~4 s | 4.8 s (the head-start stops at its next step first) |
+  | Looks 8 s, keeps the size (6-page scan to 500 KB) | ~7.1 s | **0.3 s** |
+
+- **Close enough.** A fit within 10% of the target ends the search without
+  rendering the gentler neighbour to confirm it is too big: renders per run
+  2.20 to 2.00 in simulation; 0.6% of runs keep a setting one step harsher
+  than needed (those files about 5% smaller than they had to be).

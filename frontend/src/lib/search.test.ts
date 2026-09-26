@@ -103,3 +103,15 @@ describe('runProgress', () => {
     expect(runProgress(settled)).toEqual({ fraction: 1, tries: 2 })
   })
 })
+
+describe('narrate for a run that stopped close to the limit', () => {
+  it('does not claim the gentlest fit when the gentler setting was never tried', () => {
+    const s = state([[11, 40_000, true], [6, 190_000, true]])
+    expect(narrate(s, 6)).toMatch(/close enough to your limit/)
+  })
+
+  it('still says the gentlest when the gentler setting was tried and too big', () => {
+    const s = state([[11, 40_000, true], [6, 150_000, true], [5, 230_000, false]])
+    expect(narrate(s, 6)).toMatch(/the gentlest that fits/)
+  })
+})

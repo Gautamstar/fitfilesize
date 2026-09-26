@@ -125,11 +125,12 @@ export function startCompress(
   targetBytes: number,
   resize?: Resize | null,
   signal?: AbortSignal,
+  prepare = false,
 ): Promise<{ job_id: string; status: string }> {
   return request(`/api/jobs/${jobId}/compress`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ target_bytes: targetBytes, ...resize }),
+    body: JSON.stringify({ target_bytes: targetBytes, ...resize, ...(prepare ? { prepare } : {}) }),
     signal,
   })
 }
