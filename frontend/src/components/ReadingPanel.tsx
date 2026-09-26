@@ -13,9 +13,11 @@ interface ReadingPanelProps {
   uploaded: number | null
   fileBytes: number
   slow: boolean
+  /** Starting a lost run again (see App): say why the upload is back. */
+  restarting?: boolean
 }
 
-export function ReadingPanel({ uploaded, fileBytes, slow }: ReadingPanelProps) {
+export function ReadingPanel({ uploaded, fileBytes, slow, restarting = false }: ReadingPanelProps) {
   const uploading = uploaded !== null
   const pct = uploading ? Math.round(uploaded * 100) : null
   // A slow upload that is visibly moving is just a big file on a slow
@@ -24,7 +26,13 @@ export function ReadingPanel({ uploaded, fileBytes, slow }: ReadingPanelProps) {
 
   return (
     <div className="panel">
-      <p className="progress-headline">{uploading ? 'Uploading your file' : 'Reading your file'}</p>
+      <p className="progress-headline">
+        {restarting
+          ? 'The server restarted. Starting again...'
+          : uploading
+            ? 'Uploading your file'
+            : 'Reading your file'}
+      </p>
       <div
         className={`read-bar${uploading ? '' : ' indeterminate'}`}
         role="progressbar"

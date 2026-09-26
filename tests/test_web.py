@@ -2,6 +2,7 @@ import io
 import json
 import os
 import time
+from pathlib import Path
 
 import fakeredis
 import pytest
@@ -1039,23 +1040,20 @@ def test_the_worker_takes_real_runs_before_waiting_head_starts(tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-class _Job:
-    """Just what the worker's killed-run handler reads from an RQ job."""
-
-    func_name = "fitpdf.web.jobs.run_compress"
-
-    def __init__(self, job_id, run_id):
-        self.args = (job_id, "src", "dst", 1000)
-        self.kwargs = {"run_id": run_id}
+def _queued_run(client, q, job_id, target):
+    """The RQ job the API really enqueues for a run, not a stand-in."""
+    assert client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target}).status_code == 202
+    return q.jobs[-1]
 
 
-def test_a_killed_run_is_reported_at_once(web, photo_jpg):
+def test_a_killed_run_is_reported_at_once(queued, photo_jpg):
     from fitpdf.web.worker import killed_handler
 
-    client, r, settings = web
+    client, r, q, _ = queued
     job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
-    store.update_job(r, job_id, run_id="r1", status="compressing", prepared="0")
-    killed_handler(settings, r)(_Job(job_id, "r1"), 123, 9, None)
+    rq_job = _queued_run(client, q, job_id, photo_jpg.stat().st_size // 5)
+    settings = Settings(data_dir=Path("unused"))
+    killed_handler(settings, r)(rq_job, 123, 9, None)
     job = store.get_job(r, job_id)
     assert job["status"] == "error"
     assert job["error"] == store.KILLED_MESSAGE
@@ -1063,13 +1061,16 @@ def test_a_killed_run_is_reported_at_once(web, photo_jpg):
     assert store.get_events(r, job_id)[-1] == {"stage": "error", "message": store.KILLED_MESSAGE}
 
 
-def test_a_killed_run_that_was_already_replaced_reports_nothing(web, photo_jpg):
+def test_a_killed_run_that_was_already_replaced_reports_nothing(queued, photo_jpg):
     from fitpdf.web.worker import killed_handler
 
-    client, r, settings = web
+    client, r, q, _ = queued
     job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
-    store.update_job(r, job_id, run_id="new", status="queued")
-    killed_handler(settings, r)(_Job(job_id, "old"), 123, 9, None)
+    size = photo_jpg.stat().st_size
+    old = _queued_run(client, q, job_id, size // 5)
+    store.update_job(r, job_id, status="done")  # let a second run be queued
+    _queued_run(client, q, job_id, size // 10)
+    killed_handler(Settings(data_dir=Path("unused")), r)(old, 123, 9, None)
     assert store.get_job(r, job_id)["status"] == "queued"
     assert store.get_events(r, job_id) == []
 

@@ -9,7 +9,7 @@
 
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useProgressStream } from './useProgressStream'
+import { LOST_MESSAGE, useProgressStream } from './useProgressStream'
 
 /** Stands in for EventSource so each test decides what the stream delivers. */
 class FakeEventSource {
@@ -268,6 +268,30 @@ describe('useProgressStream', () => {
 
     expect(fetchMock.mock.calls.length).toBeGreaterThan(2)
     expect(result.current.result).not.toBeNull()
+  })
+
+  it('stops waiting when the job is gone from the server', async () => {
+    fetchMock.mockImplementation(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({ detail: 'job not found or expired' }),
+    }))
+
+    const { result } = renderHook(() => useProgressStream('j1', true))
+    act(() => {
+      FakeEventSource.last!.fail()
+    })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000)
+    })
+    const calls = fetchMock.mock.calls.length
+
+    expect(result.current.error).toBe(LOST_MESSAGE)
+    expect(FakeEventSource.last!.closed).toBe(true)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(20_000)
+    })
+    expect(fetchMock.mock.calls.length).toBe(calls) // no more polling
   })
 
   it('closes the connection and stops polling on unmount', async () => {

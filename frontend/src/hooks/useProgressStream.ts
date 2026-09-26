@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { eventsUrl, getJob } from '../lib/api'
+import { ApiError, eventsUrl, getJob } from '../lib/api'
 import { fmt, fmtLimit } from '../lib/format'
 import type { DoneEvent, JobState, ProgressEvent } from '../types/api'
 
@@ -25,6 +25,13 @@ const STREAM_GRACE_MS = 6000
 
 /** Poll interval once the fallback is running. */
 const POLL_MS = 2500
+
+/**
+ * The job is gone from the server while the page waits on it: Redis lost it,
+ * or it expired. App treats this like a restart and starts the file again.
+ */
+export const LOST_MESSAGE =
+  'The server lost track of your file, so it has to be uploaded again.'
 
 /** One line in the progress list. */
 export interface ProgressStep {
@@ -100,6 +107,12 @@ const EMPTY: StreamState = {
  */
 export function useProgressStream(jobId: string | null, enabled: boolean): StreamState {
   const [state, setState] = useState<StreamState>(EMPTY)
+  // Which job `state` belongs to. Until the effect below resets it for a new
+  // job, the old job's result or error is still in `state`; returning EMPTY
+  // for any other job keeps a caller from reading one job's outcome as
+  // another's (App restarts lost runs on an error, and must not act on the
+  // previous run's).
+  const [stateJob, setStateJob] = useState<string | null>(null)
 
   // Monotonic id for step keys. A ref, not state, because bumping it must not
   // trigger a re-render on its own.
@@ -110,6 +123,7 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
     // Fresh run: clear anything left from the previous job.
     setState(EMPTY)
+    setStateJob(jobId)
     nextId.current = 0
 
     const es = new EventSource(eventsUrl(jobId))
@@ -154,9 +168,14 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
       pollTimer = window.setInterval(async () => {
         try {
           settleFromState(await getJob(jobId))
-        } catch {
-          // A failed poll says nothing conclusive, so keep trying until the
-          // job resolves or the component unmounts.
+        } catch (err) {
+          // Gone for good: waiting longer cannot bring it back. Anything else
+          // (a network blip, a busy server) says nothing conclusive, so keep
+          // trying until the job resolves or the component unmounts.
+          if (err instanceof ApiError && (err.status === 404 || err.status === 410)) {
+            if (!settled) setState((s) => ({ ...s, error: LOST_MESSAGE }))
+            stop()
+          }
         }
       }, POLL_MS)
     }
@@ -311,5 +330,5 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
     return stop
   }, [jobId, enabled])
 
-  return state
+  return stateJob === jobId ? state : EMPTY
 }

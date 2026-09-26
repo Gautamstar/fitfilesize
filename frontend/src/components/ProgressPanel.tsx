@@ -8,7 +8,7 @@
  * turns it into the bar's position.
  */
 
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fmtLimit } from '../lib/format'
 import { runProgress } from '../lib/search'
 import type { SearchState } from '../hooks/useProgressStream'
@@ -19,8 +19,21 @@ interface ProgressPanelProps {
   search: SearchState
 }
 
+/** Silence after which the panel says the run is slow, not stuck. */
+export const QUIET_MS = 45_000
+
 export function ProgressPanel({ filename, targetBytes, search }: ProgressPanelProps) {
   const { fraction, tries } = runProgress(search)
+  // Any change in the search restarts the clock. A server that has stopped
+  // for good is caught elsewhere (the run fails or the job disappears); this
+  // only keeps a long wait from looking like a hang.
+  const [quiet, setQuiet] = useState(false)
+  const signature = `${search.rungs}:${tries}:${search.current?.rung}:${Object.keys(search.points).length}:${search.lossless}`
+  useEffect(() => {
+    setQuiet(false)
+    const timer = window.setTimeout(() => setQuiet(true), QUIET_MS)
+    return () => window.clearTimeout(timer)
+  }, [signature])
   // The estimate of work ahead can grow when a guess misses; the bar never
   // moves back, it waits for the work to catch up instead.
   const shown = useRef(0)
@@ -61,6 +74,11 @@ export function ProgressPanel({ filename, targetBytes, search }: ProgressPanelPr
       <p className="read-meta" aria-live="polite">
         {status}
       </p>
+      {quiet ? (
+        <p className="slow-note">
+          Taking longer than usual. Big files can take a minute or two, and it is still working.
+        </p>
+      ) : null}
     </div>
   )
 }
