@@ -2,6 +2,7 @@
   "name": "fitfilesize-mcp",
   "version": "0.1.0",
   "description": "MCP server for FitFileSize: compress a PDF or image to fit an upload limit, or a form's exact rules (US visa photo, Indian e-Visa, IBPS, SBI, RRB).",
+  "mcpName": "io.github.Gautamstar/fitfilesize",
   "license": "MIT",
   "type": "module",
   "bin": {
