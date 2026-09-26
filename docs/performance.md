@@ -177,3 +177,25 @@ runs: no rule beat the live one by more than 0.02 renders per run).
   rendering the gentler neighbour to confirm it is too big: renders per run
   2.20 to 2.00 in simulation; 0.6% of runs keep a setting one step harsher
   than needed (those files about 5% smaller than they had to be).
+
+## Smaller uploads for big photos (2026-09-26)
+
+For a JPEG over 1.5 MB and a limit chosen before upload that is well under
+it, the browser uploads a copy at 3000 px and quality 95 instead
+(`frontend/src/lib/shrink.ts`), used only when the copy is still at least 3x
+the limit. The server's answer is then a rung at or below 3000 px, which the
+copy holds in full. A larger limit or pixel size picked afterwards uploads the
+original before the run.
+
+| Photo | Sent | At 1.5 Mbit/s upload, drop to size picker |
+|---|---|---|
+| 5 MB phone photo, IBPS 50 KB | 2.7 MB instead of 4.9 MB | 15.4 s instead of 27.5 s |
+| 10.7 MB 48 MP photo, 500 KB | 1.5 MB instead of 10.4 MB | 8.9 s instead of 57.7 s |
+| 12 MB photo, 1 MB | 3.3 MB instead of 11.8 MB | |
+
+Answers, 4 photos (one stored sideways with EXIF orientation 6) x 6 limits
+from 20 KB to 1 MB: 23 of 24 the same rung as from the original, within
+0.5 dB of it against a direct Lanczos resize; the other one step up (2200 px
+instead of 2000, still under 500 KB). Copies sized down toward the limit
+were tried and dropped: the browser's resampling differs from Pillow's enough
+that a copy near the answer's size changed 6 of 24 answers, some a step down.
