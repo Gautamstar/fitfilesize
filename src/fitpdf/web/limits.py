@@ -77,11 +77,18 @@ def hit(r, bucket: str, client: str, limit: int) -> Quota:
     now = int(time.time())
     window = now // WINDOW_SECONDS
     key = _key(bucket, client, window)
-    pipe = r.pipeline()
-    pipe.incr(key)
-    pipe.expire(key, WINDOW_SECONDS)
-    used, _ = pipe.execute()
-    return Quota(limit=limit, used=int(used), reset_in=(window + 1) * WINDOW_SECONDS - now)
+    reset_in = (window + 1) * WINDOW_SECONDS - now
+    try:
+        pipe = r.pipeline()
+        pipe.incr(key)
+        pipe.expire(key, WINDOW_SECONDS)
+        used, _ = pipe.execute()
+    except Exception:
+        # Redis unreachable: let the request through uncounted. The limit
+        # guards against abuse; turning every visitor away while Redis
+        # restarts would be the bigger failure.
+        return Quota(limit=limit, used=0, reset_in=reset_in)
+    return Quota(limit=limit, used=int(used), reset_in=reset_in)
 
 
 def peek(r, bucket: str, client: str, limit: int) -> Quota:

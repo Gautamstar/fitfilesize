@@ -345,9 +345,47 @@ def test_sse_pings_a_quiet_stream(tmp_path, image_pdf, monkeypatch):
 
 def test_health(web):
     client, _, _ = web
-    assert client.get("/health").json() == {"ok": True}
+    # No worker yet, but within the start-up grace period: still healthy.
+    assert client.get("/health").json() == {"ok": True, "redis": True, "worker": False}
     # Uptime monitors probe with HEAD; a 405 would page as an outage.
     assert client.head("/health").status_code == 200
+
+
+def _app_without_grace(tmp_path, r):
+    settings = Settings(data_dir=tmp_path / "data")
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    return create_app(
+        settings=settings, redis_conn=r, queue=q, background_sweep=False, worker_grace=0
+    ), settings
+
+
+def test_health_fails_without_a_worker_and_passes_with_one(tmp_path):
+    from rq import Worker
+
+    r = fakeredis.FakeRedis()
+    app, settings = _app_without_grace(tmp_path, r)
+    with TestClient(app) as client:
+        res = client.get("/health")
+        assert res.status_code == 503
+        assert res.json() == {"ok": False, "redis": True, "worker": False}
+        assert client.head("/health").status_code == 503  # what UptimeRobot sees
+
+        Worker([Queue(settings.queue_name, connection=r)], connection=r).register_birth()
+        assert client.get("/health").json() == {"ok": True, "redis": True, "worker": True}
+
+
+def test_health_fails_when_redis_is_away(tmp_path, monkeypatch):
+    r = fakeredis.FakeRedis()
+    app, _ = _app_without_grace(tmp_path, r)
+
+    def down():
+        raise ConnectionError("gone")
+
+    monkeypatch.setattr(r, "ping", down)
+    with TestClient(app) as client:
+        res = client.get("/health")
+    assert res.status_code == 503
+    assert res.json()["redis"] is False
 
 
 def test_cors_for_separate_frontend(tmp_path, monkeypatch):
@@ -994,3 +1032,101 @@ def test_the_worker_takes_real_runs_before_waiting_head_starts(tmp_path):
     SimpleWorker(work, connection=r).work(burst=True)
     done = {j: Job.fetch(j.id, connection=r).ended_at for j in (first, second)}
     assert done[second] < done[first]  # ...but the real run went first
+
+
+# --------------------------------------------------------------------------- #
+# Self-healing: failures that used to hang or 500 now report or recover.
+# --------------------------------------------------------------------------- #
+
+
+class _Job:
+    """Just what the worker's killed-run handler reads from an RQ job."""
+
+    func_name = "fitpdf.web.jobs.run_compress"
+
+    def __init__(self, job_id, run_id):
+        self.args = (job_id, "src", "dst", 1000)
+        self.kwargs = {"run_id": run_id}
+
+
+def test_a_killed_run_is_reported_at_once(web, photo_jpg):
+    from fitpdf.web.worker import killed_handler
+
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    store.update_job(r, job_id, run_id="r1", status="compressing", prepared="0")
+    killed_handler(settings, r)(_Job(job_id, "r1"), 123, 9, None)
+    job = store.get_job(r, job_id)
+    assert job["status"] == "error"
+    assert job["error"] == store.KILLED_MESSAGE
+    assert "completed_at" in job
+    assert store.get_events(r, job_id)[-1] == {"stage": "error", "message": store.KILLED_MESSAGE}
+
+
+def test_a_killed_run_that_was_already_replaced_reports_nothing(web, photo_jpg):
+    from fitpdf.web.worker import killed_handler
+
+    client, r, settings = web
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    store.update_job(r, job_id, run_id="new", status="queued")
+    killed_handler(settings, r)(_Job(job_id, "old"), 123, 9, None)
+    assert store.get_job(r, job_id)["status"] == "queued"
+    assert store.get_events(r, job_id) == []
+
+
+def test_redis_being_away_is_a_503_not_a_500(web, monkeypatch):
+    import redis
+
+    client, _, _ = web
+
+    def away(*args, **kwargs):
+        raise redis.ConnectionError("Connection refused")
+
+    monkeypatch.setattr(store, "get_job", away)
+    res = client.get("/api/jobs/abc")
+    assert res.status_code == 503
+    assert "try again" in res.json()["detail"]
+
+
+def test_the_rate_limit_lets_requests_through_when_redis_is_away():
+    from fitpdf.web import limits
+
+    class Down:
+        def pipeline(self):
+            raise ConnectionError("gone")
+
+    quota = limits.hit(Down(), "uploads", "1.2.3.4", 30)
+    assert not quota.exceeded
+
+
+def test_low_disk_sweeps_first_then_refuses_before_reading_the_upload(web, photo_jpg, monkeypatch):
+    client, _, settings = web
+    swept = []
+    monkeypatch.setattr(web_app, "sweep_expired", lambda *a: swept.append(1) or 0)
+    Usage = type("Usage", (), {})
+    low = Usage()
+    low.free = 1
+    monkeypatch.setattr(web_app.shutil, "disk_usage", lambda path: low)
+    res = _upload(client, photo_jpg, "a.jpg")
+    assert res.status_code == 503
+    assert "space" in res.json()["detail"]
+    assert swept == [1]
+    assert not any(settings.data_dir.iterdir())  # nothing was written
+
+
+def test_an_image_too_big_to_process_is_refused_with_the_reason(web, tmp_path):
+    client, _, settings = web
+    png = tmp_path / "huge.png"
+    Image.new("RGB", (7000, 5000)).save(png)  # 35 MP, a few KB: flat
+    res = _upload(client, png, "huge.png")
+    assert res.status_code == 422
+    assert "35 megapixels" in res.json()["detail"]
+    assert "JPEG" in res.json()["detail"]
+    assert not any(settings.data_dir.iterdir())
+
+
+def test_a_large_phone_photo_is_still_taken(web, tmp_path):
+    client, _, _ = web
+    jpg = tmp_path / "48mp.jpg"
+    Image.new("RGB", (8000, 6000)).save(jpg, quality=50)
+    assert _upload(client, jpg, "48mp.jpg").status_code == 200
