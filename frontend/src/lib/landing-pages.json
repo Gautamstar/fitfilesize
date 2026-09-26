@@ -434,6 +434,13 @@
         "height": 600
       },
       "heading": "US visa photo for the DS-160: 600 x 600, under 240 KB",
+      "title": "US visa photo (DS-160)",
+      "spec": [
+        "JPEG",
+        "600 × 600 pixels",
+        "240 KB or less"
+      ],
+      "org": "the U.S. Department of State",
       "description": "Make your DS-160 visa photo a 600 x 600 pixel JPEG under 240 KB, as the U.S. Department of State requires. Free, no sign-up, files deleted minutes after.",
       "blurb": "The DS-160 takes a square JPEG, 600 x 600 pixels and no more than 240 KB. A phone photo is several megabytes and the wrong shape, so it gets cropped, resized and compressed in one go.",
       "source": {
@@ -461,6 +468,12 @@
       "linkLabel": "Indian e-Visa passport page (PDF)",
       "targetKb": 300,
       "heading": "Indian e-Visa passport page: PDF under 300 KB",
+      "title": "Indian e-Visa passport page",
+      "spec": [
+        "PDF",
+        "10 KB to 300 KB"
+      ],
+      "org": "the Government of India",
       "description": "Compress the scanned bio page of your passport to a PDF under 300 KB for the Indian e-Visa application. Free, no sign-up, files deleted minutes after.",
       "blurb": "The Indian e-Visa asks for the bio page of your passport as a PDF between 10 KB and 300 KB. A scan or phone photo of it is usually far bigger.",
       "source": {
@@ -493,6 +506,13 @@
         "height": 1000
       },
       "heading": "Indian e-Visa photo: square JPEG under 1 MB",
+      "title": "Indian e-Visa photo",
+      "spec": [
+        "JPEG",
+        "Square",
+        "10 KB to 1 MB"
+      ],
+      "org": "the Government of India",
       "description": "Make your Indian e-Visa photo a square JPEG between 10 KB and 1 MB, as the e-Visa application requires. Free, no sign-up, files deleted minutes after.",
       "blurb": "The Indian e-Visa takes a JPEG photo between 10 KB and 1 MB whose height and width are equal. A phone photo is rarely square, so it is cropped to 1000 x 1000 pixels and compressed to fit.",
       "source": {
@@ -525,6 +545,13 @@
         "height": 230
       },
       "heading": "IBPS photo: 200 x 230 pixels, 20 KB to 50 KB",
+      "title": "IBPS photo",
+      "spec": [
+        "JPEG",
+        "200 × 230 pixels",
+        "20 KB to 50 KB"
+      ],
+      "org": "IBPS",
       "description": "Resize your photo to 200 x 230 pixels and 20 KB to 50 KB for IBPS bank exam applications. Free, no sign-up, files deleted minutes after.",
       "blurb": "IBPS applications ask for a photo of 200 x 230 pixels and between 20 KB and 50 KB. A photo that small often comes out under 20 KB, so it is padded up to the minimum without changing the picture.",
       "source": {
@@ -557,6 +584,13 @@
         "height": 60
       },
       "heading": "IBPS signature: 140 x 60 pixels, 10 KB to 20 KB",
+      "title": "IBPS signature",
+      "spec": [
+        "JPEG",
+        "140 × 60 pixels",
+        "10 KB to 20 KB"
+      ],
+      "org": "IBPS",
       "description": "Resize your signature to 140 x 60 pixels and 10 KB to 20 KB for IBPS bank exam applications. Free, no sign-up, files deleted minutes after.",
       "blurb": "IBPS applications ask for a signature image of 140 x 60 pixels and between 10 KB and 20 KB. An image that small is only a few KB, so it is padded up to the minimum without changing it.",
       "source": {

@@ -48,7 +48,7 @@ const jsonLd = (obj) =>
 // page. Preloading it lets the download start with the HTML instead of after
 // the CSS has been fetched and parsed.
 const fontFile = readdirSync(join(dist, 'assets')).find((f) =>
-  /^plus-jakarta-sans-latin-wght-normal-.*\.woff2$/.test(f),
+  /^ibm-plex-sans-latin-wght-normal-.*\.woff2$/.test(f),
 )
 const fontPreload = fontFile
   ? `<link rel="preload" href="/assets/${fontFile}" as="font" type="font/woff2" crossorigin />`

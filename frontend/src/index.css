@@ -36,7 +36,7 @@
   --shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px rgba(17, 24, 39, 0.06);
   --radius: 16px;
 
-  --sans: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'IBM Plex Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   color-scheme: light;
 }
@@ -236,10 +236,34 @@ input[type='range']:focus-visible {
   margin: 0 auto;
   max-width: 18ch;
   font-size: 44px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   line-height: 1.1;
   text-wrap: balance;
+}
+/* A form's requirements under its name: read, not clicked, so plain text
+   rather than anything shaped like the size chips below. */
+.hero-spec {
+  margin: 10px auto 0;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.hero-spec span + span::before {
+  content: '·';
+  margin: 0 0.55em;
+  color: var(--ink-muted);
+}
+@media (max-width: 520px) {
+  .hero-spec {
+    font-size: 16px;
+  }
+}
+.hero-note {
+  margin: 10px auto 0;
+  color: var(--ink-muted);
+  font-size: 13px;
 }
 .tagline {
   max-width: 52ch;
@@ -442,7 +466,7 @@ input[type='range']:focus-visible {
   margin: 0;
   text-align: center;
   font-size: 48px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.1;
 }
@@ -1122,7 +1146,7 @@ button:disabled {
   display: block;
   margin-top: 4px;
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -1170,7 +1194,7 @@ button:disabled {
 .band-title {
   margin: 0 0 18px;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -1234,7 +1258,7 @@ button:disabled {
   background: var(--accent-wash);
   color: var(--accent);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .step-title {
   margin: 12px 0 4px;

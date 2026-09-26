@@ -341,11 +341,23 @@ function App({ path }: AppProps) {
       <section className="hero">
         {/* On a landing page the H1 is the search phrase itself, since that is
             what the visitor typed and what the page should rank for. */}
-        <h1>{landing?.heading ?? 'Make any file fit the upload limit'}</h1>
+        <h1>{landing?.title ?? landing?.heading ?? 'Make any file fit the upload limit'}</h1>
+        {landing?.spec ? (
+          // The form's requirements, as it states them, under its name.
+          <p className="hero-spec">
+            {landing.spec.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </p>
+        ) : null}
         <p className="tagline">
           {(landing && keepUnits(landing.blurb)) ??
             'Compress a PDF or image to the exact size a form asks for. Free, no sign-up, and your file is deleted within minutes.'}
         </p>
+        {landing?.org ? (
+          // A page named for a form must not pass for the form's own site.
+          <p className="hero-note">Independent tool, not affiliated with {landing.org}.</p>
+        ) : null}
       </section>
 
       <main>

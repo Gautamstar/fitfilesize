@@ -40,6 +40,7 @@ describe('landing page data', () => {
       expect(page.source?.url).toMatch(/^https:\/\//)
       expect(page.source?.checked).toMatch(/^\d{4}-\d{2}-\d{2}$/)
       expect(page.linkLabel).toBeTruthy()
+      expect(page.title && page.org && page.spec?.length).toBeTruthy()
       // The minimum (read as 1024-byte KB) must sit under the limit (1000-byte KB).
       const min = pageMinBytes(page)
       if (min !== null) expect(min).toBeLessThan(pageTargetBytes(page))
