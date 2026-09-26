@@ -1,0 +1,183 @@
+{
+  "updated": "2026-09-26",
+  "forms": [
+    {
+      "id": "us-visa-photo-ds160",
+      "name": "US visa photo (DS-160)",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "600 × 600 pixels",
+        "240 KB or less"
+      ],
+      "limit_bytes": 240000,
+      "width": 600,
+      "height": 600,
+      "source": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/photos.html",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/us-visa-photo-ds160"
+    },
+    {
+      "id": "indian-evisa-passport-pdf",
+      "name": "Indian e-Visa passport page",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "10 KB to 300 KB"
+      ],
+      "limit_bytes": 300000,
+      "source": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/indian-evisa-passport-pdf"
+    },
+    {
+      "id": "indian-evisa-photo",
+      "name": "Indian e-Visa photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "Square",
+        "10 KB to 1 MB"
+      ],
+      "limit_bytes": 1000000,
+      "min_bytes": 10240,
+      "width": 1000,
+      "height": 1000,
+      "source": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/indian-evisa-photo"
+    },
+    {
+      "id": "ibps-photo",
+      "name": "IBPS photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "200 × 230 pixels",
+        "20 KB to 50 KB"
+      ],
+      "limit_bytes": 50000,
+      "min_bytes": 20480,
+      "width": 200,
+      "height": 230,
+      "source": "https://ibpsreg.ibps.in/crpcsaxvjl25/uploads/loadpdf.php?file=k7m5p+fQ15erzNvW1Mrd4NPSnJp9sc%2FKYaao1bWrpok%3D&t=1LHArOLA2di0yczXwNDa083LmNWypw%3D%3D",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/ibps-photo"
+    },
+    {
+      "id": "ibps-signature",
+      "name": "IBPS signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "140 × 60 pixels",
+        "10 KB to 20 KB"
+      ],
+      "limit_bytes": 20000,
+      "min_bytes": 10240,
+      "width": 140,
+      "height": 60,
+      "source": "https://ibpsreg.ibps.in/crpcsaxvjl25/uploads/loadpdf.php?file=k7m5p+fQ15erzNvW1Mrd4NPSnJp9sc%2FKYaao1bWrpok%3D&t=1LHArOLA2di0yczXwNDa083LmNWypw%3D%3D",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/ibps-signature"
+    },
+    {
+      "id": "sbi-photo",
+      "name": "SBI photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "200 × 230 pixels",
+        "20 KB to 50 KB"
+      ],
+      "limit_bytes": 50000,
+      "min_bytes": 20480,
+      "width": 200,
+      "height": 230,
+      "source": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/sbi-photo"
+    },
+    {
+      "id": "sbi-signature",
+      "name": "SBI signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "140 × 60 pixels",
+        "10 KB to 20 KB"
+      ],
+      "limit_bytes": 20000,
+      "min_bytes": 10240,
+      "width": 140,
+      "height": 60,
+      "source": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/sbi-signature"
+    },
+    {
+      "id": "sbi-thumb-impression",
+      "name": "SBI left thumb impression",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "240 × 240 pixels",
+        "20 KB to 50 KB"
+      ],
+      "limit_bytes": 50000,
+      "min_bytes": 20480,
+      "width": 240,
+      "height": 240,
+      "source": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/sbi-thumb-impression"
+    },
+    {
+      "id": "sbi-handwritten-declaration",
+      "name": "SBI handwritten declaration",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "800 × 400 pixels",
+        "50 KB to 100 KB"
+      ],
+      "limit_bytes": 100000,
+      "min_bytes": 51200,
+      "width": 800,
+      "height": 400,
+      "source": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/sbi-handwritten-declaration"
+    },
+    {
+      "id": "rrb-signature",
+      "name": "RRB signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "At least 140 × 60 pixels",
+        "30 KB to 49 KB"
+      ],
+      "limit_bytes": 49000,
+      "min_bytes": 30720,
+      "width": 350,
+      "height": 200,
+      "source": "https://rrbajmer.gov.in/Upload_PDF/Final-Detailed%20CEN%2009-2025%20Level-1-updated%20on%2030012026-639054049190206941.pdf",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/rrb-signature"
+    },
+    {
+      "id": "rrb-sc-st-certificate-pdf",
+      "name": "RRB SC/ST certificate",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "Under 400 KB"
+      ],
+      "limit_bytes": 400000,
+      "source": "https://rrbajmer.gov.in/Upload_PDF/Final-Detailed%20CEN%2009-2025%20Level-1-updated%20on%2030012026-639054049190206941.pdf",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/rrb-sc-st-certificate-pdf"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { loadEnv } from 'vite'
+import { formsFromPages } from './forms.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = join(root, 'dist')
@@ -183,6 +184,13 @@ if (existsSync(llmsPath)) {
     .join('\n')
   writeFileSync(llmsPath, `${readFileSync(llmsPath, 'utf8').trimEnd()}\n\n## Common limits\n\n${list}\n`)
 }
+
+// forms.json: each form's rules as data, read by the MCP package
+// (fitfilesize-mcp) so a new form page reaches it without a new release.
+writeFileSync(
+  join(dist, 'forms.json'),
+  `${JSON.stringify({ updated, forms: formsFromPages(pages, siteUrl || 'https://fitfilesize.com') }, null, 2)}\n`,
+)
 
 // The SSR bundle is only a build tool; nothing serves it.
 if (existsSync(ssrDir)) rmSync(ssrDir, { recursive: true })
