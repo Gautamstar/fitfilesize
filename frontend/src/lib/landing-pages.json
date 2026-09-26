@@ -610,6 +610,234 @@
           "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
         ]
       }
+    },
+    {
+      "slug": "sbi-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "SBI photo",
+      "targetKb": 50,
+      "minKb": 20,
+      "pixels": {
+        "width": 200,
+        "height": 230
+      },
+      "heading": "SBI photo: 200 x 230 pixels, 20 KB to 50 KB",
+      "title": "SBI photo",
+      "spec": [
+        "JPEG",
+        "200 × 230 pixels",
+        "20 KB to 50 KB"
+      ],
+      "org": "the State Bank of India",
+      "description": "Resize your photo to 200 x 230 pixels and 20 KB to 50 KB for SBI recruitment applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "SBI applications ask for a photo of 200 x 230 pixels and between 20 KB and 50 KB. A photo that small often comes out under 20 KB, so it is padded up to the minimum without changing the picture.",
+      "source": {
+        "label": "SBI's Junior Associates 2026 recruitment notice",
+        "url": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an SBI photo to 200 x 230 and 20 KB to 50 KB",
+        "paragraphs": [
+          "SBI's recruitment notice asks for a recent passport-style colour photo, 200 x 230 pixels preferred, with a file size between 20 KB and 50 KB, as a JPG or JPEG.",
+          "Here the photo is cropped from the middle to 200 x 230, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it with an invisible comment inside the file. The picture is exactly the same."
+        ],
+        "tips": [
+          "Use a light, preferably white, background and look straight at the camera. Caps, hats and dark glasses are not accepted.",
+          "SBI also asks for a live photo taken with your webcam or phone during the application, besides this upload.",
+          "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
+        ]
+      }
+    },
+    {
+      "slug": "sbi-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "SBI signature",
+      "targetKb": 20,
+      "minKb": 10,
+      "pixels": {
+        "width": 140,
+        "height": 60
+      },
+      "heading": "SBI signature: 140 x 60 pixels, 10 KB to 20 KB",
+      "title": "SBI signature",
+      "spec": [
+        "JPEG",
+        "140 × 60 pixels",
+        "10 KB to 20 KB"
+      ],
+      "org": "the State Bank of India",
+      "description": "Resize your signature to 140 x 60 pixels and 10 KB to 20 KB for SBI recruitment applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "SBI applications ask for a signature of 140 x 60 pixels and between 10 KB and 20 KB. An image that small is only a few KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "SBI's Junior Associates 2026 recruitment notice",
+        "url": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an SBI signature to 140 x 60 and 10 KB to 20 KB",
+        "paragraphs": [
+          "SBI's recruitment notice asks for your signature in black ink on white paper, 140 x 60 pixels preferred, with a file size between 10 KB and 20 KB.",
+          "A signature at 140 x 60 pixels is usually 3 to 5 KB even at the best quality, which is under the minimum. Here it is cropped from the middle, saved at the best quality under 20 KB and padded up to 10 KB with an invisible comment inside the file."
+        ],
+        "tips": [
+          "Sign with a black pen on plain white paper, and photograph or scan it in good light.",
+          "Crop the photo close around the signature first, so the crop from the middle keeps all of it.",
+          "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
+        ]
+      }
+    },
+    {
+      "slug": "sbi-thumb-impression",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "SBI thumb impression",
+      "targetKb": 50,
+      "minKb": 20,
+      "pixels": {
+        "width": 240,
+        "height": 240
+      },
+      "heading": "SBI left thumb impression: 240 x 240 pixels, 20 KB to 50 KB",
+      "title": "SBI left thumb impression",
+      "spec": [
+        "JPEG",
+        "240 × 240 pixels",
+        "20 KB to 50 KB"
+      ],
+      "org": "the State Bank of India",
+      "description": "Resize your left thumb impression to 240 x 240 pixels and 20 KB to 50 KB for SBI recruitment applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "SBI applications ask for a left thumb impression of 240 x 240 pixels and between 20 KB and 50 KB. It is cropped square, compressed, and padded up to 20 KB if it comes out smaller.",
+      "source": {
+        "label": "SBI's Junior Associates 2026 recruitment notice",
+        "url": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting a thumb impression to 240 x 240 and 20 KB to 50 KB",
+        "paragraphs": [
+          "SBI's recruitment notice asks for your left thumb impression in black or blue ink on white paper, 240 x 240 pixels preferred, with a file size between 20 KB and 50 KB, as a JPG or JPEG.",
+          "Here the image is cropped square from the middle, resized to 240 x 240, saved at the best quality under 50 KB, and padded up to 20 KB with an invisible comment inside the file if it comes out smaller."
+        ],
+        "tips": [
+          "Press the thumb once, firmly and evenly, so the ridges are clear rather than a smudge.",
+          "Photograph it straight on in good light and crop close around the print first, so the square crop keeps all of it.",
+          "If you do not have a left thumb, the notice allows your right thumb."
+        ]
+      }
+    },
+    {
+      "slug": "sbi-handwritten-declaration",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "SBI handwritten declaration",
+      "targetKb": 100,
+      "minKb": 50,
+      "pixels": {
+        "width": 800,
+        "height": 400
+      },
+      "heading": "SBI handwritten declaration: 800 x 400 pixels, 50 KB to 100 KB",
+      "title": "SBI handwritten declaration",
+      "spec": [
+        "JPEG",
+        "800 × 400 pixels",
+        "50 KB to 100 KB"
+      ],
+      "org": "the State Bank of India",
+      "description": "Resize your handwritten declaration to 800 x 400 pixels and 50 KB to 100 KB for SBI recruitment applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "SBI applications ask for the handwritten declaration as an image of 800 x 400 pixels and between 50 KB and 100 KB. It is cropped, compressed, and padded up to 50 KB if it comes out smaller.",
+      "source": {
+        "label": "SBI's Junior Associates 2026 recruitment notice",
+        "url": "https://sbi.bank.in/webfiles/uploads/files_2627/08/JA_2026_Detailed_Advt_Eng.pdf",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting the declaration to 800 x 400 and 50 KB to 100 KB",
+        "paragraphs": [
+          "SBI's recruitment notice asks you to write the declaration in English, in black ink on white paper, and upload it at 800 x 400 pixels preferred, with a file size between 50 KB and 100 KB, as a JPG or JPEG. The notice gives the exact wording to copy.",
+          "Here the photo of your page is cropped from the middle to the 2 to 1 shape of 800 x 400, saved at the best quality under 100 KB, and padded up to 50 KB with an invisible comment inside the file if it comes out smaller."
+        ],
+        "tips": [
+          "Write the declaration in your own handwriting, not in capital letters, and copy the wording from the notice exactly.",
+          "Crop the photo close around the text first, so the crop from the middle keeps every line.",
+          "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
+        ]
+      }
+    },
+    {
+      "slug": "rrb-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "RRB signature",
+      "targetKb": 49,
+      "minKb": 30,
+      "pixels": {
+        "width": 350,
+        "height": 200
+      },
+      "heading": "RRB signature: 30 KB to 49 KB, at least 140 x 60 pixels",
+      "title": "RRB signature",
+      "spec": [
+        "JPEG",
+        "At least 140 × 60 pixels",
+        "30 KB to 49 KB"
+      ],
+      "org": "the Railway Recruitment Boards",
+      "description": "Resize your signature to 30 KB to 49 KB for Railway Recruitment Board applications (CEN 09/2025). Free, no sign-up, files deleted minutes after.",
+      "blurb": "RRB's CEN 09/2025 asks for a signature JPEG between 30 KB and 49 KB, at least 140 x 60 pixels. A clean signature is far smaller than 30 KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "RRB Centralised Employment Notification 09/2025",
+        "url": "https://rrbajmer.gov.in/Upload_PDF/Final-Detailed%20CEN%2009-2025%20Level-1-updated%20on%2030012026-639054049190206941.pdf",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an RRB signature to 30 KB to 49 KB",
+        "paragraphs": [
+          "RRB's Centralised Employment Notification 09/2025 asks for a scanned signature, in running handwriting in black ink on white paper, as a JPG or JPEG between 30 KB and 49 KB and at least 140 x 60 pixels.",
+          "The form places the signature in a 35 x 20 mm box, so this page makes it 350 x 200 pixels, the same shape and well above the minimum. It is saved at the best quality under 49 KB, and because a signature at that size is usually well under 30 KB, it is padded up to 30 KB with an invisible comment inside the file. The signature is exactly the same."
+        ],
+        "tips": [
+          "Sign in running (joined-up) handwriting. The notice rejects block, capital or disjointed letters.",
+          "Crop the photo close around the signature first, so the crop from the middle keeps all of it.",
+          "Each notification sets its own rules. The RRB photo is captured live in the application, so there is no photo to upload."
+        ]
+      }
+    },
+    {
+      "slug": "rrb-sc-st-certificate-pdf",
+      "kind": "pdf",
+      "group": "Forms and applications",
+      "linkLabel": "RRB SC/ST certificate (PDF)",
+      "targetKb": 400,
+      "heading": "RRB SC/ST certificate: PDF under 400 KB",
+      "title": "RRB SC/ST certificate",
+      "spec": [
+        "PDF",
+        "Under 400 KB"
+      ],
+      "org": "the Railway Recruitment Boards",
+      "description": "Compress your SC/ST certificate to a PDF under 400 KB for the free travel pass on Railway Recruitment Board applications (CEN 09/2025). Free, no sign-up, files deleted minutes after.",
+      "blurb": "RRB's CEN 09/2025 asks SC/ST candidates who want the free travel pass to upload their certificate as a PDF under 400 KB. A scan is often bigger, so it is compressed until it fits.",
+      "source": {
+        "label": "RRB Centralised Employment Notification 09/2025",
+        "url": "https://rrbajmer.gov.in/Upload_PDF/Final-Detailed%20CEN%2009-2025%20Level-1-updated%20on%2030012026-639054049190206941.pdf",
+        "checked": "2026-09-26"
+      },
+      "guide": {
+        "title": "Getting an SC/ST certificate PDF under 400 KB",
+        "paragraphs": [
+          "RRB's Centralised Employment Notification 09/2025 asks SC/ST candidates who want the free railway travel pass to upload their SC/ST certificate as a PDF of less than 400 KB, legible and clear.",
+          "A certificate of one or two pages fits in 400 KB comfortably. We lower the resolution of the scan step by step and keep the first step that fits, so the text stays as readable as the limit allows."
+        ],
+        "tips": [
+          "Scan the certificate flat and in good light, with the whole page in the frame.",
+          "If your certificate is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
+          "The certificate must be the latest valid one as on the closing date of the application."
+        ]
+      }
     }
   ],
   "faq": [
