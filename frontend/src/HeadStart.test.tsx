@@ -6,7 +6,7 @@
 
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, expect, it, vi } from 'vitest'
-import { startCompress } from './lib/api'
+import { startCompress, uploadFile } from './lib/api'
 
 vi.mock('./lib/api', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./lib/api')>()
@@ -35,7 +35,10 @@ vi.stubGlobal(
   },
 )
 
-beforeEach(() => vi.mocked(startCompress).mockClear())
+beforeEach(() => {
+  vi.mocked(startCompress).mockClear()
+  vi.mocked(uploadFile).mockClear()
+})
 
 async function dropPhoto() {
   const input = document.querySelector('input[type=file]') as HTMLInputElement
@@ -63,4 +66,18 @@ it("starts one for a landing page's size", async () => {
   render(<App path="/compress-jpg-to-200kb" />)
   await dropPhoto()
   expect(startCompress).toHaveBeenCalledWith('job1', 200_000, null, undefined, true)
+})
+
+it('refuses an image with too many pixels without uploading it', async () => {
+  // A PNG header claiming 7000 x 5000 (35 MP; the cap for PNG is 34).
+  const header = new Uint8Array(33)
+  header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52])
+  new DataView(header.buffer).setUint32(16, 7000)
+  new DataView(header.buffer).setUint32(20, 5000)
+  const { default: App } = await import('./App')
+  render(<App path="/" />)
+  const input = document.querySelector('input[type=file]') as HTMLInputElement
+  fireEvent.change(input, { target: { files: [new File([header], 'huge.png', { type: 'image/png' })] } })
+  expect(await screen.findByText(/35 megapixels/)).toBeTruthy()
+  expect(uploadFile).not.toHaveBeenCalled()
 })

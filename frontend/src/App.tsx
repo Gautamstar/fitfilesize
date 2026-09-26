@@ -25,6 +25,7 @@ import { TipLink } from './components/TipLink'
 import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
 import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
+import { fileProblem } from './lib/fileCheck'
 import { describeSource, isAcceptedFile } from './lib/format'
 import { keepUnits, pageForPath, pageTargetBytes } from './lib/landing'
 import type { MediaKind, Resize } from './types/api'
@@ -158,6 +159,12 @@ function App({ path }: AppProps) {
 
     if (!isAcceptedFile(file)) {
       setDropError('We can take a PDF, JPEG, PNG, WebP, TIFF or BMP.')
+      return
+    }
+    // What the server would refuse, said now instead of after the upload.
+    const problem = await fileProblem(file)
+    if (problem) {
+      setDropError(problem)
       return
     }
 

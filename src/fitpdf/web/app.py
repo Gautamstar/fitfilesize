@@ -12,7 +12,14 @@ from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
-from ..strategies import IMAGE_SUFFIXES, MAX_RESIZE_EDGE, PDF_SUFFIXES, image_too_big
+from ..strategies import (
+    IMAGE_SUFFIXES,
+    MAX_IMAGE_PIXELS,
+    MAX_OTHER_IMAGE_PIXELS,
+    MAX_RESIZE_EDGE,
+    PDF_SUFFIXES,
+    image_too_big,
+)
 from ..units import human_size, parse_limit
 from . import limits, store
 from .config import Settings
@@ -456,9 +463,23 @@ def create_app(
 
     @app.get("/api/limits")
     async def get_limits(request: Request):
-        """The caller's remaining budget, without spending any of it."""
+        """The caller's remaining budget, without spending any of it, and the
+        largest file the server takes.
+
+        `files` lets a page refuse a file before uploading it: the upload
+        size cap, and the pixel caps for images (JPEG, and every other
+        format). The server checks both again on upload.
+        """
         client = limits.client_key(request, settings.client_ip_headers)
-        out = {}
+        out: dict = {
+            "files": {
+                "max_bytes": settings.max_upload_bytes,
+                "max_pixels": {
+                    "jpeg": MAX_IMAGE_PIXELS["JPEG"],
+                    "other": MAX_OTHER_IMAGE_PIXELS,
+                },
+            }
+        }
         for bucket, limit in (("uploads", settings.uploads_per_hour), ("runs", settings.runs_per_hour)):
             if limit > 0:
                 q = limits.peek(r, bucket, client, limit)
@@ -575,6 +596,11 @@ def create_app(
                     f.write(chunk)
             if size == 0:
                 raise HTTPException(400, "empty upload")
+            # Past these, a run would need more memory than the server has
+            # and be killed partway; refuse it up front with the reason.
+            # Before analyze, which cannot open the very largest images.
+            if suffix in IMAGE_SUFFIXES and (reason := image_too_big(dest)):
+                raise HTTPException(422, reason)
             try:
                 info = await run_in_threadpool(analyze, dest)
             except Exception:
@@ -585,10 +611,6 @@ def create_app(
                 raise HTTPException(
                     422, "this PDF is password protected; remove the password first"
                 )
-            # Past these, a run would need more memory than the server has
-            # and be killed partway; refuse it up front with the reason.
-            if info.kind == "image" and (reason := image_too_big(dest)):
-                raise HTTPException(422, reason)
         except HTTPException:
             remove_tree(d)
             raise
