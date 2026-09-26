@@ -25,9 +25,10 @@ import { TipLink } from './components/TipLink'
 import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
 import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
-import { fileProblem } from './lib/fileCheck'
+import { fileProblem, readImageSize } from './lib/fileCheck'
 import { describeSource, isAcceptedFile } from './lib/format'
 import { keepUnits, pageForPath, pageMinBytes, pageResize, pageTargetBytes } from './lib/landing'
+import { needsOriginal, shrinkForUpload, type Shrunk } from './lib/shrink'
 import type { MediaKind, Resize } from './types/api'
 
 type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
@@ -121,6 +122,10 @@ function App({ path }: AppProps) {
   // The file the visitor dropped, kept so a run the server lost (a restart,
   // a deploy, Redis forgetting the job) can start again without them.
   const fileRef = useRef<File | null>(null)
+  // What was actually sent: the file itself, or the smaller copy made for a
+  // small limit (lib/shrink.ts), with its size, while that copy is in use.
+  const sentRef = useRef<File | null>(null)
+  const shrunkRef = useRef<Shrunk | null>(null)
   const autoRestarted = useRef(false)
   const [restarting, setRestarting] = useState(false)
   // What a restart needs, read when an error arrives. Through a ref so the
@@ -132,7 +137,7 @@ function App({ path }: AppProps) {
 
   useEffect(() => {
     if (!stream.error) return
-    const file = fileRef.current
+    const file = sentRef.current
     const { job, targetBytes, resize, minBytes } = runRef.current
     const lostByServer = /server restarted|lost track/i.test(stream.error)
     if (!lostByServer || !file || !job || autoRestarted.current) {
@@ -187,23 +192,40 @@ function App({ path }: AppProps) {
     setFileBytes(file.size)
     setUploaded(0)
     setPhase('analyzing')
+    // For a limit far below a big photo, a smaller copy that gets the same
+    // answer; null sends the file as it is.
+    const shrunk = await shrinkForUpload(file, limit)
+    const sent = shrunk?.file ?? file
+    shrunkRef.current = shrunk
+    sentRef.current = sent
+    setFileBytes(sent.size)
     const slowTimer = window.setTimeout(() => setSlowUpload(true), SLOW_UPLOAD_MS)
     try {
       let up
       try {
-        up = await uploadFile(file, undefined, setUploaded)
+        up = await uploadFile(sent, undefined, setUploaded)
       } finally {
         window.clearTimeout(slowTimer)
         setSlowUpload(false)
         setUploaded(null)
       }
       const an = await analyzeJob(up.job_id)
+      // The visitor's own file, not the copy: its size is what "before" and
+      // the picker's range mean, and its pixels are what they know it by.
+      const own = shrunk ? await readImageSize(file).catch(() => null) : null
+      const ownBytes = shrunk ? file.size : up.size_bytes
       setJob({
         jobId: up.job_id,
         filename: up.filename,
         kind: up.kind,
-        originalBytes: up.size_bytes,
-        meta: describeSource(up.kind, up.size_bytes, up.pages, up.width, up.height),
+        originalBytes: ownBytes,
+        meta: describeSource(
+          up.kind,
+          ownBytes,
+          up.pages,
+          own?.width ?? up.width,
+          own?.height ?? up.height,
+        ),
         floor: an.floor_estimate,
       })
       setPreview(up.kind === 'image' ? URL.createObjectURL(file) : null)
@@ -216,7 +238,8 @@ function App({ path }: AppProps) {
       // On a form page, with the form's pixel size and minimum too, which is
       // what the picker opens with.
       const headResize = up.kind === 'image' ? resize : null
-      if (limitChosen && limit !== null && (limit < up.size_bytes || headResize)) {
+      const copyServes = !shrunk || (limit !== null && !needsOriginal(shrunk, limit, headResize))
+      if (limitChosen && limit !== null && copyServes && (limit < up.size_bytes || headResize)) {
         startCompress(up.job_id, limit, headResize, undefined, true, minFor(limit)).catch(() => {})
       }
     } catch (err) {
@@ -237,11 +260,34 @@ function App({ path }: AppProps) {
     setResize(nextResize)
     const min = minFor(target)
     setMinBytes(min)
+    let jobId = job.jobId
+    const original = fileRef.current
+    if (shrunkRef.current && original && needsOriginal(shrunkRef.current, target, nextResize)) {
+      // A limit or pixel size the smaller copy cannot serve: send the file
+      // itself, and let the copy's upload go.
+      setFileBytes(original.size)
+      setUploaded(0)
+      setPhase('analyzing')
+      try {
+        jobId = (await uploadFile(original, undefined, setUploaded)).job_id
+      } catch (err) {
+        setTargetWarning(err instanceof Error ? err.message : 'upload failed')
+        setPhase('target')
+        return
+      } finally {
+        setUploaded(null)
+      }
+      deleteJob(job.jobId).catch(() => {})
+      shrunkRef.current = null
+      sentRef.current = original
+      setJob({ ...job, jobId })
+    }
     try {
-      await startCompress(job.jobId, target, nextResize, undefined, false, min)
+      await startCompress(jobId, target, nextResize, undefined, false, min)
       setPhase('progress')
     } catch (err) {
       setTargetWarning(err instanceof Error ? err.message : 'could not start compression')
+      setPhase('target')
     }
   }
 
@@ -320,7 +366,8 @@ function App({ path }: AppProps) {
         return job && stream.result ? (
           <ResultPanel
             jobId={job.jobId}
-            result={stream.result}
+            // The visitor's own file size, even when a smaller copy was sent.
+            result={{ ...stream.result, original_bytes: job.originalBytes }}
             secondsLeft={secondsLeft}
             onRetry={() => setPhase('target')}
             onDelete={handleDelete}
