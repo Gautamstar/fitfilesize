@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { DEFAULT_API, FitError, fitFile } from './api.js'
 import { findForm, loadForms, type Form } from './forms.js'
 
-export const VERSION = '0.1.0'
+export const VERSION = '0.1.1'
 
 export interface ServerOptions {
   api?: string

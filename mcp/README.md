@@ -77,3 +77,7 @@ npm run build     # bundles the form presets from the website's data
 ```
 
 `FITFILESIZE_API` points the server at another API, such as a local one (`http://127.0.0.1:8000`).
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). This covers the MCP server in this folder; the rest of the FitFileSize repository is not open source.

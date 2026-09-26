@@ -173,3 +173,13 @@ describe('list_forms and the form list', () => {
     expect(findForm(forms, 'us-visa-photo-ds160')?.width).toBe(600)
   })
 })
+
+describe('release', () => {
+  it('names the same version in package.json, server.json and the server', async () => {
+    const { VERSION } = await import('../src/server.js')
+    const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+    const entry = JSON.parse(await readFile(new URL('../server.json', import.meta.url), 'utf8'))
+    expect([pkg.version, entry.version, entry.packages[0].version]).toEqual([VERSION, VERSION, VERSION])
+    expect(entry.name).toBe(pkg.mcpName)
+  })
+})
