@@ -76,6 +76,10 @@ function App({ path }: AppProps) {
   // The limit picked before upload. A landing page preselects its own; null
   // means "Other", and the picker then suggests a size from the file.
   const [limit, setLimit] = useState<number | null>(landing ? pageTargetBytes(landing) : 1_000_000)
+  // Whether that limit is one the visitor chose: a landing page's size (they
+  // searched for it) or a chip they clicked. The home page's 1 MB default is
+  // only a suggestion, so it gets no head-start run.
+  const [limitChosen, setLimitChosen] = useState(landing !== undefined)
 
   const streaming = phase === 'progress' || phase === 'result'
   const stream = useProgressStream(job?.jobId ?? null, streaming)
@@ -138,12 +142,12 @@ function App({ path }: AppProps) {
         floor: an.floor_estimate,
       })
       setPhase('target')
-      // Head-start: the size picked before upload (a landing page's, or a
-      // chip) is what most visitors go on to compress with, so start that run
-      // now, while they look at the picker. Their Compress adopts it when the
-      // settings match and replaces it when not. Best effort: if this fails,
-      // Compress simply starts the run as it always did.
-      if (limit !== null && limit < up.size_bytes) {
+      // Head-start: a size the visitor chose before upload (a landing page's,
+      // or a chip they clicked) is what they usually go on to compress with,
+      // so start that run now, while they look at the picker. Their Compress
+      // adopts it when the settings match and replaces it when not. Best
+      // effort: if this fails, Compress starts the run as it always did.
+      if (limitChosen && limit !== null && limit < up.size_bytes) {
         startCompress(up.job_id, limit, null, undefined, true).catch(() => {})
       }
     } catch (err) {
@@ -186,7 +190,10 @@ function App({ path }: AppProps) {
           <Dropzone onFile={handleFile} error={dropError}>
             <LimitChips
               value={limit}
-              onChange={setLimit}
+              onChange={(next) => {
+                setLimit(next)
+                setLimitChosen(true)
+              }}
               extra={landing ? pageTargetBytes(landing) : undefined}
             />
           </Dropzone>
