@@ -146,11 +146,21 @@
       <ul>
         <li>Your file is uploaded to our server, compressed there, and used for nothing else.</li>
         <li>
-          The original is deleted 5 minutes after the compression finishes. It is kept that long
-          only so "Try another size" works without a second upload.
+          If you chose a size before uploading, we start compressing to it while you look at the
+          size options, so the result is ready sooner. Nothing is kept or shared because of that.
         </li>
-        <li>The compressed file is deleted 10 minutes after the compression finishes.</li>
-        <li>A file that never finishes compressing is deleted after at most 30 minutes.</li>
+        <li>
+          The original is deleted 5 minutes after you press Compress and the compression finishes.
+          It is kept that long only so "Try another size" works without a second upload.
+        </li>
+        <li>
+          The compressed file is deleted 10 minutes after you press Compress and the compression
+          finishes.
+        </li>
+        <li>
+          A file you never press Compress for, or that never finishes compressing, is deleted after
+          at most 30 minutes. "Cancel" deletes it straight away.
+        </li>
         <li>"Delete now" removes both files immediately.</li>
         <li>
           While a job exists we also store its filename, size and page count so the page can show
