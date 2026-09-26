@@ -35,10 +35,37 @@ export class ApiError extends Error {
  * bottom applies it. Nothing is validated at runtime, so the types in
  * types/api.ts have to be kept honest by hand.
  */
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(API_BASE + path, init)
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  { conflictMeansDone = false }: { conflictMeansDone?: boolean } = {},
+): Promise<T> {
+  // Transient failures (a dropped connection, or the host answering 502-504
+  // while it swaps instances or the server says it is busy) are retried
+  // twice, a little later each time. Anything else is a real answer.
+  for (let attempt = 0; ; attempt++) {
+    const retryable = attempt < RETRY_DELAYS_MS.length && !init?.signal?.aborted
+    let res: Response
+    try {
+      res = await fetch(API_BASE + path, init)
+    } catch (err) {
+      if (init?.signal?.aborted) throw err
+      if (retryable) {
+        await sleep(RETRY_DELAYS_MS[attempt])
+        continue
+      }
+      throw new Error("couldn't reach the server; check your connection and try again")
+    }
 
-  if (!res.ok) {
+    if (res.ok) return (await res.json()) as T
+    if (retryable && TRANSIENT_STATUSES.has(res.status)) {
+      await sleep(RETRY_DELAYS_MS[attempt])
+      continue
+    }
+    // A retry of a request that had in fact arrived the first time: the
+    // server already has what we asked for.
+    if (res.status === 409 && conflictMeansDone && attempt > 0) return {} as T
+
     let message = `request failed (${res.status})`
     try {
       const body = await res.json()
@@ -48,9 +75,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(message, res.status)
   }
-
-  return (await res.json()) as T
 }
+
+/** Waits before each retry of a transient failure; its length is the retry count. */
+export const RETRY_DELAYS_MS = [1000, 3000]
+const TRANSIENT_STATUSES = new Set([502, 503, 504])
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * GET /health, fire and forget, as soon as the page loads.
@@ -65,7 +96,27 @@ export function warmUp(): void {
 }
 
 /** POST /api/upload. Sends the PDF or image, gets back a job id and basic info. */
-export function uploadFile(
+export async function uploadFile(
+  file: File,
+  signal?: AbortSignal,
+  onProgress?: (fraction: number) => void,
+): Promise<UploadResponse> {
+  // One retry for a dropped connection or a busy server; the bar starts over.
+  try {
+    return await sendUpload(file, signal, onProgress)
+  } catch (err) {
+    const transient =
+      !(err instanceof ApiError) || TRANSIENT_STATUSES.has(err.status)
+    if (!transient || signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) {
+      throw err
+    }
+    await sleep(RETRY_DELAYS_MS[0])
+    onProgress?.(0)
+    return sendUpload(file, signal, onProgress)
+  }
+}
+
+function sendUpload(
   file: File,
   signal?: AbortSignal,
   onProgress?: (fraction: number) => void,
@@ -127,12 +178,18 @@ export function startCompress(
   signal?: AbortSignal,
   prepare = false,
 ): Promise<{ job_id: string; status: string }> {
-  return request(`/api/jobs/${jobId}/compress`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ target_bytes: targetBytes, ...resize, ...(prepare ? { prepare } : {}) }),
-    signal,
-  })
+  return request(
+    `/api/jobs/${jobId}/compress`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_bytes: targetBytes, ...resize, ...(prepare ? { prepare } : {}) }),
+      signal,
+    },
+    // A retried Compress that finds a run already going: the first try got
+    // through. (Not for a head-start, whose 409 means "not needed".)
+    { conflictMeansDone: !prepare },
+  )
 }
 
 /** GET /api/jobs/{id}. Current job state, including seconds until deletion. */

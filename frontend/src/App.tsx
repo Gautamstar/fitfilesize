@@ -6,7 +6,7 @@
  * cannot hold two values.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
@@ -103,12 +103,54 @@ function App({ path }: AppProps) {
     if (stream.result) setPhase('result')
   }, [stream.result])
 
+  // The file the visitor dropped, kept so a run the server lost (a restart,
+  // a deploy, Redis forgetting the job) can start again without them.
+  const fileRef = useRef<File | null>(null)
+  const autoRestarted = useRef(false)
+  const [restarting, setRestarting] = useState(false)
+  // What a restart needs, read when an error arrives. Through a ref so the
+  // effect below runs for a new error, not for every change in these.
+  const runRef = useRef({ job, targetBytes, resize })
   useEffect(() => {
-    if (stream.error) {
+    runRef.current = { job, targetBytes, resize }
+  }, [job, targetBytes, resize])
+
+  useEffect(() => {
+    if (!stream.error) return
+    const file = fileRef.current
+    const { job, targetBytes, resize } = runRef.current
+    const lostByServer = /server restarted|lost track/i.test(stream.error)
+    if (!lostByServer || !file || !job || autoRestarted.current) {
       setFatalError(stream.error)
       setPhase('error')
+      return
     }
-  }, [stream.error])
+    // Once per file: a server that keeps losing runs is really down, and
+    // looping would only spend the visitor's upload budget.
+    autoRestarted.current = true
+    const lostMessage = stream.error
+    setRestarting(true)
+    setFileBytes(file.size)
+    setUploaded(0)
+    setPhase('analyzing')
+    ;(async () => {
+      try {
+        const up = await uploadFile(file, undefined, setUploaded)
+        setUploaded(null)
+        await startCompress(up.job_id, targetBytes, resize)
+        setJob({ ...job, jobId: up.job_id })
+        setPhase('progress')
+      } catch {
+        setFatalError(lostMessage)
+        setPhase('error')
+      } finally {
+        setRestarting(false)
+        setUploaded(null)
+      }
+    })()
+    // The job id too: a second loss with the same message is still a new
+    // error. The stream never reports one job's error under another's id.
+  }, [stream.error, job?.jobId])
 
   // Upload, then analyze, then show the picker.
   const handleFile = async (file: File) => {
@@ -119,6 +161,8 @@ function App({ path }: AppProps) {
       return
     }
 
+    fileRef.current = file
+    autoRestarted.current = false
     setFileBytes(file.size)
     setUploaded(0)
     setPhase('analyzing')
@@ -200,7 +244,14 @@ function App({ path }: AppProps) {
         )
 
       case 'analyzing':
-        return <ReadingPanel uploaded={uploaded} fileBytes={fileBytes} slow={slowUpload} />
+        return (
+          <ReadingPanel
+            uploaded={uploaded}
+            fileBytes={fileBytes}
+            slow={slowUpload}
+            restarting={restarting}
+          />
+        )
 
       case 'target':
         return job ? (

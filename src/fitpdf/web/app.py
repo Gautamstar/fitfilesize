@@ -24,6 +24,8 @@ UPLOAD_CHUNK = 1024 * 1024
 # /health counts a missing worker only after this long: the worker process
 # starts next to the API and takes a few seconds to register.
 WORKER_GRACE_SECONDS = 60
+# Longest /health takes to answer.
+HEALTH_TIMEOUT = 3.0
 # Free disk kept for uploads in flight; see receive_upload.
 MIN_FREE_BYTES = 500 * 1024 * 1024
 # /api/fit waits this long for the run before answering 202 with a status URL.
@@ -426,7 +428,13 @@ def create_app(
             booting = not worker_ok and time.monotonic() - started < worker_grace
             return {"ok": worker_ok or booting, "redis": True, "worker": worker_ok}
 
-        state = await run_in_threadpool(check)
+        try:
+            # Quick either way: the Redis client retries with backoff, which
+            # suits requests but would leave a health check hanging while
+            # Redis is away, and a slow answer says less than a 503.
+            state = await asyncio.wait_for(run_in_threadpool(check), HEALTH_TIMEOUT)
+        except TimeoutError:
+            state = {"ok": False, "redis": False, "worker": False}
         if not state["ok"]:
             response.status_code = 503
         return state
@@ -721,7 +729,7 @@ def create_app(
             settings.gs_timeout,
             resize,
             fit,
-            run_id,
+            run_id=run_id,  # by name: the worker's killed-run handler reads it
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,
