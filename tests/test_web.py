@@ -931,3 +931,66 @@ def test_deleting_the_file_stops_its_run(web, photo_jpg, monkeypatch):
         run_id="r1",
     )
     assert store.get_job(r, job_id) is None  # nothing written back after the delete
+
+
+# --------------------------------------------------------------------------- #
+# Queue priority: head-starts wait on their own queue, below real runs.
+# --------------------------------------------------------------------------- #
+
+
+@pytest.fixture()
+def queued(tmp_path):
+    """The API with queues that hold jobs instead of running them."""
+    settings = Settings(data_dir=tmp_path / "data", gs_timeout=120)
+    r = fakeredis.FakeRedis()
+    q = Queue(settings.queue_name, connection=r)
+    pq = Queue(settings.prepare_queue_name, connection=r)
+    app = create_app(settings=settings, redis_conn=r, queue=q, prepare_queue=pq, background_sweep=False)
+    with TestClient(app) as client:
+        yield client, r, q, pq
+
+
+def test_head_starts_and_real_runs_go_on_separate_queues(queued, photo_jpg):
+    client, _, q, pq = queued
+    target = photo_jpg.stat().st_size // 5
+    a = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    b = _upload(client, photo_jpg, "b.jpg").json()["job_id"]
+    client.post(f"/api/jobs/{a}/compress", json={"target_bytes": target, "prepare": True})
+    client.post(f"/api/jobs/{b}/compress", json={"target_bytes": target})
+    assert [j.args[0] for j in pq.jobs] == [a]
+    assert [j.args[0] for j in q.jobs] == [b]
+
+
+def test_adopting_a_waiting_head_start_moves_it_up_without_spending_again(queued, photo_jpg):
+    client, r, q, _ = queued
+    target = photo_jpg.stat().st_size // 5
+    job_id = _upload(client, photo_jpg, "a.jpg").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target, "prepare": True})
+    old_run = store.get_job(r, job_id)["run_id"]
+    runs_left = client.get("/api/limits").json()["runs"]["remaining"]
+
+    assert client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target}).status_code == 202
+    job = store.get_job(r, job_id)
+    assert job["prepared"] == "0" and job["run_id"] != old_run
+    assert [j.args[0] for j in q.jobs] == [job_id]  # now with the real runs
+    assert client.get("/api/limits").json()["runs"]["remaining"] == runs_left
+    # The copy left on the low queue belongs to the old run: when the worker
+    # gets to it, its first write finds a newer run and it does nothing.
+
+
+def test_the_worker_takes_real_runs_before_waiting_head_starts(tmp_path):
+    from rq import SimpleWorker
+    from rq.job import Job
+
+    from fitpdf.web.worker import queues
+
+    settings = Settings(data_dir=tmp_path / "data")
+    r = fakeredis.FakeRedis()
+    work = queues(settings, r)
+    real = next(q for q in work if q.name == settings.queue_name)
+    prepare = next(q for q in work if q.name == settings.prepare_queue_name)
+    first = prepare.enqueue(time.sleep, 0.01)  # queued first...
+    second = real.enqueue(time.sleep, 0.01)
+    SimpleWorker(work, connection=r).work(burst=True)
+    done = {j: Job.fetch(j.id, connection=r).ended_at for j in (first, second)}
+    assert done[second] < done[first]  # ...but the real run went first
