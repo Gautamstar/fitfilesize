@@ -26,6 +26,13 @@ from .strategies import (
 # public package API treat PDFs as the default media type.
 RUNGS = PDF_RUNGS
 
+# A fitting result at least this share of the target ends the search without
+# rendering the gentler neighbour to confirm it is too big. Simulated over
+# every target on 15 real and realistic files: renders per run 2.20 -> 2.00;
+# 0.6% of runs keep a setting one step harsher than needed, and those files
+# come out about 5% smaller than they had to be.
+CLOSE_ENOUGH = 0.9
+
 __all__ = [
     "IMAGE_RUNGS",
     "PDF_RUNGS",
@@ -250,7 +257,9 @@ def compress_to_target(
     measured predict which rung will just fit; that rung and its gentler
     neighbour usually settle it in two renders where bisection needs three or
     four. Predictions that stop helping fall back to bisection, and the answer
-    is the same either way: the gentlest rung that fits.
+    is the same either way: the gentlest rung that fits, except that a fit
+    within CLOSE_ENOUGH of the target ends the search without confirming
+    that the next gentler rung is too big.
 
     on_progress, if given, is called with a dict per step:
       {"stage": "lossless", "size": int}
@@ -373,6 +382,8 @@ def compress_to_target(
         )
         misses = 0
         while lo <= hi:
+            if fit is not None and cache[fit][0] >= CLOSE_ENOUGH * target_bytes:
+                break
             guess = (
                 None
                 if misses >= 2
