@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot, hydrateRoot } from 'react-dom/client'
 // Self-hosted rather than from Google Fonts: one less origin to connect to
 // before first paint, and one less third party seeing every visit.
-import '@fontsource-variable/plus-jakarta-sans'
+import '@fontsource-variable/ibm-plex-sans'
 import './index.css'
 import App from './App.tsx'
 import { warmUp } from './lib/api'

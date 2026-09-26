@@ -29,7 +29,14 @@ export interface LandingPage {
   linkLabel?: string
   /** Where a form's requirements come from, shown on the page. */
   source?: { label: string; url: string; checked: string }
+  /** Search-phrase heading, used for the page's <title>. */
   heading: string
+  /** A form page's own heading, shown in place of `heading`: the form's name. */
+  title?: string
+  /** A form's requirements, shown small under the title: "JPEG", "200 × 230 pixels". */
+  spec?: string[]
+  /** Who sets the form's rules, for the "not affiliated" note. */
+  org?: string
   description: string
   blurb: string
   /** The page's own section: what fits at this size and how to get there. */
