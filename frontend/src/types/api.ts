@@ -107,8 +107,6 @@ export interface JobState {
   hit_target?: boolean
   method?: CompressMethod
   warnings?: string[]
-  needs_jpeg?: boolean
-  png_shrunk?: boolean
 
   // Present only on a failed run.
   error?: string
@@ -232,16 +230,6 @@ export interface DoneEvent {
   target_bytes: number
   method: CompressMethod
   warnings: string[]
-  /**
-   * A PNG that could not get under the limit as a PNG, in a run that was not
-   * allowed to make it a JPEG: offer the conversion.
-   */
-  needs_jpeg?: boolean
-  /**
-   * Kept a PNG by shrinking it well below its original size: a JPEG would
-   * usually keep more detail, so offer one.
-   */
-  png_shrunk?: boolean
   /** Seconds until the files are deleted, counted from completion. */
   expires_in?: number
 }

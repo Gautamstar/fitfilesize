@@ -7,7 +7,7 @@ from fitpdf.engine import analyze, compress_to_target, estimate_floor
 from fitpdf.strategies import IMAGE_RUNGS, ImageStrategy, PdfStrategy, detect_strategy
 
 # Under every 256-colour PNG of the photo_png fixture, over its JPEGs.
-PHOTO_PNG_LIMIT = 100_000
+PHOTO_PNG_LIMIT = 40_000
 
 
 def test_detect_strategy_by_extension(photo_jpg, transparent_png, image_pdf):
@@ -87,7 +87,9 @@ def test_binary_search_beats_linear(photo_jpg, tmp_path):
 
 
 def test_transparency_warning_is_raised(transparent_photo_png, tmp_path):
-    result = compress_to_target(transparent_photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT)
+    result = compress_to_target(
+        transparent_photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT, allow_jpeg=True
+    )
     assert result.output.suffix == ".jpg"
     assert any("see-through parts are now white" in w for w in result.warnings)
 
@@ -99,7 +101,7 @@ def test_an_opaque_png_with_an_alpha_channel_gets_no_transparency_warning(
     png = tmp_path / "screenshot.png"
     Image.open(photo_png).convert("RGBA").save(png, "PNG")
     assert ImageStrategy().probe(png).warnings == []
-    result = compress_to_target(png, tmp_path / "out.png", PHOTO_PNG_LIMIT)
+    result = compress_to_target(png, tmp_path / "out.png", PHOTO_PNG_LIMIT, allow_jpeg=True)
     assert not any("see-through" in w for w in result.warnings)
     assert any(w.startswith("saved as a JPG: as a PNG") for w in result.warnings)
 
@@ -132,7 +134,7 @@ def test_transparency_is_flattened_onto_white(transparent_png, tmp_path):
 
 def test_lossy_output_is_rejigged_to_jpg(photo_png, tmp_path):
     """A PNG that has to become a JPEG must not keep the caller's .png name."""
-    result = compress_to_target(photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT)
+    result = compress_to_target(photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT, allow_jpeg=True)
     assert result.output.suffix == ".jpg"
     assert result.output.exists()
 
@@ -140,7 +142,7 @@ def test_lossy_output_is_rejigged_to_jpg(photo_png, tmp_path):
 def test_a_png_that_becomes_a_jpg_says_so(photo_png, tmp_path):
     # An opaque PNG has no transparency warning to mention the change, and a
     # site that only takes PNG would refuse the result without one.
-    result = compress_to_target(photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT)
+    result = compress_to_target(photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT, allow_jpeg=True)
     assert result.hit_target
     assert result.output.suffix == ".jpg"
     assert any(w.startswith("saved as a JPG: as a PNG") for w in result.warnings)
@@ -169,39 +171,44 @@ def test_a_transparent_png_keeps_its_transparency(transparent_png, tmp_path):
     assert not any("see-through" in w for w in result.warnings)
 
 
-def test_a_png_that_cannot_stay_a_png_asks_before_becoming_a_jpg(photo_png, tmp_path):
-    result = compress_to_target(
-        photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT, allow_jpeg=False
-    )
+def test_a_png_that_cannot_fit_stays_a_png_at_its_floor(photo_png, tmp_path):
+    # Not a converter: a PNG comes back a PNG, as small as it goes.
+    result = compress_to_target(photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT)
     assert result.needs_jpeg
-    assert not result.hit_target
+    assert not result.hit_target and result.method == "floor"
     assert result.output.suffix == ".png"
-    assert any("as a PNG it could not get under your limit" in w for w in result.warnings)
-
-
-def test_a_png_kept_only_by_shrinking_it_a_lot_offers_a_jpeg(photo_jpg, tmp_path):
-    png = tmp_path / "sheet.png"
-    Image.open(photo_jpg).save(png, "PNG")  # 3000 x 2000
-    full = compress_to_target(png, tmp_path / "a.png", png.stat().st_size // 2)
-    assert full.output.suffix == ".png" and not full.png_shrunk
-    # Small enough that no PNG over 70 percent of 3000 px fits.
-    tight = compress_to_target(png, tmp_path / "b.png", 12_000)
-    assert tight.hit_target and tight.output.suffix == ".png"
-    with Image.open(tight.output) as out:
-        assert max(out.size) < 0.7 * 3000
-    assert tight.png_shrunk
+    assert not any("JPG" in w for w in result.warnings)
 
 
 def test_keep_png_false_goes_straight_to_jpeg(photo_jpg, tmp_path):
-    # The visitor chose JPEG: no PNG is searched even though one would fit.
+    # An API caller who asks for JPEG: no PNG is searched even though one would fit.
     png = tmp_path / "sheet.png"
     Image.open(photo_jpg).save(png, "PNG")
     events = []
     result = compress_to_target(
-        png, tmp_path / "out.png", png.stat().st_size // 2, keep_png=False, on_progress=events.append
+        png, tmp_path / "out.png", png.stat().st_size // 2, allow_jpeg=True, keep_png=False,
+        on_progress=events.append,
     )
     assert result.output.suffix == ".jpg"
     assert not any("colors" in e for e in events if e["stage"] == "rung_start")
+
+
+def test_a_png_that_must_stay_a_png_never_lets_pngquant_give_up(photo_png, tmp_path, monkeypatch):
+    # Giving up would leave the file at its original size, since no JPEG
+    # follows; so pngquant gets no quality floor.
+    import shutil
+    import subprocess
+
+    fake = tmp_path / "pngquant"
+    fake.write_text("#!/bin/sh\nexit 1\n")
+    fake.chmod(0o755)
+    monkeypatch.setattr(shutil, "which", lambda name: str(fake) if name == "pngquant" else None)
+    calls = []
+    monkeypatch.setattr(
+        subprocess, "run", lambda args, **k: calls.append(args) or subprocess.CompletedProcess(args, 1, b"", b"")
+    )
+    compress_to_target(photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT)
+    assert calls and not any("--quality" in c for c in calls)
 
 
 def test_pngquant_refusing_a_photo_skips_the_rest_of_the_png_ladder(
@@ -221,7 +228,7 @@ def test_pngquant_refusing_a_photo_skips_the_rest_of_the_png_ladder(
     monkeypatch.setattr(subprocess, "run", lambda *a, **k: calls.append(a) or real_run(*a, **k))
     events = []
     result = compress_to_target(
-        photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT, on_progress=events.append
+        photo_png, tmp_path / "out.png", PHOTO_PNG_LIMIT, allow_jpeg=True, on_progress=events.append
     )
     assert len(calls) == 1
     assert result.output.suffix == ".jpg" and result.hit_target
@@ -232,7 +239,9 @@ def test_a_jpg_or_a_transparent_png_gets_no_extra_format_warning(
 ):
     jpg = compress_to_target(photo_jpg, tmp_path / "a.jpg", photo_jpg.stat().st_size // 10)
     assert not any("saved as a JPG" in w for w in jpg.warnings)
-    png = compress_to_target(transparent_photo_png, tmp_path / "b.png", PHOTO_PNG_LIMIT)
+    png = compress_to_target(
+        transparent_photo_png, tmp_path / "b.png", PHOTO_PNG_LIMIT, allow_jpeg=True
+    )
     assert sum("JPG" in w for w in png.warnings) == 1
 
 

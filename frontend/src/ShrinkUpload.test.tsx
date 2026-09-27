@@ -89,7 +89,7 @@ it('sends the original for a limit the copy is too close to', async () => {
   await drop()
   fireEvent.click(screen.getByRole('button', { name: '1 MB' }))
   fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
-  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('orig', 1_000_000, null, undefined, false, null, false))
+  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('orig', 1_000_000, null, undefined, false, null))
   expect(vi.mocked(uploadFile).mock.calls[1][0]).toBe(original)
   expect(deleteJob).toHaveBeenCalledWith('copy')
 })
@@ -97,6 +97,6 @@ it('sends the original for a limit the copy is too close to', async () => {
 it('keeps the copy for the limit it was made for', async () => {
   await drop()
   fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
-  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('copy', 200_000, null, undefined, false, null, false))
+  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('copy', 200_000, null, undefined, false, null))
   expect(uploadFile).toHaveBeenCalledTimes(1)
 })

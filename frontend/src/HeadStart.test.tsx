@@ -89,6 +89,6 @@ it("sends a form page's pixel size and minimum, which Compress sends too", async
   const form = [{ width: 140, height: 60, fit: 'crop' }, undefined] as const
   expect(startCompress).toHaveBeenCalledWith('job1', 20_000, ...form, true, 10_240)
   fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
-  expect(startCompress).toHaveBeenLastCalledWith('job1', 20_000, ...form, false, 10_240, false)
+  expect(startCompress).toHaveBeenLastCalledWith('job1', 20_000, ...form, false, 10_240)
   expect(screen.queryByText(/already under/)).toBeNull()
 })

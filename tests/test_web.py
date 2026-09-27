@@ -197,12 +197,12 @@ def test_image_round_trip_downloads_jpeg(web, photo_jpg):
     assert "photo.fit.jpg" in dl.headers["content-disposition"]
 
 
-def test_png_upload_downloads_as_jpeg(web, photo_png):
+def test_png_upload_downloads_as_jpeg_when_the_caller_allows_it(web, photo_png):
     """A PNG that can only fit as a JPEG, and the download name has to follow."""
     client, _, _ = web
     job_id = _upload(client, photo_png, name="photo.png").json()["job_id"]
     client.post(f"/api/jobs/{job_id}/analyze")
-    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 100_000})
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 40_000, "allow_jpeg": True})
 
     dl = client.get(f"/api/jobs/{job_id}/download")
     assert dl.status_code == 200
@@ -210,17 +210,17 @@ def test_png_upload_downloads_as_jpeg(web, photo_png):
     assert "photo.fit.jpg" in dl.headers["content-disposition"]
 
 
-def test_the_page_is_asked_before_a_png_becomes_a_jpeg(web, photo_png):
-    # The page sends allow_jpeg false; the run stops on the smallest PNG and
-    # says so. Allowed on a second run, the same upload fits as a JPEG.
+def test_a_png_stays_a_png_unless_the_caller_allows_jpeg(web, photo_png):
+    # By default the run stops on the smallest PNG and says a JPEG could go
+    # smaller. Allowed on a second run, the same upload fits as a JPEG.
     client, _, _ = web
     job_id = _upload(client, photo_png, name="photo.png").json()["job_id"]
-    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 100_000, "allow_jpeg": False})
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 40_000})
     state = client.get(f"/api/jobs/{job_id}").json()
     assert state["needs_jpeg"] is True and state["hit_target"] is False
     assert client.get(f"/api/jobs/{job_id}/download").headers["content-type"] == "image/png"
 
-    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 100_000, "allow_jpeg": True})
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 40_000, "allow_jpeg": True})
     state = client.get(f"/api/jobs/{job_id}").json()
     assert "needs_jpeg" not in state and state["hit_target"] is True
     assert client.get(f"/api/jobs/{job_id}/download").headers["content-type"] == "image/jpeg"

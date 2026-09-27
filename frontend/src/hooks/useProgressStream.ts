@@ -152,8 +152,6 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
       target_bytes: st.target_bytes ?? 0,
       method: st.method ?? 'none',
       warnings: st.warnings ?? [],
-      needs_jpeg: st.needs_jpeg ?? false,
-      png_shrunk: st.png_shrunk ?? false,
     })
 
     const settleFromState = (st: JobState) => {
