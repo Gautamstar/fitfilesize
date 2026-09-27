@@ -27,7 +27,7 @@ export interface FileLimits {
  * setFileLimits); the page then follows whatever the server says.
  */
 let limits: FileLimits = {
-  maxBytes: 26_214_400,
+  maxBytes: 52_428_800,
   maxPixels: { jpeg: 64_000_000, webp: 16_000_000, other: 50_000_000 },
 }
 

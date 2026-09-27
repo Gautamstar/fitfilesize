@@ -195,7 +195,7 @@
           "At this size most files keep high-resolution images. Very large ones, like dozens of scanned pages or print-resolution artwork, may still need the stronger settings."
         ],
         "tips": [
-          "Uploads can be up to 25 MB. Split anything larger before you start.",
+          "Uploads can be up to 50 MB. Split anything larger before you start.",
           "Big files take longer, since each setting is a full pass over the document. A large scan can take a minute or two.",
           "Keep your original. The compressed copy is for sending, not for printing or editing."
         ]
@@ -215,7 +215,7 @@
           "At this size most documents keep images at 200 to 300 dpi, which still prints well. Often the lossless pass alone gets there, since PDFs exported from design tools tend to carry duplicate fonts and uncompressed data."
         ],
         "tips": [
-          "Uploads can be up to 25 MB. Split anything larger into parts first.",
+          "Uploads can be up to 50 MB. Split anything larger into parts first.",
           "Some mail servers count an attachment after encoding, which makes it about a third bigger. If a 10 MB mail limit rejects the file, try a 7 MB target.",
           "Large files take longer, since each setting is a full pass over the document. Leave the tab open until it finishes."
         ]

@@ -100,7 +100,7 @@ export function presetToSlider(bytes: number, lo: number, hi: number): number {
 
 export type LimitUnit = 'KB' | 'MB'
 
-/** Largest custom limit accepted. Uploads cap at 25 MB, so a target above that is never needed. */
+/** Largest custom limit accepted. Uploads cap at 50 MB, so a target above that is never needed. */
 export const MAX_CUSTOM_LIMIT = 100_000_000
 
 /**
