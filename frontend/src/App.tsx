@@ -275,7 +275,7 @@ function App({ path }: AppProps) {
   const minFor = (target: number) => (formMin !== null && target > formMin ? formMin : null)
 
   // Queue the run and switch to the live progress view.
-  const handleCompress = async (target: number, nextResize: Resize | null) => {
+  const handleCompress = async (target: number, nextResize: Resize | null, allowJpeg = false) => {
     if (!job) return
     setTargetWarning(null)
     setTargetBytes(target)
@@ -305,7 +305,7 @@ function App({ path }: AppProps) {
       setJob({ ...job, jobId })
     }
     try {
-      await startCompress(jobId, target, nextResize, undefined, false, min)
+      await startCompress(jobId, target, nextResize, undefined, false, min, allowJpeg)
       setPhase('progress')
     } catch (err) {
       setTargetWarning(err instanceof Error ? err.message : 'could not start compression')
@@ -395,6 +395,7 @@ function App({ path }: AppProps) {
             secondsLeft={secondsLeft}
             onRetry={() => setPhase('target')}
             onDelete={handleDelete}
+            onConvertToJpeg={() => handleCompress(targetBytes, resize, true)}
             search={stream.search}
           />
         ) : null

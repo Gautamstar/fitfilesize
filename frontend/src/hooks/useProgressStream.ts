@@ -152,6 +152,7 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
       target_bytes: st.target_bytes ?? 0,
       method: st.method ?? 'none',
       warnings: st.warnings ?? [],
+      needs_jpeg: st.needs_jpeg ?? false,
     })
 
     const settleFromState = (st: JobState) => {
@@ -225,7 +226,9 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
         case 'search': {
           const { rungs, known } = ev
           setState((s) => {
-            const points = { ...s.search.points }
+            // A PNG run can search two ladders, PNG then JPEG; each starts
+            // its chart afresh, since rung numbers mean different settings.
+            const points: SearchState['points'] = {}
             for (const k of known) {
               points[k.rung] = {
                 rung: k.rung,
@@ -245,8 +248,11 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
           setState((s) => ({ ...s, attempts: s.attempts + 1 }))
           // Every kind of run shares this stage, so `stage` cannot separate
           // them. The `in` operator narrows the union to the right variant.
+          const pngEdge = 'colors' in ev ? (ev.max_edge >= 100_000 ? 'full size' : `${ev.max_edge} px`) : ''
           const label =
-            'width' in ev
+            'colors' in ev
+              ? `Trying a ${ev.colors}-colour PNG, ${pngEdge}`
+              : 'width' in ev
               ? `Trying ${ev.width} x ${ev.height}, quality ${ev.quality}`
               : 'max_edge' in ev
                 ? `Trying ${ev.max_edge}px wide, quality ${ev.quality}`
@@ -254,7 +260,9 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
           addStep(label, 'pending')
           const rung = ev.rung
           const short =
-            'width' in ev
+            'colors' in ev
+              ? `PNG, ${pngEdge}`
+              : 'width' in ev
               ? `${ev.width} x ${ev.height}, quality ${ev.quality}`
               : 'max_edge' in ev
                 ? `${ev.max_edge} px, quality ${ev.quality}`

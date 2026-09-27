@@ -13,11 +13,22 @@ interface ResultPanelProps {
   secondsLeft: number | null
   onRetry: () => void
   onDelete: () => void
+  /** Run again allowing JPEG, for a PNG that could not fit as a PNG. */
+  onConvertToJpeg?: () => void
   /** The run's search, when it had one; shown under "How we found it". */
   search?: SearchState
 }
 
-export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, search }: ResultPanelProps) {
+export function ResultPanel({
+  jobId,
+  result,
+  secondsLeft,
+  onRetry,
+  onDelete,
+  onConvertToJpeg,
+  search,
+}: ResultPanelProps) {
+  const offerJpeg = Boolean(result.needs_jpeg && onConvertToJpeg)
   const savedPct = savedPercent(result.final_bytes, result.original_bytes)
   // "rung:6" names the setting the run kept; "floor", "lossless" and "none" keep none.
   const chosenRung = result.method.startsWith('rung:') ? Number(result.method.slice(5)) : null
@@ -35,8 +46,22 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, sea
           ? result.method === 'none'
             ? 'Your file was already under that size, so we left it alone.'
             : `You saved ${savedPct} percent.`
-          : `This is as small as this file goes without ruining it. You saved ${savedPct} percent.`}
+          : offerJpeg
+            ? `As a PNG, this is as small as it goes, still over your limit.`
+            : `This is as small as this file goes without ruining it. You saved ${savedPct} percent.`}
       </p>
+
+      {offerJpeg ? (
+        <div className="convert-offer">
+          <p>
+            A JPEG can get under {fmtLimit(result.target_bytes)}. It has no transparency, and text
+            and sharp edges come out a little softer.
+          </p>
+          <button type="button" className="btn-primary" onClick={onConvertToJpeg}>
+            Convert to JPEG
+          </button>
+        </div>
+      ) : null}
 
       <div className="sizes">
         <div>
@@ -52,7 +77,7 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, sea
       {/* The floor case is already stated by the badge, so skip that warning. */}
       <ul className="warnings">
         {result.warnings
-          .filter((w) => !w.includes('floor'))
+          .filter((w) => !w.includes('floor') && !(offerJpeg && w.startsWith('as a PNG')))
           .map((w) => (
             <li key={w}>{sentence(w)}</li>
           ))}
@@ -60,8 +85,8 @@ export function ResultPanel({ jobId, result, secondsLeft, onRetry, onDelete, sea
 
       <div className="actions">
         {/* A plain link, not a fetch: the browser handles the download. */}
-        <a className="btn-primary" href={downloadUrl(jobId)}>
-          Download
+        <a className={offerJpeg ? 'btn-ghost' : 'btn-primary'} href={downloadUrl(jobId)}>
+          {offerJpeg ? 'Download the PNG anyway' : 'Download'}
         </a>
         <button type="button" className="btn-ghost" onClick={onRetry}>
           Try another size

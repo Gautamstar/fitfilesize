@@ -107,6 +107,7 @@ export interface JobState {
   hit_target?: boolean
   method?: CompressMethod
   warnings?: string[]
+  needs_jpeg?: boolean
 
   // Present only on a failed run.
   error?: string
@@ -163,7 +164,8 @@ export interface SearchEvent {
  * All share `stage: 'rung_start'`, so `stage` alone cannot tell them apart.
  * Narrow with the `in` operator on a field only one of them has:
  *
- *     if ('width' in ev) { ev.quality } else if ('max_edge' in ev) { ev.quality } else { ev.jpeg_q }
+ *     if ('colors' in ev) { ev.max_edge } else if ('width' in ev) { ev.quality }
+ *     else if ('max_edge' in ev) { ev.quality } else { ev.jpeg_q }
  */
 export interface PdfRungStartEvent {
   stage: 'rung_start'
@@ -182,6 +184,15 @@ export interface ImageRungStartEvent {
   quality: number
 }
 
+/** A PNG kept a PNG: reduced to `colors` colours, longest side capped. */
+export interface PngRungStartEvent {
+  stage: 'rung_start'
+  rung: number
+  /** Cap on the longest side; larger than the image means full size. */
+  max_edge: number
+  colors: number
+}
+
 /** An image run at an exact pixel size, where only quality changes. */
 export interface ResizeRungStartEvent {
   stage: 'rung_start'
@@ -191,7 +202,11 @@ export interface ResizeRungStartEvent {
   quality: number
 }
 
-export type RungStartEvent = PdfRungStartEvent | ImageRungStartEvent | ResizeRungStartEvent
+export type RungStartEvent =
+  | PdfRungStartEvent
+  | PngRungStartEvent
+  | ImageRungStartEvent
+  | ResizeRungStartEvent
 
 /**
  * That rung finished.
@@ -216,6 +231,11 @@ export interface DoneEvent {
   target_bytes: number
   method: CompressMethod
   warnings: string[]
+  /**
+   * A PNG that could not get under the limit as a PNG, in a run that was not
+   * allowed to make it a JPEG: offer the conversion.
+   */
+  needs_jpeg?: boolean
   /** Seconds until the files are deleted, counted from completion. */
   expires_in?: number
 }

@@ -197,17 +197,45 @@ def test_image_round_trip_downloads_jpeg(web, photo_jpg):
     assert "photo.fit.jpg" in dl.headers["content-disposition"]
 
 
-def test_png_upload_downloads_as_jpeg(web, transparent_png):
-    """A PNG in becomes a JPEG out, and the download name has to follow."""
+def test_png_upload_downloads_as_jpeg(web, photo_png):
+    """A PNG that can only fit as a JPEG, and the download name has to follow."""
     client, _, _ = web
-    job_id = _upload(client, transparent_png, name="logo.png").json()["job_id"]
+    job_id = _upload(client, photo_png, name="photo.png").json()["job_id"]
     client.post(f"/api/jobs/{job_id}/analyze")
-    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 4000})
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 100_000})
 
     dl = client.get(f"/api/jobs/{job_id}/download")
     assert dl.status_code == 200
     assert dl.headers["content-type"] == "image/jpeg"
-    assert "logo.fit.jpg" in dl.headers["content-disposition"]
+    assert "photo.fit.jpg" in dl.headers["content-disposition"]
+
+
+def test_the_page_is_asked_before_a_png_becomes_a_jpeg(web, photo_png):
+    # The page sends allow_jpeg false; the run stops on the smallest PNG and
+    # says so. Allowed on a second run, the same upload fits as a JPEG.
+    client, _, _ = web
+    job_id = _upload(client, photo_png, name="photo.png").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 100_000, "allow_jpeg": False})
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["needs_jpeg"] is True and state["hit_target"] is False
+    assert client.get(f"/api/jobs/{job_id}/download").headers["content-type"] == "image/png"
+
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 100_000, "allow_jpeg": True})
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert "needs_jpeg" not in state and state["hit_target"] is True
+    assert client.get(f"/api/jobs/{job_id}/download").headers["content-type"] == "image/jpeg"
+
+
+def test_a_graphic_png_comes_back_as_a_png(web, photo_jpg, tmp_path):
+    client, _, _ = web
+    png = tmp_path / "sheet.png"
+    Image.open(photo_jpg).save(png, "PNG")
+    job_id = _upload(client, png, name="sheet.png").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": png.stat().st_size // 2, "allow_jpeg": False})
+    assert client.get(f"/api/jobs/{job_id}").json()["hit_target"] is True
+    dl = client.get(f"/api/jobs/{job_id}/download")
+    assert dl.headers["content-type"] == "image/png"
+    assert "sheet.fit.png" in dl.headers["content-disposition"]
 
 
 def test_compress_missing_job_404(web):

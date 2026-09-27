@@ -218,7 +218,7 @@ def test_hopeless_lossless_pass_is_skipped_for_a_compressed_png(transparent_png,
 
 def test_png_lossless_pass_still_runs_when_it_could_reach_the_target(transparent_png, tmp_path):
     size = transparent_png.stat().st_size
-    assert _stages(transparent_png, tmp_path, int(size * 0.3))[0] == "lossless"
+    assert _stages(transparent_png, tmp_path, int(size * 0.7))[0] == "lossless"
 
 
 def test_stored_png_and_bmp_always_get_the_lossless_pass(photo_jpg, tmp_path):
