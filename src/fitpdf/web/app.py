@@ -292,14 +292,12 @@ def _oldest_mtime(d: Path) -> float | None:
 
 
 def _newest_output_mtime(d: Path) -> float | None:
-    """When the latest run in a job directory finished, or None if none has."""
-    stamps = []
-    for f in d.glob("output-*"):
-        try:
-            stamps.append(f.stat().st_mtime)
-        except FileNotFoundError:
-            pass
-    return max(stamps, default=None)
+    """When the latest run in a job directory finished, or None if none has
+    (or the directory vanished under a Delete now)."""
+    try:
+        return max((f.stat().st_mtime for f in d.glob("output-*")), default=None)
+    except FileNotFoundError:
+        return None
 
 
 def stale_after(settings: "Settings") -> int:
