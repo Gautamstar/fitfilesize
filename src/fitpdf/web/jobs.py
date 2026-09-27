@@ -25,6 +25,8 @@ def _floor_render(src: Path) -> dict[int, Path] | None:
     native_first = getattr(strategy, "native_first", None)
     if native_first is not None and native_first(src) and floors[0].suffix == strategy.native_suffix:
         strategy.use_native(True)
+    elif getattr(strategy, "must_convert", lambda _: False)(src):
+        strategy.use_conversion()
     return {len(strategy.rungs) - 1: floors[0]}
 
 

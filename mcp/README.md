@@ -52,7 +52,7 @@ claude mcp add fitfilesize -- npx -y fitfilesize-mcp
 
 | Argument | |
 |---|---|
-| `path` | Full path to the file (`~/` works). PDF, JPEG, PNG, WebP, TIFF or BMP. |
+| `path` | Full path to the file (`~/` works). PDF, JPEG, PNG, WebP, TIFF, BMP or HEIC (returned as JPEG). |
 | `limit` | The upload limit, like `"200KB"` or `"1.5MB"`. KB and MB are 1000-based, so the result passes a check done either way. |
 | `form` | Instead of `limit`: a form preset from `list_forms`, like `"ibps-photo"`. |
 | `width`, `height` | Optional exact pixel size, images only. |

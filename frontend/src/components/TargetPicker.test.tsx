@@ -7,12 +7,17 @@ function setup(
   kind: MediaKind,
   initialResize?: Resize,
   // null for no landing-page preset (undefined would take the default).
-  { originalBytes = 3_000_000, floor = 120_000, initialTarget = 50_000 as number | null } = {},
+  {
+    originalBytes = 3_000_000,
+    floor = 120_000,
+    initialTarget = 50_000 as number | null,
+    filename = 'photo.jpg',
+  } = {},
 ) {
   const onCompress = vi.fn()
   render(
     <TargetPicker
-      filename="photo.jpg"
+      filename={filename}
       meta="3.0 MB, 3000 x 2000"
       originalBytes={originalBytes}
       floor={floor}
@@ -103,6 +108,18 @@ describe('TargetPicker common limits', () => {
     expect(screen.getByRole('button', { name: '200 KB' })).toBeTruthy()
     expect(screen.getByRole('button', { name: '2 MB' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: '5 MB' })).toBeNull()
+  })
+})
+
+describe('TargetPicker with an iPhone photo', () => {
+  it('says before Compress that a HEIC comes back as a JPEG', () => {
+    setup('image', undefined, { filename: 'IMG_0001.HEIC' })
+    expect(screen.getByText('HEIC photos are saved as JPEG.')).toBeTruthy()
+  })
+
+  it('says nothing of the kind for other images', () => {
+    setup('image')
+    expect(screen.queryByText(/HEIC/)).toBeNull()
   })
 })
 

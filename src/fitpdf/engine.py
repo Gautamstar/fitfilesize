@@ -155,8 +155,11 @@ def estimate_floor(src: Path | str, *, timeout: int = 120, keep: Path | str | No
     # An image that keeps its format has its own floor: a BMP screenshot
     # bottoms out near 145 KB where a JPEG of it would reach a few.
     native_first = getattr(strategy, "native_first", None)
+    must_convert = getattr(strategy, "must_convert", None)
     if native_first is not None and native_first(src):
         strategy.use_native(True)
+    elif must_convert is not None and must_convert(src):
+        strategy.use_conversion()
 
     try:
         strategy.ensure_available()
@@ -333,7 +336,9 @@ def compress_to_target(
         before = src.suffix.lower().lstrip(".")
         after = target_path.suffix.lower().lstrip(".")
         lost_transparency = getattr(strategy, "lost_transparency", None)
-        if after in ("jpg", "jpeg") and lossy and lost_transparency is not None and lost_transparency(src):
+        if converting:
+            warnings.append("converted from HEIC to JPEG")
+        elif after in ("jpg", "jpeg") and lossy and lost_transparency is not None and lost_transparency(src):
             warnings.append(
                 "saved as a JPG, which has no transparency: the see-through parts are now white"
             )
@@ -348,8 +353,14 @@ def compress_to_target(
     # A strategy that must transform the file (exact pixel dimensions, say)
     # cannot hand back the original or a lossless copy, however small.
     always_render = getattr(strategy, "always_render", False)
+    # A HEIC always becomes a JPEG: handing back the original, or a lossless
+    # copy of it, would hand back a HEIC.
+    must_convert = getattr(strategy, "must_convert", None)
+    converting = bool(must_convert and must_convert(src))
+    if converting:
+        strategy.use_conversion()
 
-    if original <= target_bytes and not always_render:
+    if original <= target_bytes and not always_render and not converting:
         return finish(src, original, True, "none", 0, lossy=False)
 
     with tempfile.TemporaryDirectory(prefix="fitpdf-") as tmp:
@@ -362,7 +373,7 @@ def compress_to_target(
         # few percent when the target is a twentieth of the file.
         lossless_hopeless = getattr(strategy, "lossless_hopeless", None)
         skip_lossless = bool(lossless_hopeless and lossless_hopeless(src, original, target_bytes))
-        if not always_render and not skip_lossless:
+        if not always_render and not skip_lossless and not converting:
             loss_size = strategy.lossless(src, loss_path, strip_metadata=strip_metadata)
             emit({"stage": "lossless", "size": loss_size})
 
@@ -532,8 +543,14 @@ def compress_to_target(
         if loss_size is not None:
             candidates.append((loss_size, loss_path, False))
         if not candidates:
-            # Only reachable with always_render, where there is no lossless
-            # copy to fall back on.
+            if converting:
+                # Nothing decoded: a damaged HEIC, or one this decoder cannot read.
+                raise RuntimeError(
+                    "this iPhone photo (HEIC) could not be read. Export it from Photos as a "
+                    "JPEG, or share it as Most Compatible, and try that"
+                )
+            # Otherwise only reachable with always_render, where there is no
+            # lossless copy to fall back on.
             raise RuntimeError("could not produce a readable file at those settings")
         floor_size, floor_path, floor_lossy = min(candidates, key=lambda c: c[0])
         warnings.append(

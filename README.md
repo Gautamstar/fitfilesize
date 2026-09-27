@@ -6,7 +6,7 @@ Compress a PDF or image to fit under a target file size. Built for the "this
 portal only accepts files under 4 MB" problem: pick a target, get a file that
 actually fits, or an honest report of the smallest achievable size.
 
-Accepts PDF, JPEG, PNG, WebP, TIFF and BMP.
+Accepts PDF, JPEG, PNG, WebP, TIFF, BMP and HEIC (iPhone photos, which come back as JPEG).
 
 The site is FitFileSize; the Python package, CLI and `FITPDF_*` settings keep
 the original name, `fitpdf`.

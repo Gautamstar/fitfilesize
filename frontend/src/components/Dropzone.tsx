@@ -5,7 +5,7 @@
  * it during render, so the highlight cannot get out of sync with the pointer.
  */
 
-import { useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { sentence } from '../lib/format'
 
 interface DropzoneProps {
@@ -17,9 +17,22 @@ interface DropzoneProps {
   children?: ReactNode
 }
 
+const ACCEPT = 'application/pdf,.pdf,image/*'
+
 export function Dropzone({ onFile, error, disabled = false, children }: DropzoneProps) {
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // HEIC is listed for desktop pickers, which may hide .heic under image/*.
+  // Not on iPhone and iPad: there image/* already hands over a JPEG, and
+  // naming HEIC makes Safari 17+ turn other photos into HEIC instead. Set
+  // after load, so the pre-rendered page and the first render agree.
+  useEffect(() => {
+    const ios =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    if (inputRef.current && !ios) inputRef.current.accept = `${ACCEPT},.heic,.heif`
+  }, [])
 
   const openPicker = () => {
     if (!disabled) inputRef.current?.click()
@@ -74,13 +87,13 @@ export function Dropzone({ onFile, error, disabled = false, children }: Dropzone
         </svg>
         <p className="drop-title">Drop your file here</p>
         <p className="drop-sub">
-          or <span className="drop-link">choose a file</span> · PDF, JPG, PNG, WebP, TIFF or BMP
+          or <span className="drop-link">choose a file</span> · PDF, JPG, PNG, WebP, TIFF, BMP or HEIC
         </p>
 
         <input
           ref={inputRef}
           type="file"
-          accept="application/pdf,.pdf,image/*"
+          accept={ACCEPT}
           hidden
           // Clearing the value lets the user pick the SAME file again after an
           // error; without it the change event would not fire a second time.

@@ -24,6 +24,7 @@ import {
   resizedFloor,
   sliderToBytes,
   tierHint,
+  isHeic,
 } from '../lib/format'
 
 /** The backend refuses sides longer than this (MAX_RESIZE_EDGE). */
@@ -172,6 +173,12 @@ export function TargetPicker({
         <h2 className="file-name">{filename}</h2>
         <p className="file-meta">{meta}</p>
       </header>
+
+      {/* Said before Compress, not after: this is the one format that comes
+          back as something else. */}
+      {isHeic(filename) ? (
+        <p className="convert-note">HEIC photos are saved as JPEG.</p>
+      ) : null}
 
       {/* The limit picked before upload (or the landing page's size) is at or
           above the file itself: say it already fits rather than quietly
