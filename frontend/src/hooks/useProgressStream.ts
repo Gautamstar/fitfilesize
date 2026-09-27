@@ -250,7 +250,9 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
           const pngEdge = 'colors' in ev ? (ev.max_edge >= 100_000 ? 'full size' : `${ev.max_edge} px`) : ''
           const label =
             'colors' in ev
-              ? `Trying a ${ev.colors}-colour ${ev.format ?? 'PNG'}, ${pngEdge}`
+              ? ev.final
+                ? `Making the final ${ev.format ?? 'PNG'}, ${pngEdge}`
+                : `Trying a ${ev.colors}-colour ${ev.format ?? 'PNG'}, ${pngEdge}`
               : 'width' in ev
               ? `Trying ${ev.width} x ${ev.height}, quality ${ev.quality}`
               : 'max_edge' in ev

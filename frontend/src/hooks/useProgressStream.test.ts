@@ -192,6 +192,22 @@ describe('useProgressStream', () => {
     expect(result.current.steps[0]?.text).toBe('Trying 200 DPI, JPEG quality 80')
   })
 
+  it('labels the final render of a drafted PNG rung, and charts its real size', () => {
+    const { result } = renderHook(() => useProgressStream('j1', true))
+    act(() => {
+      const es = FakeEventSource.last!
+      es.emit({ stage: 'start', target_bytes: 5_000_000 })
+      es.emit({ stage: 'rung_start', rung: 3, max_edge: 4000, colors: 256 })
+      es.emit({ stage: 'rung_result', rung: 3, size: 4_900_000, fits: true })
+      es.emit({ stage: 'rung_start', rung: 3, max_edge: 4000, colors: 256, final: true })
+      es.emit({ stage: 'rung_result', rung: 3, size: 4_700_000, fits: true })
+    })
+    const texts = result.current.steps.map((s) => s.text)
+    expect(texts[1]).toMatch(/^Trying a 256-colour PNG, 4000 px gives/)
+    expect(texts[2]).toMatch(/^Making the final PNG, 4000 px gives/)
+    expect(result.current.search.points[3]).toMatchObject({ size: 4_700_000, fits: true })
+  })
+
   it('marks a failed render as skipped instead of reporting a size', () => {
     const { result } = renderHook(() => useProgressStream('j1', true))
     act(() => {
