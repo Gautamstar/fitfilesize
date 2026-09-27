@@ -177,10 +177,7 @@ export function TargetPicker({
       {/* Said before Compress, not after: this is the one format that comes
           back as something else. */}
       {isHeic(filename) ? (
-        <p className="convert-note">
-          This is an iPhone photo (HEIC). Almost no upload form accepts HEIC, so it comes back as
-          a JPEG.
-        </p>
+        <p className="convert-note">HEIC photos are saved as JPEG.</p>
       ) : null}
 
       {/* The limit picked before upload (or the landing page's size) is at or

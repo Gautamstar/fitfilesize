@@ -226,7 +226,7 @@ def test_an_iphone_heic_always_comes_back_as_an_upright_jpeg(iphone_heic, tmp_pa
     with Image.open(result.output) as out:
         assert out.format == "JPEG"
         assert out.size == (1200, 1600)  # portrait, turned once, full size kept
-    assert any(w.startswith("converted to JPG") for w in result.warnings)
+    assert any(w == "converted from HEIC to JPEG" for w in result.warnings)
 
 
 def test_an_unreadable_heic_says_what_to_do(iphone_heic, tmp_path, monkeypatch):

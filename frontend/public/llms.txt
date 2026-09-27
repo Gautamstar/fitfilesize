@@ -2,7 +2,7 @@
 
 > Compress a PDF or image so it fits under an upload limit, such as "200 KB" on a visa form or "1 MB" on a job application. Free, no sign-up, no API key. Lossless first; if that is not enough, the gentlest lossy setting that fits. Files are deleted within minutes.
 
-FitFileSize is for the situation where a website rejects a file for being too large. Pick the limit, get a file that is under it, or an honest report of the smallest size reachable. It accepts PDF, JPEG, PNG, WebP, TIFF, BMP and HEIC, up to 50 MB. Every file comes back in the format it was uploaded in, except HEIC (iPhone photos), which comes back as JPEG because almost no upload form accepts HEIC.
+FitFileSize is for the situation where a website rejects a file for being too large. Pick the limit, get a file that is under it, or an honest report of the smallest size reachable. It accepts PDF, JPEG, PNG, WebP, TIFF, BMP and HEIC, up to 50 MB. Every file comes back in the format it was uploaded in, except HEIC (iPhone photos), which is saved as JPEG.
 
 ## Using it for someone (API)
 

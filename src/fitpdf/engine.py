@@ -337,7 +337,7 @@ def compress_to_target(
         after = target_path.suffix.lower().lstrip(".")
         lost_transparency = getattr(strategy, "lost_transparency", None)
         if converting:
-            warnings.append("converted to JPG: most upload forms do not accept iPhone photos (HEIC)")
+            warnings.append("converted from HEIC to JPEG")
         elif after in ("jpg", "jpeg") and lossy and lost_transparency is not None and lost_transparency(src):
             warnings.append(
                 "saved as a JPG, which has no transparency: the see-through parts are now white"

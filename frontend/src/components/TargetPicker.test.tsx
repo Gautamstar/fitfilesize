@@ -114,7 +114,7 @@ describe('TargetPicker common limits', () => {
 describe('TargetPicker with an iPhone photo', () => {
   it('says before Compress that a HEIC comes back as a JPEG', () => {
     setup('image', undefined, { filename: 'IMG_0001.HEIC' })
-    expect(screen.getByText(/iPhone photo \(HEIC\).*comes back as\s+a JPEG/)).toBeTruthy()
+    expect(screen.getByText('HEIC photos are saved as JPEG.')).toBeTruthy()
   })
 
   it('says nothing of the kind for other images', () => {

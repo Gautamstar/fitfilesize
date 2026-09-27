@@ -315,7 +315,7 @@
           "We stop at the first setting that fits, so an image that only needs a little squeezing keeps most of its resolution and detail."
         ],
         "tips": [
-          "iPhone photos (HEIC) work too: they come back as a JPG, since almost no upload form accepts HEIC.",
+          "iPhone photos (HEIC) work too. HEIC photos are saved as JPEG.",
           "We remove camera metadata such as GPS location. It saves space and keeps where you took the photo private.",
           "Every file comes back in the format you uploaded: a PNG stays a PNG, a WebP a WebP."
         ]
@@ -376,7 +376,7 @@
         ],
         "tips": [
           "Stripping metadata also removes the photo's GPS location, which is worth doing before you post it publicly.",
-          "iPhone photos (HEIC) work too: they come back as a JPG, since almost no upload form accepts HEIC.",
+          "iPhone photos (HEIC) work too. HEIC photos are saved as JPEG.",
           "RAW files are not supported. Export a JPEG from your editor, then compress that."
         ]
       }
@@ -430,11 +430,11 @@
       "targetKb": 10000,
       "heading": "Convert HEIC to JPG",
       "description": "Convert an iPhone HEIC photo to JPG, and fit it under a size limit if you need one. Free, no sign-up, files deleted minutes after.",
-      "blurb": "iPhones save photos as HEIC, which almost no upload form accepts and Windows cannot open without an extra download.",
+      "blurb": "iPhones save photos as HEIC. The US visa form (DS-160), UK passport photos and Canadian immigration uploads accept JPEG, not HEIC.",
       "guide": {
         "title": "Turning an iPhone photo into a JPG",
         "paragraphs": [
-          "iPhones save photos as HEIC to use less space. The catch is that very few upload forms take it: the US visa form (DS-160), UK passport photos and Canadian immigration uploads all ask for JPG. Windows needs a paid extension just to open one.",
+          "iPhones save photos as HEIC to use less space. The US visa form (DS-160), UK passport photos and Canadian immigration uploads all ask for JPEG, and Windows needs a paid extension just to open a HEIC.",
           "We convert it to a JPG, turned the right way up, with its colours converted to the standard sRGB every site expects, and keep every pixel when the limit allows. A JPG of the same photo is usually about twice the size of the HEIC, so if the form has a limit, pick it below and we fit the JPG under it in the same step."
         ],
         "tips": [
@@ -472,7 +472,7 @@
       "targetKb": 200,
       "heading": "Convert HEIC to JPG under 200 KB",
       "description": "Turn an iPhone HEIC photo into a JPG under 200 KB for an application form. Free, no sign-up, files deleted minutes after.",
-      "blurb": "200 KB is a common limit for photos on visa, exam and job application forms, and none of them take HEIC.",
+      "blurb": "200 KB is a common limit for photos on visa, exam and job application forms, which usually ask for JPEG.",
       "guide": {
         "title": "An iPhone photo as a JPG under 200 KB",
         "paragraphs": [
@@ -493,7 +493,7 @@
       "targetKb": 100,
       "heading": "Convert HEIC to JPG under 100 KB",
       "description": "Turn an iPhone HEIC photo into a JPG under 100 KB. Free, no sign-up, files deleted minutes after.",
-      "blurb": "100 KB is tight for an iPhone photo, which is often 20 to 50 times that once converted to JPG.",
+      "blurb": "100 KB is tight for an iPhone photo: converted to JPEG at full size, one is often several megabytes.",
       "guide": {
         "title": "An iPhone photo as a JPG under 100 KB",
         "paragraphs": [

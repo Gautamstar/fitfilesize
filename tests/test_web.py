@@ -251,7 +251,7 @@ def test_an_iphone_heic_uploads_and_downloads_as_a_jpeg(web, iphone_heic):
     client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 200_000})
     state = client.get(f"/api/jobs/{job_id}").json()
     assert state["hit_target"] is True
-    assert any(w.startswith("converted to JPG") for w in state["warnings"])
+    assert any(w == "converted from HEIC to JPEG" for w in state["warnings"])
     dl = client.get(f"/api/jobs/{job_id}/download")
     assert dl.headers["content-type"] == "image/jpeg"
     assert "IMG_0001.fit.jpg" in dl.headers["content-disposition"]
