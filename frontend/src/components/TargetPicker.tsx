@@ -114,7 +114,14 @@ export function TargetPicker({
   // A form's exact pixel size changes the file whatever its size, so its own
   // limit stays on offer even for a file already under it.
   const formPixels = kind === 'image' && Boolean(initialResize) && initialTarget !== undefined
-  const hi = formPixels ? Math.max(originalBytes, initialTarget as number) : originalBytes
+  // A HEIC always becomes a JPEG, usually two to three times its size, so a
+  // limit above the HEIC itself still means something.
+  const heic = isHeic(filename)
+  const hi = formPixels
+    ? Math.max(originalBytes, initialTarget as number)
+    : heic
+      ? Math.max(originalBytes * 3, initialTarget ?? 0)
+      : originalBytes
 
   // The slider's bottom only ever moves down. A large pixel size raises the
   // floor estimate, and if that raised the bottom, a limit already picked
@@ -131,7 +138,7 @@ export function TargetPicker({
   // size moves the slider's range, and a position would then point at a
   // different size. A preset or chip stays exactly its limit this way.
   const [chosen, setChosen] = useState(() => {
-    if (initialTarget && (initialTarget < originalBytes || formPixels)) return initialTarget
+    if (initialTarget && (initialTarget < originalBytes || formPixels || heic)) return initialTarget
     const fourMB = 4 * 1024 * 1024
     const def =
       fourMB > effectiveFloor && fourMB < originalBytes ? fourMB : Math.round(originalBytes * 0.6)
@@ -146,14 +153,15 @@ export function TargetPicker({
     setLo((current) => Math.min(current, sliderLow(floorFor(next), hi, initialTarget)))
   }
 
-  const alreadyFits = !formPixels && initialTarget !== undefined && initialTarget >= originalBytes
+  const alreadyFits =
+    !formPixels && !heic && initialTarget !== undefined && initialTarget >= originalBytes
 
   // Only limits this file can use: under its size, and at or over its floor
   // (for the format it comes back in, so a BMP screenshot is not offered
   // 20 KB). The slider still reaches below the floor for anyone who insists.
   // The one already picked stays, even if a pixel size then raised the floor.
   const chipLimits = LIMIT_PRESETS.filter(
-    (bytes) => bytes < originalBytes && (bytes >= effectiveFloor || bytes === chosen),
+    (bytes) => bytes < hi && (bytes >= effectiveFloor || bytes === chosen),
   )
 
   // Everything below is derived from `chosen`. `lo` never rises, so the
@@ -176,7 +184,7 @@ export function TargetPicker({
 
       {/* Said before Compress, not after: this is the one format that comes
           back as something else. */}
-      {isHeic(filename) ? (
+      {heic ? (
         <p className="convert-note">HEIC photos are saved as JPEG.</p>
       ) : null}
 
