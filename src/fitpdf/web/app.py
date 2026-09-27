@@ -75,7 +75,7 @@ where a crop cuts from.
 **Units:** KB and MB are 1000-based, so a `200KB` target aims under 200,000
 bytes and passes whichever way the destination counts.
 
-**Limits:** uploads up to 25 MB; per client, 30 uploads and 100 compressions
+**Limits:** uploads up to 50 MB; per client, 30 uploads and 100 compressions
 an hour (`GET /api/limits` shows what is left; a refusal is `429` with
 `Retry-After`). Accepted types: PDF, JPEG, PNG, WebP, TIFF, BMP.
 
