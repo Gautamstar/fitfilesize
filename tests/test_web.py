@@ -375,6 +375,21 @@ def test_health_fails_without_a_worker_and_passes_with_one(tmp_path):
         assert client.get("/health").json() == {"ok": True, "redis": True, "worker": True}
 
 
+def test_a_worker_that_outlived_its_registration_shows_up_again(tmp_path):
+    from fitpdf.web.worker import FitWorker
+
+    r = fakeredis.FakeRedis()
+    app, settings = _app_without_grace(tmp_path, r)
+    worker = FitWorker([Queue(settings.queue_name, connection=r)], connection=r)
+    worker.register_birth()
+    with TestClient(app) as client:
+        assert client.get("/health").json()["worker"] is True
+        r.delete(worker.key)  # frozen past its TTL: the registration expires
+        assert client.get("/health").json()["worker"] is False
+        worker.heartbeat()  # it wakes up
+        assert client.get("/health").json() == {"ok": True, "redis": True, "worker": True}
+
+
 def test_health_fails_when_redis_is_away(tmp_path, monkeypatch):
     r = fakeredis.FakeRedis()
     app, _ = _app_without_grace(tmp_path, r)
