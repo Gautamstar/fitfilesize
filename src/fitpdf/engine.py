@@ -152,6 +152,11 @@ def estimate_floor(src: Path | str, *, timeout: int = 120, keep: Path | str | No
     src = Path(src)
     original = src.stat().st_size
     strategy = detect_strategy(src)
+    # An image that keeps its format has its own floor: a BMP screenshot
+    # bottoms out near 145 KB where a JPEG of it would reach a few.
+    native_first = getattr(strategy, "native_first", None)
+    if native_first is not None and native_first(src):
+        strategy.use_native(True)
 
     try:
         strategy.ensure_available()
@@ -379,7 +384,14 @@ def compress_to_target(
             cache: dict[int, tuple[int | None, Path]] = {}
             for i, given in seeds.items():
                 path = Path(given)
-                if 0 <= i < len(strategy.rungs) and path.exists() and strategy.validate(path, probe):
+                # Only a render in this ladder's format seeds it: the analyze
+                # step's floor is a PNG for a PNG, and says nothing about JPEG.
+                if (
+                    0 <= i < len(strategy.rungs)
+                    and path.suffix.lower() == lossy_suffix
+                    and path.exists()
+                    and strategy.validate(path, probe)
+                ):
                     cache[i] = (path.stat().st_size, path)
             seeded = len(cache)
 
@@ -481,7 +493,7 @@ def compress_to_target(
             # compressed PNG is rarely under a fifth of it, and below that the
             # full-size render (10 s at 40 MP) is wasted.
             fit, cache, _ = search_ladder(
-                tmpdir / "native", {}, gentlest_first=target_bytes >= 0.2 * original
+                tmpdir / "native", prerendered or {}, gentlest_first=target_bytes >= 0.2 * original
             )
             png_tried = len(cache)
             png_results = [(s, p) for s, p in cache.values() if s is not None]

@@ -186,6 +186,37 @@ def test_a_transparent_webp_keeps_its_transparency(transparent_png, tmp_path):
         assert out.convert("RGBA").getchannel("A").getextrema()[0] < 255
 
 
+def test_the_floor_estimate_is_for_the_format_that_comes_back(photo_jpg, tmp_path):
+    # A BMP stays a BMP, whose floor is 8-bit pixels: far above what a JPEG
+    # of it would reach, and the picker must not offer sizes below it.
+    bmp = tmp_path / "shot.bmp"
+    Image.open(photo_jpg).save(bmp, "BMP")
+    jpg = tmp_path / "shot.jpg"
+    Image.open(photo_jpg).save(jpg, "JPEG", quality=95)
+    keep = tmp_path / "floor"
+    bmp_floor = estimate_floor(bmp, keep=keep)
+    assert (tmp_path / "floor.bmp").exists()
+    with Image.open(tmp_path / "floor.bmp") as im:
+        assert im.format == "BMP" and max(im.size) == 480
+    assert bmp_floor > 3 * estimate_floor(jpg)
+
+
+def test_a_run_reuses_the_native_floor_render(photo_jpg, tmp_path):
+    from fitpdf.strategies import PNG_RUNGS
+
+    png = tmp_path / "sheet.png"
+    Image.open(photo_jpg).save(png, "PNG")
+    floor = estimate_floor(png, keep=tmp_path / "floor")
+    events = []
+    result = compress_to_target(
+        png, tmp_path / "out.png", floor // 2,
+        prerendered={len(PNG_RUNGS) - 1: tmp_path / "floor.png"}, on_progress=events.append,
+    )
+    # Under the floor: answered by the analyze step's render, nothing rendered again.
+    assert result.method == "floor" and result.output.suffix == ".png"
+    assert not any(e["stage"] == "rung_start" and e["rung"] == len(PNG_RUNGS) - 1 for e in events)
+
+
 def test_a_transparent_png_keeps_its_transparency(transparent_png, tmp_path):
     result = compress_to_target(
         transparent_png, tmp_path / "out.png", transparent_png.stat().st_size // 2

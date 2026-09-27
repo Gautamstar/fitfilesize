@@ -147,7 +147,13 @@ export function TargetPicker({
 
   const alreadyFits = !formPixels && initialTarget !== undefined && initialTarget >= originalBytes
 
-  const chipLimits = LIMIT_PRESETS.filter((bytes) => bytes < originalBytes)
+  // Only limits this file can use: under its size, and at or over its floor
+  // (for the format it comes back in, so a BMP screenshot is not offered
+  // 20 KB). The slider still reaches below the floor for anyone who insists.
+  // The one already picked stays, even if a pixel size then raised the floor.
+  const chipLimits = LIMIT_PRESETS.filter(
+    (bytes) => bytes < originalBytes && (bytes >= effectiveFloor || bytes === chosen),
+  )
 
   // Everything below is derived from `chosen`. `lo` never rises, so the
   // clamp below never lifts a target the visitor picked.
@@ -214,15 +220,12 @@ export function TargetPicker({
         </p>
       </div>
 
-      {/* Limits the file already fits under are left out rather than shown
-          disabled: a row of dead buttons is noise, and the answer for those
-          is simply "you don't need this". */}
+      {/* Limits the file already fits under, or cannot reach, are left out
+          rather than shown disabled: a row of dead buttons is noise. */}
       {chipLimits.length > 0 ? <p className="chips-label">Common limits</p> : null}
       <div className="chips">
         {chipLimits.map((bytes) => {
-          const outOfRange = bytes < lo
-          const disabled = outOfRange
-          const belowFloor = !disabled && bytes < effectiveFloor
+          const disabled = bytes < lo
           // Chips land on a hard limit the same way the landing presets do,
           // so a chip is active exactly when the slider sits on its position.
           const chipPos = presetToSlider(bytes, lo, hi)
@@ -232,15 +235,9 @@ export function TargetPicker({
             <button
               key={bytes}
               type="button"
-              className={`chip${active ? ' active' : ''}${belowFloor ? ' below-floor' : ''}`}
+              className={`chip${active ? ' active' : ''}`}
               disabled={disabled}
-              title={
-                outOfRange
-                  ? 'out of range for this file'
-                  : belowFloor
-                    ? 'below the estimated floor'
-                    : undefined
-              }
+              title={disabled ? 'out of range for this file' : undefined}
               aria-pressed={active}
               onClick={() => setChosen(bytes)}
             >

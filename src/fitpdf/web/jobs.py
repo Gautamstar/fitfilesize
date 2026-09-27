@@ -19,7 +19,13 @@ def _floor_render(src: Path) -> dict[int, Path] | None:
     floors = sorted(src.parent.glob("floor.*"))
     if not floors:
         return None
-    return {len(detect_strategy(src).rungs) - 1: floors[0]}
+    # The floor is the harshest rung of whichever ladder made it: the file's
+    # own format's, or JPEG's. The engine seeds only the matching ladder.
+    strategy = detect_strategy(src)
+    native_first = getattr(strategy, "native_first", None)
+    if native_first is not None and native_first(src) and floors[0].suffix == strategy.native_suffix:
+        strategy.use_native(True)
+    return {len(strategy.rungs) - 1: floors[0]}
 
 
 def run_compress(

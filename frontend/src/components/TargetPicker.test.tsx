@@ -76,7 +76,7 @@ describe('TargetPicker pixel size', () => {
   })
 
   it('never raises a picked limit when a large pixel size raises the floor', () => {
-    const onCompress = setup('image', undefined, { initialTarget: null })
+    const onCompress = setup('image', undefined, { initialTarget: null, floor: 60_000 })
     fireEvent.click(screen.getByRole('button', { name: '100 KB' }))
     // 3000 x 3000 puts the estimated floor near 560 KB, well above 100 KB.
     typeSize('3000', '3000')
@@ -92,6 +92,17 @@ describe('TargetPicker pixel size', () => {
     expect((screen.getByRole('textbox', { name: 'Width' }) as HTMLInputElement).value).toBe('140')
     compress()
     expect(onCompress.mock.calls.at(-1)![1]).toEqual({ width: 140, height: 60, fit: 'crop' })
+  })
+})
+
+describe('TargetPicker common limits', () => {
+  it('offers only limits the file can reach, from its floor up to its size', () => {
+    // A BMP screenshot, say: 4.8 MB, and nothing under 145 KB is possible.
+    setup('image', undefined, { originalBytes: 4_800_000, floor: 145_000, initialTarget: null })
+    expect(screen.queryByRole('button', { name: '100 KB' })).toBeNull()
+    expect(screen.getByRole('button', { name: '200 KB' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '2 MB' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '5 MB' })).toBeNull()
   })
 })
 
