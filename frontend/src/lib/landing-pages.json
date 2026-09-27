@@ -317,7 +317,7 @@
         "tips": [
           "iPhone photos saved as HEIC need to be JPEG first. Export or share them as JPEG, or set the camera to Most Compatible.",
           "We remove camera metadata such as GPS location. It saves space and keeps where you took the photo private.",
-          "A PNG stays a PNG. WebP, TIFF and BMP files come back as JPEG when they need lossy compression, since that is what gets them small."
+          "Every file comes back in the format you uploaded: a PNG stays a PNG, a WebP a WebP."
         ]
       }
     },

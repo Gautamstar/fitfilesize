@@ -221,18 +221,22 @@ def test_png_lossless_pass_still_runs_when_it_could_reach_the_target(transparent
     assert _stages(transparent_png, tmp_path, int(size * 0.7))[0] == "lossless"
 
 
-def test_stored_png_and_bmp_always_get_the_lossless_pass(photo_jpg, tmp_path):
-    # Stored without compression, these can shrink many times over and stay
-    # lossless, so however small the target, the pass runs.
+def test_stored_png_and_tiff_always_get_the_lossless_pass_and_bmp_never(photo_jpg, tmp_path):
+    # Stored without compression, a PNG or TIFF can shrink many times over and
+    # stay lossless, so however small the target, the pass runs. A BMP has no
+    # compression to gain: it goes straight to its 256-colour ladder.
     from PIL import Image
 
     im = Image.open(photo_jpg)
     stored = tmp_path / "stored.png"
     im.save(stored, "PNG", compress_level=0)
+    tiff = tmp_path / "scan.tif"
+    im.save(tiff, "TIFF")
     bmp = tmp_path / "scan.bmp"
     im.save(bmp, "BMP")
-    for src in (stored, bmp):
+    for src in (stored, tiff):
         assert _stages(src, tmp_path, src.stat().st_size // 20)[0] == "lossless", src.name
+    assert _stages(bmp, tmp_path, bmp.stat().st_size // 20)[0] != "lossless"
 
 
 def test_search_is_announced_with_the_ladder_and_what_is_known(tmp_path):

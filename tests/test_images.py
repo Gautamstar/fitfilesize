@@ -111,7 +111,7 @@ def test_transparency_is_known_without_a_render(transparent_png, tmp_path):
     # alone, so this run never decodes the source itself. (Its PNG ladder
     # would decode it, so this run goes straight to JPEG.)
     strategy = ImageStrategy()
-    strategy.png_first = lambda src: False
+    strategy.native_first = lambda src: False
     floor = tmp_path / "floor.jpg"
     ImageStrategy().render(transparent_png, floor, IMAGE_RUNGS[-1], timeout=60)
     result = compress_to_target(
@@ -159,6 +159,31 @@ def test_a_graphic_png_stays_a_png_at_full_size(photo_jpg, tmp_path):
     with Image.open(result.output) as out, Image.open(png) as src:
         assert out.size == src.size
     assert not any("JPG" in w for w in result.warnings)
+
+
+@pytest.mark.parametrize(
+    ("fmt", "suffix", "kwargs"),
+    [("WEBP", ".webp", {"quality": 95}), ("TIFF", ".tif", {}), ("BMP", ".bmp", {})],
+)
+def test_every_format_comes_back_as_itself(photo_jpg, tmp_path, fmt, suffix, kwargs):
+    # Not a converter: a WebP, TIFF or BMP that has to shrink stays one.
+    src = tmp_path / f"in{suffix}"
+    Image.open(photo_jpg).save(src, fmt, **kwargs)
+    result = compress_to_target(src, tmp_path / f"out{suffix}", src.stat().st_size // 4)
+    assert result.hit_target
+    assert result.output.suffix == suffix
+    with Image.open(result.output) as out:
+        assert out.format == fmt
+    assert not any("JPG" in w for w in result.warnings)
+
+
+def test_a_transparent_webp_keeps_its_transparency(transparent_png, tmp_path):
+    webp = tmp_path / "logo.webp"
+    Image.open(transparent_png).save(webp, "WEBP", quality=100)
+    result = compress_to_target(webp, tmp_path / "out.webp", webp.stat().st_size // 3)
+    assert result.output.suffix == ".webp"
+    with Image.open(result.output) as out:
+        assert out.convert("RGBA").getchannel("A").getextrema()[0] < 255
 
 
 def test_a_transparent_png_keeps_its_transparency(transparent_png, tmp_path):
@@ -445,7 +470,7 @@ def test_a_large_webp_skips_the_lossless_pass_and_a_small_one_keeps_it(tmp_path)
     Image.new("RGB", (2000, 1500)).save(small, "WEBP")  # 3 MP
     for path, hopeless in ((big, True), (small, False)):
         size = path.stat().st_size
-        assert ImageStrategy().lossless_hopeless(path, size, int(size * 0.9)) is hopeless
+        assert ImageStrategy().lossless_hopeless(path, size, int(size * 0.97)) is hopeless
 
 
 def test_a_png_is_shrunk_after_decoding_to_what_the_rung_needs(tmp_path):

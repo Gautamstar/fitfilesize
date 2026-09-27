@@ -22,7 +22,8 @@ The same three steps regardless of what you feed it:
 2. **If still over target, binary-search a ladder** of increasingly aggressive
    settings for the gentlest one that fits. PDFs step down Ghostscript image
    DPI and JPEG quality; images step down pixel dimensions and JPEG quality,
-   and a PNG steps down pixel dimensions at 256 colours so it stays a PNG.
+   and a PNG, TIFF or BMP steps down pixel dimensions at 256 colours so it keeps
+   its format.
    Twelve rungs are searched in at most four attempts.
 3. **If even the harshest rung cannot fit**, you get the smallest achievable
    file plus a clear "floor" warning instead of a silent failure.
@@ -68,10 +69,12 @@ fitpdf scan.pdf -t 500kb -o out.pdf
 fitpdf scan.pdf                   # lossless-only pass
 ```
 
-A PNG stays a PNG: 256 colours at full size first, then fewer pixels, and if
-no PNG fits you get the smallest one. Other formats' lossy results are JPEG,
-so the output name is re-suffixed to match what was actually produced
-(`scan.tif` in, `scan.fit.jpg` out).
+Every image keeps its format. A PNG, TIFF or BMP drops to 256 colours at full
+size first, then fewer pixels; a WebP steps size and quality down like a JPEG,
+saved as WebP. If nothing fits you get the smallest file, still in its own
+format. The one exception is an exact pixel size (the API's `width` and
+`height`, which the site's form pages use), which always produces the JPEG
+such forms require.
 
 Exit codes: 0 target hit, 2 floor reached (target not possible), 1 error.
 

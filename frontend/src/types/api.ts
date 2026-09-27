@@ -179,17 +179,24 @@ export interface ImageRungStartEvent {
   rung: number
   /** Cap on the longest side, in pixels. */
   max_edge: number
-  /** JPEG quality, 1-95. */
+  /** JPEG (or, with format 'WEBP', WebP) quality, 1-95. */
   quality: number
+  /** 'WEBP' when a WebP is kept a WebP; absent for JPEG. */
+  format?: string
 }
 
-/** A PNG kept a PNG: reduced to `colors` colours, longest side capped. */
+/**
+ * A PNG, TIFF or BMP kept in its format: reduced to `colors` colours,
+ * longest side capped.
+ */
 export interface PngRungStartEvent {
   stage: 'rung_start'
   rung: number
   /** Cap on the longest side; larger than the image means full size. */
   max_edge: number
   colors: number
+  /** 'TIFF' or 'BMP'; absent for a PNG. */
+  format?: string
 }
 
 /** An image run at an exact pixel size, where only quality changes. */

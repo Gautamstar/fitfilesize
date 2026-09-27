@@ -73,8 +73,9 @@ class CompressResult:
     rungs_tried: int = 0
     warnings: list[str] = field(default_factory=list)
     kind: str = "pdf"
-    # A PNG that could not get under the limit as a PNG, in a run not
-    # allowed to turn it into a JPEG: a JPEG could have gone smaller.
+    # An image that could not get under the limit in its own format (PNG,
+    # WebP, TIFF, BMP), in a run not allowed to turn it into a JPEG: a JPEG
+    # could have gone smaller.
     needs_jpeg: bool = False
 
     @property
@@ -260,10 +261,10 @@ def compress_to_target(
     it is padded up to it with comment blocks (see strategies.pad_jpeg), the
     picture unchanged. Other formats are left as they are, with a warning.
 
-    A PNG (with no exact size asked for) stays a PNG: this is not a
-    converter. It searches the strategy's PNG ladder, and if no rung fits the
-    smallest PNG comes back as the floor, with needs_jpeg=True to say a JPEG
-    could have gone smaller. `allow_jpeg` lets it go on to the JPEG ladder
+    An image keeps its format (with no exact size asked for): this is not a
+    converter. A PNG, WebP, TIFF or BMP searches the strategy's ladder for
+    its own format, and if no rung fits the smallest one comes back as the
+    floor, with needs_jpeg=True to say a JPEG could have gone smaller. `allow_jpeg` lets it go on to the JPEG ladder
     instead, for API callers who ask; `keep_png=False` goes straight there.
 
     `prerendered` maps rung indexes to files already rendered at that rung for
@@ -370,8 +371,8 @@ def compress_to_target(
         ) -> tuple[int | None, dict[int, tuple[int | None, Path]], int]:
             """Search strategy.rungs as they stand: (fitting rung or None, cache, seeded).
 
-            `gentlest_first` renders rung 0 before searching: for the PNG ladder,
-            full size, which is usually the answer and the one worth having.
+            `gentlest_first` renders rung 0 before searching: for a format's own
+            ladder, the gentlest setting, usually the answer worth having.
             """
             outdir.mkdir(exist_ok=True)
             lossy_suffix = strategy.output_suffix(src, lossy=True)
@@ -471,16 +472,16 @@ def compress_to_target(
 
         png_tried = 0
         png_results: list[tuple[int, Path]] = []
-        png_first = getattr(strategy, "png_first", None)
-        if keep_png and not always_render and png_first is not None and png_first(src):
-            strategy.use_png(True)
+        native_first = getattr(strategy, "native_first", None)
+        if keep_png and not always_render and native_first is not None and native_first(src):
+            strategy.use_native(True)
             # Only worth refusing a poor 256-colour copy if a JPEG can follow.
             strategy.png_strict = allow_jpeg
             # Full size first when it has a chance: a 256-colour copy of a
             # compressed PNG is rarely under a fifth of it, and below that the
             # full-size render (10 s at 40 MP) is wasted.
             fit, cache, _ = search_ladder(
-                tmpdir / "png", {}, gentlest_first=target_bytes >= 0.2 * original
+                tmpdir / "native", {}, gentlest_first=target_bytes >= 0.2 * original
             )
             png_tried = len(cache)
             png_results = [(s, p) for s, p in cache.values() if s is not None]
@@ -488,7 +489,7 @@ def compress_to_target(
                 size, out = cache[fit]
                 assert size is not None
                 return finish(out, size, True, f"rung:{fit}", png_tried, lossy=True)
-            strategy.use_png(False)
+            strategy.use_native(False)
             if not allow_jpeg:
                 pngs = [(s, p, True) for s, p in cache.values() if s is not None]
                 if loss_size is not None:
