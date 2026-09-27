@@ -117,6 +117,18 @@ describe('TargetPicker with an iPhone photo', () => {
     expect(screen.getByText('HEIC photos are saved as JPEG.')).toBeTruthy()
   })
 
+  it('keeps a limit above the HEIC itself, since the JPEG is bigger', () => {
+    const onCompress = setup('image', undefined, {
+      filename: 'IMG_0001.HEIC',
+      originalBytes: 2_000_000,
+      initialTarget: 10_000_000,
+    })
+    expect(screen.queryByText(/already under/)).toBeNull()
+    expect(screen.getByRole('button', { name: '5 MB' })).toBeTruthy()
+    compress()
+    expect(onCompress.mock.calls.at(-1)![0]).toBe(10_000_000)
+  })
+
   it('says nothing of the kind for other images', () => {
     setup('image')
     expect(screen.queryByText(/HEIC/)).toBeNull()
