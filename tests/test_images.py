@@ -111,7 +111,7 @@ def test_transparency_is_known_without_a_render(transparent_png, tmp_path):
     # alone, so this run never decodes the source itself. (Its PNG ladder
     # would decode it, so this run goes straight to JPEG.)
     strategy = ImageStrategy()
-    strategy.png_first = lambda src: False
+    strategy.native_first = lambda src: False
     floor = tmp_path / "floor.jpg"
     ImageStrategy().render(transparent_png, floor, IMAGE_RUNGS[-1], timeout=60)
     result = compress_to_target(
@@ -159,6 +159,62 @@ def test_a_graphic_png_stays_a_png_at_full_size(photo_jpg, tmp_path):
     with Image.open(result.output) as out, Image.open(png) as src:
         assert out.size == src.size
     assert not any("JPG" in w for w in result.warnings)
+
+
+@pytest.mark.parametrize(
+    ("fmt", "suffix", "kwargs"),
+    [("WEBP", ".webp", {"quality": 95}), ("TIFF", ".tif", {}), ("BMP", ".bmp", {})],
+)
+def test_every_format_comes_back_as_itself(photo_jpg, tmp_path, fmt, suffix, kwargs):
+    # Not a converter: a WebP, TIFF or BMP that has to shrink stays one.
+    src = tmp_path / f"in{suffix}"
+    Image.open(photo_jpg).save(src, fmt, **kwargs)
+    result = compress_to_target(src, tmp_path / f"out{suffix}", src.stat().st_size // 4)
+    assert result.hit_target
+    assert result.output.suffix == suffix
+    with Image.open(result.output) as out:
+        assert out.format == fmt
+    assert not any("JPG" in w for w in result.warnings)
+
+
+def test_a_transparent_webp_keeps_its_transparency(transparent_png, tmp_path):
+    webp = tmp_path / "logo.webp"
+    Image.open(transparent_png).save(webp, "WEBP", quality=100)
+    result = compress_to_target(webp, tmp_path / "out.webp", webp.stat().st_size // 3)
+    assert result.output.suffix == ".webp"
+    with Image.open(result.output) as out:
+        assert out.convert("RGBA").getchannel("A").getextrema()[0] < 255
+
+
+def test_the_floor_estimate_is_for_the_format_that_comes_back(photo_jpg, tmp_path):
+    # A BMP stays a BMP, whose floor is 8-bit pixels: far above what a JPEG
+    # of it would reach, and the picker must not offer sizes below it.
+    bmp = tmp_path / "shot.bmp"
+    Image.open(photo_jpg).save(bmp, "BMP")
+    jpg = tmp_path / "shot.jpg"
+    Image.open(photo_jpg).save(jpg, "JPEG", quality=95)
+    keep = tmp_path / "floor"
+    bmp_floor = estimate_floor(bmp, keep=keep)
+    assert (tmp_path / "floor.bmp").exists()
+    with Image.open(tmp_path / "floor.bmp") as im:
+        assert im.format == "BMP" and max(im.size) == 480
+    assert bmp_floor > 3 * estimate_floor(jpg)
+
+
+def test_a_run_reuses_the_native_floor_render(photo_jpg, tmp_path):
+    from fitpdf.strategies import PNG_RUNGS
+
+    png = tmp_path / "sheet.png"
+    Image.open(photo_jpg).save(png, "PNG")
+    floor = estimate_floor(png, keep=tmp_path / "floor")
+    events = []
+    result = compress_to_target(
+        png, tmp_path / "out.png", floor // 2,
+        prerendered={len(PNG_RUNGS) - 1: tmp_path / "floor.png"}, on_progress=events.append,
+    )
+    # Under the floor: answered by the analyze step's render, nothing rendered again.
+    assert result.method == "floor" and result.output.suffix == ".png"
+    assert not any(e["stage"] == "rung_start" and e["rung"] == len(PNG_RUNGS) - 1 for e in events)
 
 
 def test_a_transparent_png_keeps_its_transparency(transparent_png, tmp_path):
@@ -445,7 +501,7 @@ def test_a_large_webp_skips_the_lossless_pass_and_a_small_one_keeps_it(tmp_path)
     Image.new("RGB", (2000, 1500)).save(small, "WEBP")  # 3 MP
     for path, hopeless in ((big, True), (small, False)):
         size = path.stat().st_size
-        assert ImageStrategy().lossless_hopeless(path, size, int(size * 0.9)) is hopeless
+        assert ImageStrategy().lossless_hopeless(path, size, int(size * 0.97)) is hopeless
 
 
 def test_a_png_is_shrunk_after_decoding_to_what_the_rung_needs(tmp_path):

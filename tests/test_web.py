@@ -226,6 +226,22 @@ def test_a_png_stays_a_png_unless_the_caller_allows_jpeg(web, photo_png):
     assert client.get(f"/api/jobs/{job_id}/download").headers["content-type"] == "image/jpeg"
 
 
+@pytest.mark.parametrize(
+    ("fmt", "ext", "mime"),
+    [("WEBP", "webp", "image/webp"), ("TIFF", "tif", "image/tiff"), ("BMP", "bmp", "image/bmp")],
+)
+def test_a_webp_tiff_or_bmp_downloads_as_itself(web, photo_jpg, tmp_path, fmt, ext, mime):
+    client, _, _ = web
+    src = tmp_path / f"scan.{ext}"
+    Image.open(photo_jpg).save(src, fmt)
+    job_id = _upload(client, src, name=f"scan.{ext}").json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": src.stat().st_size // 4})
+    assert client.get(f"/api/jobs/{job_id}").json()["hit_target"] is True
+    dl = client.get(f"/api/jobs/{job_id}/download")
+    assert dl.headers["content-type"] == mime
+    assert f"scan.fit.{ext}" in dl.headers["content-disposition"]
+
+
 def test_a_graphic_png_comes_back_as_a_png(web, photo_jpg, tmp_path):
     client, _, _ = web
     png = tmp_path / "sheet.png"

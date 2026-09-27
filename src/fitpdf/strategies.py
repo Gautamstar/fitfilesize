@@ -253,6 +253,20 @@ PNGQUANT_SPEED = "4"
 PNGQUANT_QUALITY_TOO_LOW = 99
 
 
+# Every image comes back in the format it came in: this is not a converter.
+# PNG, TIFF and BMP take the 256-colour ladder above (BMP has no compression,
+# so 8-bit colour and fewer pixels are its only levers); WebP, which has
+# lossy compression and transparency, takes the JPEG ladder's steps saved as
+# WebP. JPEG is JPEG throughout.
+PALETTE_FORMATS = {"PNG", "TIFF", "BMP"}
+# Saving each format as small as it goes without losing anything more.
+NATIVE_SAVE = {
+    "PNG": {"format": "PNG", "optimize": True},
+    "TIFF": {"format": "TIFF", "compression": "tiff_adobe_deflate"},
+    "BMP": {"format": "BMP"},
+}
+
+
 class PngRefused(Exception):
     """256 colours would visibly damage this image; it should not stay a PNG."""
 
@@ -319,8 +333,11 @@ class ImageStrategy:
         self._pixels: dict[tuple, object] = {}
         # Whether see-through pixels were turned white; None until known.
         self.flattened: bool | None = None
-        # "png" while searching PNG_RUNGS (see use_png), else "jpeg".
+        # "native" while searching the source format's own ladder (see
+        # use_native), else "jpeg".
         self.mode = "jpeg"
+        self.native_format = ""
+        self.native_suffix = ""
         self._png_refused = False
         # Set by the engine when a JPEG may take over from the PNG ladder.
         self.png_strict = False
@@ -330,29 +347,39 @@ class ImageStrategy:
             width, height = resize
             self.rungs = [{"width": width, "height": height, "quality": q} for q in RESIZE_QUALITIES]
 
-    def png_first(self, src: Path) -> bool:
-        """Whether to search PNG_RUNGS before converting to JPEG.
-
-        For a PNG with no exact size asked for. An exact size is a form's
-        requirement, and those forms ask for JPEG.
-        """
+    def native_first(self, src: Path) -> bool:
+        """Whether src has a ladder that keeps its own format (see
+        PALETTE_FORMATS). Not with an exact size: that is a form's
+        requirement, and those forms ask for JPEG."""
         from PIL import Image
 
         if self.resize is not None:
             return False
         try:
             with Image.open(src) as im:
-                return (im.format or "").upper() == "PNG"
+                fmt = (im.format or "").upper()
         except Exception:
             return False
+        if fmt not in PALETTE_FORMATS and fmt != "WEBP":
+            return False
+        self.native_format = fmt
+        # The visitor's own extension (.tif or .tiff), so the name matches.
+        self.native_suffix = src.suffix.lower() or {"PNG": ".png", "TIFF": ".tif", "BMP": ".bmp", "WEBP": ".webp"}[fmt]
+        return True
 
-    def use_png(self, on: bool) -> None:
-        """Switch the ladder between PNG_RUNGS and the JPEG rungs."""
-        self.mode = "png" if on else "jpeg"
-        self.rungs = PNG_RUNGS if on else IMAGE_RUNGS
+    def use_native(self, on: bool) -> None:
+        """Switch between the source format's own ladder and the JPEG one."""
+        self.mode = "native" if on else "jpeg"
         if not on:
-            # Let the full-size PNG decode go before the JPEG ladder decodes.
-            self._pixels.pop(("png", "decoded"), None)
+            self.rungs = IMAGE_RUNGS
+            # Let the full-size decode go before the JPEG ladder decodes.
+            self._pixels.pop(("native", "decoded"), None)
+        elif self.native_format == "WEBP":
+            self.rungs = [{**r, "format": "WEBP"} for r in IMAGE_RUNGS]
+        elif self.native_format == "PNG":
+            self.rungs = PNG_RUNGS
+        else:
+            self.rungs = [{**r, "format": self.native_format} for r in PNG_RUNGS]
 
     def probe(self, src: Path) -> Probe:
         from PIL import Image
@@ -407,7 +434,9 @@ class ImageStrategy:
     # half. Below 60 percent a PNG goes to the 256-colour PNG rungs instead,
     # which keep it a PNG: on a 40 MP cheat sheet the pass took 14 s to save
     # 17 percent, where full size at 256 colours took 10 s to save 64.
-    LOSSLESS_REACH: ClassVar[dict[str, float]] = {"JPEG": 0.5, "PNG": 0.6}
+    # A lossy WebP re-encoded losslessly only grows; a lossless one gains a
+    # few percent at most.
+    LOSSLESS_REACH: ClassVar[dict[str, float]] = {"JPEG": 0.5, "PNG": 0.6, "WEBP": 0.95}
     # A PNG stored close to raw (compression level 0) can shrink many times
     # over and stay a PNG, so it always gets the pass.
     STORED_PNG = 0.9
@@ -415,10 +444,10 @@ class ImageStrategy:
     def lossless_hopeless(self, src: Path, original: int, target: int) -> bool:
         """True when the lossless pass cannot get the file down to the target.
 
-        JPEG and PNG by reach, and a large WebP by memory. TIFF and BMP are
-        often stored uncompressed and can shrink a great deal on the way to
-        PNG, so they always get the pass. Reads the header only; no pixels
-        are decoded.
+        JPEG, PNG and WebP by reach, and a large WebP by memory. A TIFF is
+        often stored uncompressed and can shrink a great deal deflated, so it
+        always gets the pass; a BMP has no compression to gain, so it never
+        does. Reads the header only; no pixels are decoded.
         """
         from PIL import Image
 
@@ -426,6 +455,8 @@ class ImageStrategy:
             with Image.open(src) as im:
                 fmt = (im.format or "").upper()
                 reach = self.LOSSLESS_REACH.get(fmt)
+                if fmt == "BMP":
+                    return True
                 if fmt == "JPEG" and im.width * im.height > MAX_DECODE_PIXELS:
                     # Not about reach: the pass decodes and re-encodes every
                     # pixel, too much memory for a photo this big on a small
@@ -473,17 +504,20 @@ class ImageStrategy:
                 ImageOps.exif_transpose(opened).save(dst, "PNG", optimize=True)
             elif fmt == "WEBP":
                 opened.save(dst, "WEBP", lossless=True, method=6)
+            elif fmt == "TIFF":
+                # Often stored uncompressed: deflate keeps every pixel.
+                ImageOps.exif_transpose(opened).save(dst, **NATIVE_SAVE["TIFF"])
             else:
-                # TIFF/BMP have no meaningful lossless shrink; PNG is the
-                # honest floor for "same pixels, smaller file".
-                opened.save(dst, "PNG", optimize=True)
+                opened.save(dst, fmt)
         return dst.stat().st_size
 
     def render(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
         from PIL import Image
 
         if "colors" in rung:
-            return self._render_png(src, dst, rung, timeout=timeout)
+            return self._render_palette(src, dst, rung, timeout=timeout)
+        if rung.get("format") == "WEBP":
+            return self._render_webp(src, dst, rung)
         if "width" in rung:
             # Every rung of an exact-size run shares one picture and differs
             # only in quality, so the resize happens once per run.
@@ -506,17 +540,12 @@ class ImageStrategy:
         im.save(dst, "JPEG", quality=rung["quality"], optimize=True, progressive=True)
         return dst.stat().st_size
 
-    def _render_png(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
-        """A 256-colour PNG, transparency kept, shrunk to the rung's max_edge."""
-        import shutil
-        import subprocess
-        import tempfile
-
+    def _native_pixels(self, src: Path, max_edge: int):
+        """The source upright, transparency kept, shrunk to max_edge. The
+        full-size decode is held for the run's other rungs."""
         from PIL import Image, ImageOps
 
-        if self._png_refused:
-            raise PngRefused  # pngquant judges the colours, not the size
-        key = ("png", "decoded")
+        key = ("native", "decoded")
         if key not in self._pixels:
             with Image.open(src) as opened:
                 opened.load()
@@ -526,11 +555,49 @@ class ImageStrategy:
                 )
                 self._pixels[key] = im.convert("RGBA" if keep_alpha else "RGB")
         im = self._pixels[key]
-        if max(im.size) > rung["max_edge"]:
-            scale = rung["max_edge"] / max(im.size)
+        if max(im.size) > max_edge:
+            scale = max_edge / max(im.size)
             im = im.resize(
                 (max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS
             )
+        return im
+
+    def _render_webp(self, src: Path, dst: Path, rung: dict) -> int:
+        """A lossy WebP, transparency kept, at the rung's size and quality."""
+        im = self._native_pixels(src, rung["max_edge"])
+        im.save(dst, "WEBP", quality=rung["quality"], method=4)
+        return dst.stat().st_size
+
+    def _render_palette(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
+        """256 colours at the rung's size, saved as the source's format."""
+        from PIL import Image
+
+        fmt = rung.get("format", "PNG")
+        if fmt == "PNG":
+            return self._render_png(src, dst, rung, timeout=timeout)
+        png = dst.with_name(dst.stem + "-256.png")
+        try:
+            self._render_png(src, png, rung, timeout=timeout)
+            with Image.open(png) as quantized:
+                quantized.load()
+                # A palette TIFF or BMP cannot hold transparency; RGBA can.
+                out = quantized.convert("RGBA") if "transparency" in quantized.info else quantized
+                out.save(dst, **NATIVE_SAVE[fmt])
+        finally:
+            png.unlink(missing_ok=True)
+        return dst.stat().st_size
+
+    def _render_png(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
+        """A 256-colour PNG, transparency kept, shrunk to the rung's max_edge."""
+        import shutil
+        import subprocess
+        import tempfile
+
+        from PIL import Image
+
+        if self._png_refused:
+            raise PngRefused  # pngquant judges the colours, not the size
+        im = self._native_pixels(src, rung["max_edge"])
 
         pngquant = shutil.which("pngquant")
         if pngquant is None:
@@ -686,10 +753,9 @@ class ImageStrategy:
 
     def output_suffix(self, src: Path, lossy: bool) -> str:
         if lossy:
-            return ".png" if self.mode == "png" else ".jpg"
+            return self.native_suffix if self.mode == "native" else ".jpg"
         suffix = src.suffix.lower()
-        # The lossless path re-encodes unsupported formats as PNG.
-        return suffix if suffix in {".jpg", ".jpeg", ".png", ".webp"} else ".png"
+        return suffix if suffix in IMAGE_SUFFIXES else ".png"
 
 
 # --------------------------------------------------------------------------- #

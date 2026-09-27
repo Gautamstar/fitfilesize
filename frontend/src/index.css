@@ -702,11 +702,6 @@ input[type='range']::-moz-range-thumb {
   border-color: var(--accent);
   color: var(--on-accent);
 }
-.chip.below-floor:not(.active) {
-  color: var(--warn);
-  border-style: dashed;
-  border-color: var(--warn);
-}
 .chip:disabled {
   opacity: 0.4;
   cursor: default;
