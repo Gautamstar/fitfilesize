@@ -237,12 +237,23 @@ def sweep_expired(data_dir: Path, settings: "Settings", r) -> int:
 
         job = store.get_job(r, d.name)
         if job is None:
-            # No Redis record: an orphan from a crash or a flushed store. Fall
-            # back to filesystem age so these cannot accumulate forever.
+            # No Redis record: an orphan from a crash or a flushed store (on a
+            # VPS, Redis keeps nothing across a restart). Fall back to file
+            # times so these cannot accumulate, and keep the same promises: a
+            # finished run's output is its completion time, so the original
+            # still goes after input_grace_seconds and the rest after ttl.
             stamp = _oldest_mtime(d)
             if stamp is None:
                 continue  # removed while we looked (a Delete now, or another sweep)
-            if now - stamp > settings.pending_ttl_seconds and remove_tree(d):
+            finished = _newest_output_mtime(d)
+            if finished is None:
+                expired = now - stamp > settings.pending_ttl_seconds
+            else:
+                if now - finished > settings.input_grace_seconds:
+                    for src in d.glob("input.*"):
+                        src.unlink(missing_ok=True)
+                expired = now - finished > settings.ttl_seconds
+            if expired and remove_tree(d):
                 removed += 1
             continue
 
@@ -278,6 +289,15 @@ def _oldest_mtime(d: Path) -> float | None:
     except FileNotFoundError:
         return None
     return stamp
+
+
+def _newest_output_mtime(d: Path) -> float | None:
+    """When the latest run in a job directory finished, or None if none has
+    (or the directory vanished under a Delete now)."""
+    try:
+        return max((f.stat().st_mtime for f in d.glob("output-*")), default=None)
+    except FileNotFoundError:
+        return None
 
 
 def stale_after(settings: "Settings") -> int:

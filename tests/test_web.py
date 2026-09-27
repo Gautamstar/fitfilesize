@@ -312,6 +312,33 @@ def test_sweeper_removes_orphan_dirs(web, tmp_path):
     assert not orphan.exists()
 
 
+def test_orphan_of_a_finished_run_keeps_the_deletion_promises(web):
+    # Redis restarted after the run finished: the record is gone, the files are not.
+    _, r, settings = web
+    orphan = settings.data_dir / "cafef00d"
+    orphan.mkdir(parents=True)
+    (orphan / "input.jpg").write_bytes(b"original")
+    (orphan / "output-1.jpg").write_bytes(b"result")
+
+    def finished(seconds_ago):
+        t = time.time() - seconds_ago
+        for f in orphan.iterdir():
+            os.utime(f, (t, t))
+
+    finished(settings.input_grace_seconds - 30)
+    sweep_expired(settings.data_dir, settings, r)
+    assert (orphan / "input.jpg").exists()  # still inside the grace window
+
+    finished(settings.input_grace_seconds + 30)
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert not (orphan / "input.jpg").exists()  # the original goes on time
+    assert (orphan / "output-1.jpg").exists()  # the result stays downloadable
+
+    finished(settings.ttl_seconds + 30)
+    assert sweep_expired(settings.data_dir, settings, r) == 1
+    assert not orphan.exists()
+
+
 def test_expires_in_restarts_at_completion(web, image_pdf):
     client, r, settings = web
     job_id = _upload(client, image_pdf).json()["job_id"]
@@ -372,6 +399,21 @@ def test_health_fails_without_a_worker_and_passes_with_one(tmp_path):
         assert client.head("/health").status_code == 503  # what UptimeRobot sees
 
         Worker([Queue(settings.queue_name, connection=r)], connection=r).register_birth()
+        assert client.get("/health").json() == {"ok": True, "redis": True, "worker": True}
+
+
+def test_a_worker_that_outlived_its_registration_shows_up_again(tmp_path):
+    from fitpdf.web.worker import FitWorker
+
+    r = fakeredis.FakeRedis()
+    app, settings = _app_without_grace(tmp_path, r)
+    worker = FitWorker([Queue(settings.queue_name, connection=r)], connection=r)
+    worker.register_birth()
+    with TestClient(app) as client:
+        assert client.get("/health").json()["worker"] is True
+        r.delete(worker.key)  # frozen past its TTL: the registration expires
+        assert client.get("/health").json()["worker"] is False
+        worker.heartbeat()  # it wakes up
         assert client.get("/health").json() == {"ok": True, "redis": True, "worker": True}
 
 

@@ -20,7 +20,28 @@ from .config import Settings
 WORKER_TTL = 60
 
 
-class WindowsWorker(SimpleWorker):
+class Rejoin:
+    """Register again when a heartbeat finds the registration gone.
+
+    A worker frozen for longer than its TTL (the box swapping hard, or a
+    paused container) loses its registration. When it wakes, RQ's heartbeat
+    writes only last_heartbeat into a fresh hash, so the worker goes on taking
+    jobs while /health, which looks for the queues it serves, reports it dead
+    for good. Registering afresh puts it back in view.
+    """
+
+    def heartbeat(self, timeout=None, pipeline=None):
+        if not self.connection.exists(self.key):
+            self.log.warning("Worker %s: registration had expired; registering again", self.name)
+            self.register_birth()
+        super().heartbeat(timeout, pipeline)
+
+
+class FitWorker(Rejoin, Worker):
+    pass
+
+
+class WindowsWorker(Rejoin, SimpleWorker):
     death_penalty_class = TimerDeathPenalty
 
 
@@ -73,7 +94,7 @@ def killed_handler(settings: Settings, conn):
 def main() -> int:
     settings = Settings.from_env()
     conn = store.connect(settings.redis_url)
-    worker_cls = WindowsWorker if sys.platform == "win32" else Worker
+    worker_cls = WindowsWorker if sys.platform == "win32" else FitWorker
     work = queues(settings, conn)
     names = ", ".join(q.name for q in work)
     print(f"fitpdf worker listening on queues {names} ({settings.redis_url})")
