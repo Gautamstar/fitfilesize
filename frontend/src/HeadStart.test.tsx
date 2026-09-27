@@ -69,16 +69,16 @@ it("starts one for a landing page's size", async () => {
 })
 
 it('refuses an image with too many pixels without uploading it', async () => {
-  // A PNG header claiming 7000 x 5000 (35 MP; the cap for PNG is 34).
+  // A PNG header claiming 8000 x 7000 (56 MP; the cap for PNG is 50).
   const header = new Uint8Array(33)
   header.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52])
-  new DataView(header.buffer).setUint32(16, 7000)
-  new DataView(header.buffer).setUint32(20, 5000)
+  new DataView(header.buffer).setUint32(16, 8000)
+  new DataView(header.buffer).setUint32(20, 7000)
   const { default: App } = await import('./App')
   render(<App path="/" />)
   const input = document.querySelector('input[type=file]') as HTMLInputElement
   fireEvent.change(input, { target: { files: [new File([header], 'huge.png', { type: 'image/png' })] } })
-  expect(await screen.findByText(/35 megapixels/)).toBeTruthy()
+  expect(await screen.findByText(/56 megapixels/)).toBeTruthy()
   expect(uploadFile).not.toHaveBeenCalled()
 })
 

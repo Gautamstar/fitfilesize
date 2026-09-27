@@ -17,18 +17,20 @@ interface ProgressPanelProps {
   filename: string
   targetBytes: number
   search: SearchState
+  /** Waiting for a free worker, behind other visitors' runs. */
+  queued?: boolean
 }
 
 /** Silence after which the panel says the run is slow, not stuck. */
 export const QUIET_MS = 45_000
 
-export function ProgressPanel({ filename, targetBytes, search }: ProgressPanelProps) {
+export function ProgressPanel({ filename, targetBytes, search, queued = false }: ProgressPanelProps) {
   const { fraction, tries } = runProgress(search)
   // Any change in the search restarts the clock. A server that has stopped
   // for good is caught elsewhere (the run fails or the job disappears); this
   // only keeps a long wait from looking like a hang.
   const [quiet, setQuiet] = useState(false)
-  const signature = `${search.rungs}:${tries}:${search.current?.rung}:${Object.keys(search.points).length}:${search.lossless}`
+  const signature = `${queued}:${search.rungs}:${tries}:${search.current?.rung}:${Object.keys(search.points).length}:${search.lossless}`
   useEffect(() => {
     setQuiet(false)
     const timer = window.setTimeout(() => setQuiet(true), QUIET_MS)
@@ -44,7 +46,9 @@ export function ProgressPanel({ filename, targetBytes, search }: ProgressPanelPr
     search.rungs === null
       ? search.lossless !== null
         ? 'Cleanup pass done, still over your limit. Compressing...'
-        : 'Getting started...'
+        : queued
+          ? 'In the queue: other files are being compressed first. Yours starts in a moment.'
+          : 'Getting started...'
       : fraction >= 1
         ? 'Found it. Getting your file ready...'
         : search.current

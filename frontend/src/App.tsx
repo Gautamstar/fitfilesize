@@ -24,7 +24,7 @@ import { ThemeToggle } from './components/ThemeToggle'
 import { TipLink } from './components/TipLink'
 import { useCountdown } from './hooks/useCountdown'
 import { useProgressStream } from './hooks/useProgressStream'
-import { analyzeJob, deleteJob, startCompress, uploadFile } from './lib/api'
+import { analyzeJob, deleteJob, getJob, startCompress, uploadFile } from './lib/api'
 import { fileProblem, readImageSize } from './lib/fileCheck'
 import { describeSource, isAcceptedFile } from './lib/format'
 import { keepUnits, pageForPath, pageMinBytes, pageResize, pageTargetBytes } from './lib/landing'
@@ -38,6 +38,27 @@ type Phase = 'drop' | 'analyzing' | 'target' | 'progress' | 'result' | 'error'
  * been idle takes up to a minute to wake, and without a word that looks hung.
  */
 const SLOW_UPLOAD_MS = 5000
+/** How often the page asks whether its analysis is waiting its turn. */
+const QUEUE_POLL_MS = 1500
+
+/**
+ * Analyze, and meanwhile tell the visitor if the analysis is queued behind
+ * other uploads (the server analyzes two at a time). Asking is best effort:
+ * a failed poll changes nothing, and the answer never delays the result.
+ */
+async function analyzeUntilDone(jobId: string, setQueued: (queued: boolean) => void) {
+  const poll = window.setInterval(() => {
+    getJob(jobId)
+      .then((st) => setQueued(st.waiting === 'analysis'))
+      .catch(() => {})
+  }, QUEUE_POLL_MS)
+  try {
+    return await analyzeJob(jobId)
+  } finally {
+    window.clearInterval(poll)
+    setQueued(false)
+  }
+}
 
 /** Everything we learn about the file from /upload and /analyze. */
 interface JobInfo {
@@ -77,6 +98,7 @@ function App({ path }: AppProps) {
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
   const [slowUpload, setSlowUpload] = useState(false)
+  const [analysisQueued, setAnalysisQueued] = useState(false)
   // Upload progress, 0 to 1, while the file is being sent; null after.
   const [uploaded, setUploaded] = useState<number | null>(null)
   const [fileBytes, setFileBytes] = useState(0)
@@ -209,7 +231,7 @@ function App({ path }: AppProps) {
         setSlowUpload(false)
         setUploaded(null)
       }
-      const an = await analyzeJob(up.job_id)
+      const an = await analyzeUntilDone(up.job_id, setAnalysisQueued)
       // The visitor's own file, not the copy: its size is what "before" and
       // the picker's range mean, and its pixels are what they know it by.
       const own = shrunk ? await readImageSize(file).catch(() => null) : null
@@ -327,6 +349,7 @@ function App({ path }: AppProps) {
             fileBytes={fileBytes}
             slow={slowUpload}
             restarting={restarting}
+            queued={analysisQueued}
           />
         )
 
@@ -359,6 +382,7 @@ function App({ path }: AppProps) {
             filename={job.filename}
             targetBytes={targetBytes}
             search={stream.search}
+            queued={stream.queued}
           />
         ) : null
 

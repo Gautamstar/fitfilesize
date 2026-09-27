@@ -4,9 +4,9 @@
 #
 #   docker compose -f deploy/docker-compose.yml --env-file deploy/.env up -d --build
 #
-# Memory caps add up to about 3.2 GB of the 4 GB box, leaving room for the
-# system and a small second site. Each worker runs one compression at a time,
-# so two workers means two at once.
+# Memory caps add up to about 3.4 GB of the 4 GB box (plus 2 GB swap); real
+# use is far lower, since the caps are sized for the largest images. Each
+# worker runs one compression at a time, so two workers means two at once.
 
 x-app: &app
   build: ..
@@ -44,7 +44,9 @@ services:
   api:
     <<: *app
     command: ["uvicorn", "fitpdf.web.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
-    mem_limit: 512m
+    # Analysing an upload decodes it here: a 50 MP transparent PNG peaks
+    # around 420 MB, so two at once need the full gigabyte.
+    mem_limit: 1g
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
       interval: 30s

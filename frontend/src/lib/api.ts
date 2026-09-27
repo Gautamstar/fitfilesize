@@ -104,7 +104,11 @@ export function warmUp(): void {
         typeof files?.max_pixels?.jpeg === 'number' &&
         typeof files?.max_pixels?.other === 'number'
       ) {
-        setFileLimits({ maxBytes: files.max_bytes, maxPixels: files.max_pixels })
+        const { jpeg, webp, other } = files.max_pixels
+        setFileLimits({
+          maxBytes: files.max_bytes,
+          maxPixels: typeof webp === 'number' ? { jpeg, webp, other } : { jpeg, other },
+        })
       }
     })
     .catch(() => {})

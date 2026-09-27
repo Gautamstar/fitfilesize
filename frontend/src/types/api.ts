@@ -94,6 +94,9 @@ export interface JobState {
   width?: number
   height?: number
 
+  // Present while the analysis waits for its turn behind other uploads.
+  waiting?: 'analysis'
+
   // Present once analysis has run.
   floor_estimate?: number
 

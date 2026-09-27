@@ -1,7 +1,7 @@
 /**
- * The "server is waking up" note. A free-tier backend that has been idle takes
- * up to a minute to answer the first upload, and without a word the page looks
- * hung, which is the moment a first-time visitor leaves.
+ * The "still working" note. A big file on a slow connection can sit at the
+ * start of its upload for a while, and without a word the page looks hung,
+ * which is the moment a first-time visitor leaves.
  */
 
 import { fireEvent, render, screen } from '@testing-library/react'
@@ -45,8 +45,8 @@ it('explains a slow upload instead of looking hung', async () => {
 
   // Let the dropzone animate out and the upload panel in.
   await screen.findByText('Uploading your file')
-  expect(screen.queryByText(/wake up/)).toBeNull()
+  expect(screen.queryByText(/Still working/)).toBeNull()
 
   // The note appears once the upload has been pending for 5 seconds.
-  expect(await screen.findByText(/wake up/, undefined, { timeout: 7000 })).toBeTruthy()
+  expect(await screen.findByText(/Still working/, undefined, { timeout: 7000 })).toBeTruthy()
 }, 10_000)

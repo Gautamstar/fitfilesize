@@ -348,6 +348,16 @@ def test_a_photo_too_big_to_decode_in_full_skips_the_lossless_pass(tmp_path):
     assert ImageStrategy().lossless_hopeless(big, size, int(size * 0.9))
 
 
+def test_a_large_webp_skips_the_lossless_pass_and_a_small_one_keeps_it(tmp_path):
+    # Lossless WebP at method 6 took 1.4 GB on a 34 MP image.
+    big, small = tmp_path / "big.webp", tmp_path / "small.webp"
+    Image.new("RGB", (4000, 3500)).save(big, "WEBP")  # 14 MP
+    Image.new("RGB", (2000, 1500)).save(small, "WEBP")  # 3 MP
+    for path, hopeless in ((big, True), (small, False)):
+        size = path.stat().st_size
+        assert ImageStrategy().lossless_hopeless(path, size, int(size * 0.9)) is hopeless
+
+
 def test_a_png_is_shrunk_after_decoding_to_what_the_rung_needs(tmp_path):
     png = tmp_path / "wide.png"
     Image.new("RGB", (4000, 3000), (40, 90, 160)).save(png)

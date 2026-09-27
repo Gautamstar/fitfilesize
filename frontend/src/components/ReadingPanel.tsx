@@ -15,13 +15,21 @@ interface ReadingPanelProps {
   slow: boolean
   /** Starting a lost run again (see App): say why the upload is back. */
   restarting?: boolean
+  /** The analysis is waiting its turn behind other uploads. */
+  queued?: boolean
 }
 
-export function ReadingPanel({ uploaded, fileBytes, slow, restarting = false }: ReadingPanelProps) {
+export function ReadingPanel({
+  uploaded,
+  fileBytes,
+  slow,
+  restarting = false,
+  queued = false,
+}: ReadingPanelProps) {
   const uploading = uploaded !== null
   const pct = uploading ? Math.round(uploaded * 100) : null
   // A slow upload that is visibly moving is just a big file on a slow
-  // connection. The waking-server note is for when nothing moves at all.
+  // connection. The still-working note is for when nothing moves at all.
   const stalled = !uploading || uploaded === 0 || uploaded >= 1
 
   return (
@@ -46,12 +54,13 @@ export function ReadingPanel({ uploaded, fileBytes, slow, restarting = false }: 
       <p className="read-meta">
         {uploading
           ? `${fmt(Math.round(fileBytes * (uploaded as number)))} of ${fmt(fileBytes)}`
-          : 'Checking how small it can go'}
+          : queued
+            ? 'In the queue: other files are being checked first. Yours is next.'
+            : 'Checking how small it can go'}
       </p>
       {slow && stalled ? (
         <p className="slow-note">
-          Still working. If nobody has used the site for a while, the server takes up to a minute
-          to wake up.
+          Still working. A big file or a slow connection can take a minute.
         </p>
       ) : null}
     </div>

@@ -167,12 +167,21 @@ class PdfStrategy:
 # decode small, so uploads above MAX_IMAGE_PIXELS are refused instead.
 MAX_DECODE_PIXELS = 24_000_000
 
-# Largest image taken at all, in pixels. A JPEG decodes at reduced size, so
-# 64 MP (every phone camera up to 64 MP sensors) peaks around 250 MB. Other
-# formats decode in full first, four bytes a pixel, so they stop at 34 MP
-# (an 8K screenshot), about 220 MB. Measured on the web worker's code path.
-MAX_IMAGE_PIXELS = {"JPEG": 64_000_000}
-MAX_OTHER_IMAGE_PIXELS = 34_000_000
+# Largest image taken at all, in pixels, sized for the VPS (API 1 GB, each
+# worker 1 GB). Peaks measured there on the real code path:
+# * JPEG decodes at reduced size, so 64 MP (every phone camera up to 64 MP
+#   sensors) peaks around 250 MB.
+# * PNG, TIFF and BMP decode in full, so they stop at 50 MP: a transparent
+#   PNG peaks at 420 MB analysing and 490 MB compressing, an opaque one 300.
+# * WebP decodes worst of all, about 15 bytes a pixel (Pillow's decoder holds
+#   several full copies), so it stops at 16 MP, a 4000 x 4000 web image:
+#   about 330 MB. At 34 MP it took 580 MB just to open.
+MAX_IMAGE_PIXELS = {"JPEG": 64_000_000, "WEBP": 16_000_000}
+MAX_OTHER_IMAGE_PIXELS = 50_000_000
+# Past this a WebP skips the lossless pass: re-encoding losslessly at
+# method 6 took 1.4 GB on a 34 MP image, and a photo's lossless copy comes
+# out larger than the lossy original anyway.
+MAX_WEBP_LOSSLESS_PIXELS = 12_000_000
 
 
 def image_too_big(src: Path) -> str | None:
@@ -350,9 +359,10 @@ class ImageStrategy:
     def lossless_hopeless(self, src: Path, original: int, target: int) -> bool:
         """True when the lossless pass cannot get the file down to the target.
 
-        JPEG and PNG only. TIFF and BMP are often stored uncompressed and can
-        shrink a great deal on the way to PNG, so they always get the pass.
-        Reads the header only; no pixels are decoded.
+        JPEG and PNG by reach, and a large WebP by memory. TIFF and BMP are
+        often stored uncompressed and can shrink a great deal on the way to
+        PNG, so they always get the pass. Reads the header only; no pixels
+        are decoded.
         """
         from PIL import Image
 
@@ -364,6 +374,8 @@ class ImageStrategy:
                     # Not about reach: the pass decodes and re-encodes every
                     # pixel, too much memory for a photo this big on a small
                     # server. The ladder, which decodes it small, takes over.
+                    return True
+                if fmt == "WEBP" and im.width * im.height > MAX_WEBP_LOSSLESS_PIXELS:
                     return True
                 if reach is None or target >= original * reach:
                     return False
