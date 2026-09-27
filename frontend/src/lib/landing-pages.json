@@ -275,7 +275,7 @@
           "For a JPEG we first try an optimized re-encode that keeps every pixel exactly as it is. If that is not enough, we reduce the dimensions and quality step by step until it fits."
         ],
         "tips": [
-          "PNG screenshots and images with transparency come back as JPEG when they need shrinking, with transparent areas filled white.",
+          "A PNG comes back as a PNG, with its transparency kept.",
           "Photographing a document? Shoot it flat and in good light, filling the frame. Less background means more detail survives.",
           "We keep your image's shape and never crop it, so crop first if the form wants a particular framing."
         ]
@@ -297,7 +297,7 @@
         "tips": [
           "Crop to the part of the photo that matters first. Every pixel you remove is one less that has to be squeezed.",
           "Photos with lots of fine detail, like foliage or patterned clothes, take more bytes than a plain background.",
-          "The result is a JPEG. If the form only accepts PNG, it probably also allows a larger size; check its instructions."
+          "A JPEG comes back as a JPEG and a PNG as a PNG, so the file type the form asked for is kept."
         ]
       }
     },
@@ -317,7 +317,7 @@
         "tips": [
           "iPhone photos saved as HEIC need to be JPEG first. Export or share them as JPEG, or set the camera to Most Compatible.",
           "We remove camera metadata such as GPS location. It saves space and keeps where you took the photo private.",
-          "PNG and WebP files come back as JPEG when they need lossy compression, since that is what gets them small."
+          "A PNG stays a PNG. WebP, TIFF and BMP files come back as JPEG when they need lossy compression, since that is what gets them small."
         ]
       }
     },
@@ -392,13 +392,13 @@
       "guide": {
         "title": "Getting a PNG under 100 KB",
         "paragraphs": [
-          "PNG keeps every pixel exactly, which is why a single screenshot or scanned page saved as PNG can be several megabytes. To get it under 100 KB it has to be converted to JPEG, which is what almost every upload form accepts anyway.",
-          "We convert and then step pixel dimensions and JPEG quality down together, keeping the gentlest step that fits under 100,000 bytes. Transparent areas become white, since JPEG has no transparency."
+          "PNG keeps every pixel exactly, which is why a single screenshot or scanned page saved as PNG can be several megabytes. The result here stays a PNG: we reduce it to 256 colours, which screenshots, logos and diagrams barely show, and make it smaller in pixels only as far as 100 KB needs.",
+          "We try it at full size first, then step the pixel dimensions down, keeping the largest PNG that fits under 100,000 bytes. Transparent areas stay transparent."
         ],
         "tips": [
-          "Need to keep transparency, for a logo on a colored background? Then the result must stay a PNG, and this tool is not the right fit.",
+          "Logos keep their transparency, so they still work on a coloured background.",
           "Crop screenshots to the part you need. A full-screen capture of a 4K display is a lot of pixels to squeeze.",
-          "Check that the form accepts .jpg. Most that say 'image' do; a few insist on PNG."
+          "A photo saved as PNG has too many colours to shrink well this way. If the form accepts JPEG, save the photo as a JPEG first; photos get much smaller that way."
         ]
       }
     },
@@ -409,16 +409,16 @@
       "targetKb": 500,
       "heading": "Compress a PNG to 500 KB",
       "description": "Shrink a large PNG, like a screenshot or design export, to under 500 KB. Free, no sign-up, files deleted minutes after.",
-      "blurb": "Design exports and full-screen screenshots saved as PNG are often 3 to 10 MB. As a JPEG under 500 KB they look nearly identical.",
+      "blurb": "Design exports and full-screen screenshots saved as PNG are often 3 to 10 MB. Reduced to 256 colours they usually fit under 500 KB, still a PNG and still sharp.",
       "guide": {
         "title": "Getting a PNG under 500 KB",
         "paragraphs": [
-          "A design export or a high-resolution screenshot saved as PNG is often 3 to 10 MB, because PNG never throws detail away. Converted to a high-quality JPEG, the same image usually drops under 500 KB with no difference you can see at normal size.",
-          "We keep as many pixels and as much quality as the limit allows, starting at 4000 pixels on the longest side and quality 92. Transparent areas become white."
+          "A design export or a high-resolution screenshot saved as PNG is often 3 to 10 MB, because PNG never throws detail away. Most of that is colour precision nobody sees: reduced to 256 colours, the same image usually drops under 500 KB and stays a PNG, with text as sharp as before.",
+          "We try it at full size first and make it smaller in pixels only if 500 KB needs that. Transparent areas stay transparent."
         ],
         "tips": [
-          "Sharp text and thin lines, as in screenshots, show JPEG artifacts first. Zoom in on small text in the result before you upload it.",
-          "If you control the export, a JPEG export straight from your design tool is often smaller still.",
+          "Zoom in on small text in the result before you upload it, in case the image had to be made smaller in pixels to fit.",
+          "For a photo, export a JPEG from your design tool instead: photos shrink much better as JPEG than as PNG.",
           "Images with large flat areas of one color, like diagrams, shrink the most."
         ]
       }

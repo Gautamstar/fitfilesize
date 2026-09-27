@@ -238,10 +238,15 @@ IMAGE_RUNGS: list[dict] = [
 FULL_SIZE = 100_000  # a max_edge larger than any image: keep every pixel
 PNG_RUNGS: list[dict] = [
     {"max_edge": edge, "colors": 256}
-    for edge in (FULL_SIZE, 6000, 5000, 4000, 3500, 3000, 2600, 2200, 1800, 1400, 1000, 800)
+    # Down to 480 px, below the JPEG ladder's 800: a PNG cannot drop quality
+    # instead, and a 640 px screenshot is still readable.
+    for edge in (FULL_SIZE, 6000, 5000, 4000, 3500, 3000, 2600, 2200, 1800, 1400, 1000, 800, 640, 480)
 ]
-# pngquant's --quality: it gives up (exit 99) rather than go below the
-# minimum, which is what keeps a photo from being posterised.
+# pngquant's --quality, used only when a JPEG may take over (an API caller's
+# allow_jpeg): it gives up (exit 99) rather than go below the minimum, so a
+# photo goes to JPEG instead of being posterised. When the result must stay
+# a PNG, giving up would only leave the file at its original size, so then
+# pngquant always returns its best 256 colours.
 PNG_QUALITY = "60-100"
 # pngquant's own default; 3 was a third slower for no visible difference.
 PNGQUANT_SPEED = "4"
@@ -317,6 +322,8 @@ class ImageStrategy:
         # "png" while searching PNG_RUNGS (see use_png), else "jpeg".
         self.mode = "jpeg"
         self._png_refused = False
+        # Set by the engine when a JPEG may take over from the PNG ladder.
+        self.png_strict = False
         if resize is None:
             self.rungs = IMAGE_RUNGS
         else:
@@ -538,8 +545,9 @@ class ImageStrategy:
             raw = Path(tmp) / "in.png"
             im.save(raw, "PNG", compress_level=1)  # read once by pngquant; speed over size
             done = subprocess.run(
-                [pngquant, str(rung["colors"]), "--quality", PNG_QUALITY, "--speed", PNGQUANT_SPEED,
-                 "--strip", "--force", "--output", str(dst), str(raw)],
+                [pngquant, str(rung["colors"]),
+                 *(["--quality", PNG_QUALITY] if self.png_strict else []),
+                 "--speed", PNGQUANT_SPEED, "--strip", "--force", "--output", str(dst), str(raw)],
                 capture_output=True, timeout=timeout, check=False,
             )
         if done.returncode == PNGQUANT_QUALITY_TOO_LOW:

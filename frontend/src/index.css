@@ -1199,20 +1199,6 @@ button:disabled {
   display: none;
 }
 
-/* A PNG that only fits as a JPEG: the choice is the visitor's. */
-.convert-offer {
-  margin: 16px 0 0;
-  padding: 14px 16px;
-  background: var(--accent-wash);
-  border: 1px solid var(--accent-tint);
-  border-radius: 12px;
-}
-.convert-offer p {
-  margin: 0 0 12px;
-  color: var(--ink-secondary);
-  font-size: 15px;
-}
-
 .countdown {
   margin: 18px 0 0;
   color: var(--ink-muted);

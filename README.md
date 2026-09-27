@@ -21,7 +21,8 @@ The same three steps regardless of what you feed it:
    are untouched and only metadata is dropped. Sometimes this alone is enough.
 2. **If still over target, binary-search a ladder** of increasingly aggressive
    settings for the gentlest one that fits. PDFs step down Ghostscript image
-   DPI and JPEG quality; images step down pixel dimensions and JPEG quality.
+   DPI and JPEG quality; images step down pixel dimensions and JPEG quality,
+   and a PNG steps down pixel dimensions at 256 colours so it stays a PNG.
    Twelve rungs are searched in at most four attempts.
 3. **If even the harshest rung cannot fit**, you get the smallest achievable
    file plus a clear "floor" warning instead of a silent failure.
@@ -67,8 +68,10 @@ fitpdf scan.pdf -t 500kb -o out.pdf
 fitpdf scan.pdf                   # lossless-only pass
 ```
 
-A lossy image result is always JPEG, so the output name is re-suffixed to match
-what was actually produced (`logo.png` in, `logo.fit.jpg` out).
+A PNG stays a PNG: 256 colours at full size first, then fewer pixels, and if
+no PNG fits you get the smallest one. Other formats' lossy results are JPEG,
+so the output name is re-suffixed to match what was actually produced
+(`scan.tif` in, `scan.fit.jpg` out).
 
 Exit codes: 0 target hit, 2 floor reached (target not possible), 1 error.
 

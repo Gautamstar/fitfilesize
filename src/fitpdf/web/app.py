@@ -130,15 +130,15 @@ class CompressRequest(BaseModel):
         "up to it with comment blocks, the picture unchanged. Must be below target_bytes.",
     )
     allow_jpeg: bool = Field(
-        True,
+        False,
         description="For a PNG, when no PNG (256 colours, at full size or smaller) fits: "
-        "whether it may become a JPEG. With false the run ends on the smallest PNG with "
-        "needs_jpeg true, so a person can be asked; the page does this.",
+        "whether it may become a JPEG. By default a PNG stays a PNG, and a run that "
+        "cannot fit ends on the smallest PNG with needs_jpeg true.",
     )
     keep_png: bool = Field(
         True,
-        description="For a PNG: try to keep it a PNG first. False goes straight to JPEG "
-        "(the page's Convert to JPEG).",
+        description="For a PNG, with allow_jpeg: false skips the PNG attempts and goes "
+        "straight to JPEG.",
     )
     prepare: bool = Field(
         False,
@@ -154,7 +154,7 @@ def run_params(
     fit: str,
     min_bytes: int | None = None,
     focus: tuple[float, float] | None = None,
-    allow_jpeg: bool = True,
+    allow_jpeg: bool = False,
     keep_png: bool = True,
 ) -> str:
     """What a run was asked for, to tell whether a head-start matches."""
@@ -632,8 +632,6 @@ def create_app(
             state["hit_target"] = job["hit_target"] == "1"
         if job.get("needs_jpeg") == "1":
             state["needs_jpeg"] = True
-        if job.get("png_shrunk") == "1":
-            state["png_shrunk"] = True
         if "method" in job:
             state["method"] = job["method"]
         if job.get("waiting"):
@@ -832,7 +830,7 @@ def create_app(
         prepared: bool = False,
         min_bytes: int | None = None,
         focus: tuple[float, float] | None = None,
-        allow_jpeg: bool = True,
+        allow_jpeg: bool = False,
         keep_png: bool = True,
     ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
@@ -847,7 +845,6 @@ def create_app(
             target_bytes=target_bytes,
             prepared="1" if prepared else "0",
             needs_jpeg="0",
-            png_shrunk="0",
             run_params=run_params(target_bytes, resize, fit, min_bytes, focus, allow_jpeg, keep_png),
         )
         # No suffix: compress_to_target picks the right one for what it produced
