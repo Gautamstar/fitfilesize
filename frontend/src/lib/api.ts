@@ -197,6 +197,8 @@ export function startCompress(
   signal?: AbortSignal,
   prepare = false,
   minBytes: number | null = null,
+  /** A PNG may become a JPEG. Only once the visitor has said so. */
+  allowJpeg = false,
 ): Promise<{ job_id: string; status: string }> {
   return request(
     `/api/jobs/${jobId}/compress`,
@@ -208,6 +210,9 @@ export function startCompress(
         ...resize,
         ...(minBytes ? { min_bytes: minBytes } : {}),
         ...(prepare ? { prepare } : {}),
+        allow_jpeg: allowJpeg,
+        // Choosing JPEG means JPEG: no second look for a PNG that fits.
+        ...(allowJpeg ? { keep_png: false } : {}),
       }),
       signal,
     },

@@ -73,12 +73,22 @@ class CompressResult:
     rungs_tried: int = 0
     warnings: list[str] = field(default_factory=list)
     kind: str = "pdf"
+    # A PNG that could not get under the limit as a PNG, in a run that was
+    # not allowed to turn it into a JPEG: the caller should ask first.
+    needs_jpeg: bool = False
+    # A PNG kept a PNG by shrinking its longest side below PNG_SHRUNK of the
+    # original: a JPEG would usually keep more of the detail, so offer one.
+    png_shrunk: bool = False
 
     @property
     def saved_pct(self) -> float:
         if self.original_bytes == 0:
             return 0.0
         return 100.0 * (1 - self.final_bytes / self.original_bytes)
+
+
+# See CompressResult.png_shrunk.
+PNG_SHRUNK = 0.7
 
 
 def analyze(path: Path | str) -> Analysis:
@@ -237,6 +247,8 @@ def compress_to_target(
     strategy: Strategy | None = None,
     prerendered: dict[int, Path] | None = None,
     min_bytes: int | None = None,
+    allow_jpeg: bool = True,
+    keep_png: bool = True,
 ) -> CompressResult:
     """Compress src to fit under target_bytes, degrading as little as possible.
 
@@ -253,6 +265,12 @@ def compress_to_target(
     `min_bytes`, for forms that also set a minimum size: a JPEG result under
     it is padded up to it with comment blocks (see strategies.pad_jpeg), the
     picture unchanged. Other formats are left as they are, with a warning.
+
+    A PNG (with no exact size asked for) searches the strategy's PNG ladder
+    first and stays a PNG if any rung fits. If none does, it goes on to the
+    JPEG ladder only with `allow_jpeg`; without it the smallest PNG comes back
+    with hit_target=False and needs_jpeg=True, so a person can be asked.
+    `keep_png=False` skips the PNG ladder: the person chose JPEG.
 
     `prerendered` maps rung indexes to files already rendered at that rung for
     this same source and strategy (the analyze step's floor render). They are
@@ -286,9 +304,18 @@ def compress_to_target(
     warnings = list(probe.warnings)
 
     def finish(
-        produced: Path, size: int, hit: bool, method: str, tried: int, lossy: bool
+        produced: Path,
+        size: int,
+        hit: bool,
+        method: str,
+        tried: int,
+        lossy: bool,
+        needs_jpeg: bool = False,
+        png_shrunk: bool = False,
     ) -> CompressResult:
-        target_path = dst.with_suffix(strategy.output_suffix(src, lossy=lossy))
+        # Named after what was produced: a run can end on a PNG rung, a JPEG
+        # rung or the lossless copy, whatever mode the strategy is left in.
+        target_path = dst.with_suffix(produced.suffix.lower())
         copy_through(produced, target_path)
         if min_bytes and size < min_bytes:
             if target_path.suffix.lower() in (".jpg", ".jpeg"):
@@ -307,7 +334,7 @@ def compress_to_target(
         before = src.suffix.lower().lstrip(".")
         after = target_path.suffix.lower().lstrip(".")
         lost_transparency = getattr(strategy, "lost_transparency", None)
-        if lossy and lost_transparency is not None and lost_transparency(src):
+        if after in ("jpg", "jpeg") and lossy and lost_transparency is not None and lost_transparency(src):
             warnings.append(
                 "saved as a JPG, which has no transparency: the see-through parts are now white"
             )
@@ -315,7 +342,9 @@ def compress_to_target(
             name = {"tif": "TIFF", "webp": "WebP"}.get(before, before.upper())
             warnings.append(f"saved as a JPG: as a {name} it could not get under your limit")
         return CompressResult(
-            target_path, original, size, target_bytes, hit, method, tried, warnings, strategy.kind
+            target_path, original, size, target_bytes, hit, method, tried, warnings, strategy.kind,
+            needs_jpeg=needs_jpeg,
+            png_shrunk=png_shrunk,
         )
 
     # A strategy that must transform the file (exact pixel dimensions, say)
@@ -344,100 +373,159 @@ def compress_to_target(
 
         strategy.ensure_available()
 
-        lossy_suffix = strategy.output_suffix(src, lossy=True)
-        cache: dict[int, tuple[int | None, Path]] = {}
-        for i, given in (prerendered or {}).items():
-            path = Path(given)
-            if 0 <= i < len(strategy.rungs) and path.exists() and strategy.validate(path, probe):
-                cache[i] = (path.stat().st_size, path)
-        seeded = len(cache)
+        def search_ladder(
+            outdir: Path, seeds: dict[int, Path], gentlest_first: bool = False
+        ) -> tuple[int | None, dict[int, tuple[int | None, Path]], int]:
+            """Search strategy.rungs as they stand: (fitting rung or None, cache, seeded).
 
-        def try_rung(i: int) -> tuple[int | None, Path]:
-            if i in cache:
+            `gentlest_first` renders rung 0 before searching: for the PNG ladder,
+            full size, which is usually the answer and the one worth having.
+            """
+            outdir.mkdir(exist_ok=True)
+            lossy_suffix = strategy.output_suffix(src, lossy=True)
+            cache: dict[int, tuple[int | None, Path]] = {}
+            for i, given in seeds.items():
+                path = Path(given)
+                if 0 <= i < len(strategy.rungs) and path.exists() and strategy.validate(path, probe):
+                    cache[i] = (path.stat().st_size, path)
+            seeded = len(cache)
+
+            def try_rung(i: int) -> tuple[int | None, Path]:
+                if i in cache:
+                    return cache[i]
+                emit({"stage": "rung_start", "rung": i, **strategy.rungs[i]})
+                out = outdir / f"rung{i}{lossy_suffix}"
+                try:
+                    size: int | None = strategy.render(src, out, strategy.rungs[i], timeout=timeout)
+                except Exception:
+                    size = None
+                if size is not None and not strategy.validate(out, probe):
+                    size = None
+                emit(
+                    {
+                        "stage": "rung_result",
+                        "rung": i,
+                        "size": size,
+                        "fits": size is not None and size <= target_bytes,
+                    }
+                )
+                cache[i] = (size, out)
                 return cache[i]
-            emit({"stage": "rung_start", "rung": i, **strategy.rungs[i]})
-            out = tmpdir / f"rung{i}{lossy_suffix}"
-            try:
-                size: int | None = strategy.render(src, out, strategy.rungs[i], timeout=timeout)
-            except Exception:
-                size = None
-            if size is not None and not strategy.validate(out, probe):
-                size = None
+
+            lo, hi = 0, len(strategy.rungs) - 1
+            fit: int | None = None
+            # Seeded rungs narrow the range before anything is rendered: sizes
+            # only shrink down the ladder, so a fitting rung rules out everything
+            # harsher and a non-fitting one everything gentler.
+            for i, (size, _) in sorted(cache.items()):
+                if size is not None and size <= target_bytes:
+                    fit = i if fit is None else min(fit, i)
+                    hi = min(hi, i - 1)
+                elif size is not None:
+                    lo = max(lo, i + 1)
+            # Announce the ladder before searching it, with anything already known,
+            # so a client can draw every rung (and the analyze step's floor) from
+            # the start rather than only the ones this run happens to render.
             emit(
                 {
-                    "stage": "rung_result",
-                    "rung": i,
-                    "size": size,
-                    "fits": size is not None and size <= target_bytes,
+                    "stage": "search",
+                    "rungs": len(strategy.rungs),
+                    "known": [
+                        {"rung": i, "size": size}
+                        for i, (size, _) in sorted(cache.items())
+                        if size is not None
+                    ],
                 }
             )
-            cache[i] = (size, out)
-            return cache[i]
-
-        lo, hi = 0, len(strategy.rungs) - 1
-        fit: int | None = None
-        # Seeded rungs narrow the range before anything is rendered: sizes
-        # only shrink down the ladder, so a fitting rung rules out everything
-        # harsher and a non-fitting one everything gentler.
-        for i, (size, _) in sorted(cache.items()):
-            if size is not None and size <= target_bytes:
-                fit = i if fit is None else min(fit, i)
-                hi = min(hi, i - 1)
-            elif size is not None:
-                lo = max(lo, i + 1)
-        # Announce the ladder before searching it, with anything already known,
-        # so a client can draw every rung (and the analyze step's floor) from
-        # the start rather than only the ones this run happens to render.
-        emit(
-            {
-                "stage": "search",
-                "rungs": len(strategy.rungs),
-                "known": [
-                    {"rung": i, "size": size}
-                    for i, (size, _) in sorted(cache.items())
-                    if size is not None
-                ],
-            }
-        )
-        misses = 0
-        while lo <= hi:
-            if fit is not None and cache[fit][0] >= CLOSE_ENOUGH * target_bytes:
-                break
-            guess = (
-                None
-                if misses >= 2
-                else _predict_boundary(
-                    cache, target_bytes, getattr(strategy, "typical_log_step", None), original
+            if gentlest_first and fit is None and lo == 0 and hi >= 0:
+                size, _ = try_rung(0)
+                if size is not None and size <= target_bytes:
+                    fit, hi = 0, -1
+                else:
+                    lo = 1
+            misses = 0
+            while lo <= hi:
+                if fit is not None and cache[fit][0] >= CLOSE_ENOUGH * target_bytes:
+                    break
+                guess = (
+                    None
+                    if misses >= 2
+                    else _predict_boundary(
+                        cache, target_bytes, getattr(strategy, "typical_log_step", None), original
+                    )
                 )
+                # Named `rung`, not `probe`: try_rung's validate() reads the
+                # enclosing `probe` (the source's page count and size), and
+                # shadowing it made every PDF render fail validation.
+                if guess is None:
+                    rung = (lo + hi) // 2
+                else:
+                    # Outside the open range the prediction still says which end
+                    # to check: a boundary at hi + 1 means "hi should not fit".
+                    rung = min(max(guess, lo), hi)
+                size, _ = try_rung(rung)
+                fits = size is not None and size <= target_bytes
+                if fits:
+                    fit = rung
+                    hi = rung - 1
+                else:
+                    lo = rung + 1
+                # The prediction says rung r fits exactly when r >= guess. Two
+                # results that contradict it and the model is not describing this
+                # file; bisection bounds the rest of the search.
+                if guess is not None and fits != (rung >= guess):
+                    misses += 1
+            return fit, cache, seeded
+
+        png_tried = 0
+        png_results: list[tuple[int, Path]] = []
+        png_first = getattr(strategy, "png_first", None)
+        if keep_png and not always_render and png_first is not None and png_first(src):
+            strategy.use_png(True)
+            # Full size first when it has a chance: a 256-colour copy of a
+            # compressed PNG is rarely under a fifth of it, and below that the
+            # full-size render (10 s at 40 MP) is wasted.
+            fit, cache, _ = search_ladder(
+                tmpdir / "png", {}, gentlest_first=target_bytes >= 0.2 * original
             )
-            # Named `rung`, not `probe`: try_rung's validate() reads the
-            # enclosing `probe` (the source's page count and size), and
-            # shadowing it made every PDF render fail validation.
-            if guess is None:
-                rung = (lo + hi) // 2
-            else:
-                # Outside the open range the prediction still says which end
-                # to check: a boundary at hi + 1 means "hi should not fit".
-                rung = min(max(guess, lo), hi)
-            size, _ = try_rung(rung)
-            fits = size is not None and size <= target_bytes
-            if fits:
-                fit = rung
-                hi = rung - 1
-            else:
-                lo = rung + 1
-            # The prediction says rung r fits exactly when r >= guess. Two
-            # results that contradict it and the model is not describing this
-            # file; bisection bounds the rest of the search.
-            if guess is not None and fits != (rung >= guess):
-                misses += 1
+            png_tried = len(cache)
+            png_results = [(s, p) for s, p in cache.values() if s is not None]
+            if fit is not None:
+                size, out = cache[fit]
+                assert size is not None
+                shrunk = strategy.rungs[fit]["max_edge"] < PNG_SHRUNK * max(probe.width, probe.height)
+                return finish(
+                    out, size, True, f"rung:{fit}", png_tried, lossy=True, png_shrunk=shrunk
+                )
+            strategy.use_png(False)
+            if not allow_jpeg:
+                pngs = [(s, p, True) for s, p in cache.values() if s is not None]
+                if loss_size is not None:
+                    pngs.append((loss_size, loss_path, False))
+                floor_size, floor_path, floor_lossy = min(
+                    pngs or [(original, src, False)], key=lambda c: c[0]
+                )
+                warnings.append(
+                    f"as a PNG it could not get under your limit (the smallest was "
+                    f"{human_size(floor_size)}); a JPEG can go much smaller"
+                )
+                return finish(
+                    floor_path, floor_size, False, "floor", png_tried,
+                    lossy=floor_lossy, needs_jpeg=True,
+                )
+
+        fit, cache, seeded = search_ladder(tmpdir, prerendered or {})
+        tried = len(cache) - seeded + png_tried
 
         if fit is not None:
             size, out = cache[fit]
             assert size is not None
-            return finish(out, size, True, f"rung:{fit}", len(cache) - seeded, lossy=True)
+            return finish(out, size, True, f"rung:{fit}", tried, lossy=True)
 
+        # The smallest of everything tried, PNG rungs included: a small
+        # graphic can come out smaller as a 256-colour PNG than as any JPEG.
         candidates = [(s, p, True) for s, p in cache.values() if s is not None]
+        candidates += [(s, p, True) for s, p in png_results]
         if loss_size is not None:
             candidates.append((loss_size, loss_path, False))
         if not candidates:
@@ -448,6 +536,5 @@ def compress_to_target(
         warnings.append(
             "target not reachable; returning the smallest achievable file (the floor)"
         )
-        return finish(
-            floor_path, floor_size, False, "floor", len(cache) - seeded, lossy=floor_lossy
-        )
+        return finish(floor_path, floor_size, False, "floor", tried, lossy=floor_lossy)
+

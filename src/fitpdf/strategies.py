@@ -230,6 +230,28 @@ IMAGE_RUNGS: list[dict] = [
 ]
 
 
+# A PNG stays a PNG while it can: 256 colours (pngquant) at full size, then
+# at smaller sizes. For screenshots, diagrams and cheat sheets that is 3 to 5
+# times smaller with text still sharp, where a JPEG blurs it. A photo saved
+# as PNG cannot drop to 256 colours without visible banding, and pngquant
+# refuses it (see PNG_QUALITY); then the run offers JPEG instead.
+FULL_SIZE = 100_000  # a max_edge larger than any image: keep every pixel
+PNG_RUNGS: list[dict] = [
+    {"max_edge": edge, "colors": 256}
+    for edge in (FULL_SIZE, 6000, 5000, 4000, 3500, 3000, 2600, 2200, 1800, 1400, 1000, 800)
+]
+# pngquant's --quality: it gives up (exit 99) rather than go below the
+# minimum, which is what keeps a photo from being posterised.
+PNG_QUALITY = "60-100"
+# pngquant's own default; 3 was a third slower for no visible difference.
+PNGQUANT_SPEED = "4"
+PNGQUANT_QUALITY_TOO_LOW = 99
+
+
+class PngRefused(Exception):
+    """256 colours would visibly damage this image; it should not stay a PNG."""
+
+
 # Exact pixel size, as exam and ID forms ask for ("200 x 230 pixels, under
 # 50 KB"). The dimensions are fixed, so JPEG quality is the only lever left.
 RESIZE_QUALITIES = (95, 90, 85, 80, 75, 70, 65, 60, 50, 40, 30, 20)
@@ -292,11 +314,38 @@ class ImageStrategy:
         self._pixels: dict[tuple, object] = {}
         # Whether see-through pixels were turned white; None until known.
         self.flattened: bool | None = None
+        # "png" while searching PNG_RUNGS (see use_png), else "jpeg".
+        self.mode = "jpeg"
+        self._png_refused = False
         if resize is None:
             self.rungs = IMAGE_RUNGS
         else:
             width, height = resize
             self.rungs = [{"width": width, "height": height, "quality": q} for q in RESIZE_QUALITIES]
+
+    def png_first(self, src: Path) -> bool:
+        """Whether to search PNG_RUNGS before converting to JPEG.
+
+        For a PNG with no exact size asked for. An exact size is a form's
+        requirement, and those forms ask for JPEG.
+        """
+        from PIL import Image
+
+        if self.resize is not None:
+            return False
+        try:
+            with Image.open(src) as im:
+                return (im.format or "").upper() == "PNG"
+        except Exception:
+            return False
+
+    def use_png(self, on: bool) -> None:
+        """Switch the ladder between PNG_RUNGS and the JPEG rungs."""
+        self.mode = "png" if on else "jpeg"
+        self.rungs = PNG_RUNGS if on else IMAGE_RUNGS
+        if not on:
+            # Let the full-size PNG decode go before the JPEG ladder decodes.
+            self._pixels.pop(("png", "decoded"), None)
 
     def probe(self, src: Path) -> Probe:
         from PIL import Image
@@ -348,10 +397,10 @@ class ImageStrategy:
     # metadata: a few percent, so below half the original it cannot help.
     # A PNG that is already compressed gains 3 to 10 percent from
     # re-optimising, and even one saved at a weak compression level about
-    # half; below a quarter it cannot help either. (Measured on photo-like
-    # and UI-screenshot PNGs. On the free server the pass took 7 s on a
-    # 3.6 MB PNG to save 9 percent.)
-    LOSSLESS_REACH: ClassVar[dict[str, float]] = {"JPEG": 0.5, "PNG": 0.25}
+    # half. Below 60 percent a PNG goes to the 256-colour PNG rungs instead,
+    # which keep it a PNG: on a 40 MP cheat sheet the pass took 14 s to save
+    # 17 percent, where full size at 256 colours took 10 s to save 64.
+    LOSSLESS_REACH: ClassVar[dict[str, float]] = {"JPEG": 0.5, "PNG": 0.6}
     # A PNG stored close to raw (compression level 0) can shrink many times
     # over and stay a PNG, so it always gets the pass.
     STORED_PNG = 0.9
@@ -426,6 +475,8 @@ class ImageStrategy:
     def render(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
         from PIL import Image
 
+        if "colors" in rung:
+            return self._render_png(src, dst, rung, timeout=timeout)
         if "width" in rung:
             # Every rung of an exact-size run shares one picture and differs
             # only in quality, so the resize happens once per run.
@@ -446,6 +497,56 @@ class ImageStrategy:
                 im = im.resize(new_size, Image.LANCZOS)
 
         im.save(dst, "JPEG", quality=rung["quality"], optimize=True, progressive=True)
+        return dst.stat().st_size
+
+    def _render_png(self, src: Path, dst: Path, rung: dict, *, timeout: int) -> int:
+        """A 256-colour PNG, transparency kept, shrunk to the rung's max_edge."""
+        import shutil
+        import subprocess
+        import tempfile
+
+        from PIL import Image, ImageOps
+
+        if self._png_refused:
+            raise PngRefused  # pngquant judges the colours, not the size
+        key = ("png", "decoded")
+        if key not in self._pixels:
+            with Image.open(src) as opened:
+                opened.load()
+                im = ImageOps.exif_transpose(opened)
+                keep_alpha = im.mode in ("RGBA", "LA", "PA") or (
+                    im.mode == "P" and "transparency" in im.info
+                )
+                self._pixels[key] = im.convert("RGBA" if keep_alpha else "RGB")
+        im = self._pixels[key]
+        if max(im.size) > rung["max_edge"]:
+            scale = rung["max_edge"] / max(im.size)
+            im = im.resize(
+                (max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS
+            )
+
+        pngquant = shutil.which("pngquant")
+        if pngquant is None:
+            # Where pngquant is not installed (a laptop, say), Pillow's own
+            # quantizer: close on flat graphics, blotchier on gradients.
+            method = Image.Quantize.FASTOCTREE if im.mode == "RGBA" else Image.Quantize.MEDIANCUT
+            im.quantize(rung["colors"], method=method, dither=Image.Dither.FLOYDSTEINBERG).save(
+                dst, "PNG", optimize=True
+            )
+            return dst.stat().st_size
+        with tempfile.TemporaryDirectory(prefix="fitpdf-png-") as tmp:
+            raw = Path(tmp) / "in.png"
+            im.save(raw, "PNG", compress_level=1)  # read once by pngquant; speed over size
+            done = subprocess.run(
+                [pngquant, str(rung["colors"]), "--quality", PNG_QUALITY, "--speed", PNGQUANT_SPEED,
+                 "--strip", "--force", "--output", str(dst), str(raw)],
+                capture_output=True, timeout=timeout, check=False,
+            )
+        if done.returncode == PNGQUANT_QUALITY_TOO_LOW:
+            self._png_refused = True
+            raise PngRefused
+        if done.returncode != 0:
+            raise RuntimeError(f"pngquant failed: {done.stderr.decode(errors='replace')[:200]}")
         return dst.stat().st_size
 
     def _upright_size(self, src: Path) -> tuple[int, int]:
@@ -577,7 +678,7 @@ class ImageStrategy:
 
     def output_suffix(self, src: Path, lossy: bool) -> str:
         if lossy:
-            return ".jpg"
+            return ".png" if self.mode == "png" else ".jpg"
         suffix = src.suffix.lower()
         # The lossless path re-encodes unsupported formats as PNG.
         return suffix if suffix in {".jpg", ".jpeg", ".png", ".webp"} else ".png"

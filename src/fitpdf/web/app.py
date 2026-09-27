@@ -129,6 +129,17 @@ class CompressRequest(BaseModel):
         description="For forms that also set a minimum: a JPEG result under this is padded "
         "up to it with comment blocks, the picture unchanged. Must be below target_bytes.",
     )
+    allow_jpeg: bool = Field(
+        True,
+        description="For a PNG, when no PNG (256 colours, at full size or smaller) fits: "
+        "whether it may become a JPEG. With false the run ends on the smallest PNG with "
+        "needs_jpeg true, so a person can be asked; the page does this.",
+    )
+    keep_png: bool = Field(
+        True,
+        description="For a PNG: try to keep it a PNG first. False goes straight to JPEG "
+        "(the page's Convert to JPEG).",
+    )
     prepare: bool = Field(
         False,
         description="Start the run ahead of time, before the visitor has confirmed "
@@ -143,6 +154,8 @@ def run_params(
     fit: str,
     min_bytes: int | None = None,
     focus: tuple[float, float] | None = None,
+    allow_jpeg: bool = True,
+    keep_png: bool = True,
 ) -> str:
     """What a run was asked for, to tell whether a head-start matches."""
     return json.dumps([
@@ -151,6 +164,8 @@ def run_params(
         fit if resize else None,
         min_bytes,
         list(focus) if focus else None,
+        allow_jpeg,
+        keep_png,
     ])
 
 
@@ -615,6 +630,10 @@ def create_app(
                 state[key] = int(job[key])
         if "hit_target" in job:
             state["hit_target"] = job["hit_target"] == "1"
+        if job.get("needs_jpeg") == "1":
+            state["needs_jpeg"] = True
+        if job.get("png_shrunk") == "1":
+            state["png_shrunk"] = True
         if "method" in job:
             state["method"] = job["method"]
         if job.get("waiting"):
@@ -764,7 +783,9 @@ def create_app(
         resize = resize_for(job, req.width, req.height)
         check_min(req.min_bytes, req.target_bytes)
         focus = focus_for(resize, req.fit, req.crop_x, req.crop_y)
-        params = run_params(req.target_bytes, resize, req.fit, req.min_bytes, focus)
+        params = run_params(
+            req.target_bytes, resize, req.fit, req.min_bytes, focus, req.allow_jpeg, req.keep_png
+        )
         head_start = job.get("prepared") == "1"
         running = job.get("status") in ("queued", "compressing")
 
@@ -781,7 +802,8 @@ def create_app(
                 # already spent on the head-start.
                 queue_run(
                     job_id, require_input(job_id, job), req.target_bytes, resize, req.fit,
-                    min_bytes=req.min_bytes, focus=focus,
+                    min_bytes=req.min_bytes, focus=focus, allow_jpeg=req.allow_jpeg,
+                    keep_png=req.keep_png,
                 )
                 return {"job_id": job_id, "status": "queued"}
             done_ok = job.get("status") == "done" and output_path(job_id, job) is not None
@@ -797,6 +819,7 @@ def create_app(
         queue_run(
             job_id, src, req.target_bytes, resize, req.fit,
             prepared=req.prepare, min_bytes=req.min_bytes, focus=focus,
+            allow_jpeg=req.allow_jpeg, keep_png=req.keep_png,
         )
         return {"job_id": job_id, "status": "queued"}
 
@@ -809,6 +832,8 @@ def create_app(
         prepared: bool = False,
         min_bytes: int | None = None,
         focus: tuple[float, float] | None = None,
+        allow_jpeg: bool = True,
+        keep_png: bool = True,
     ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
         # The new run id goes in first: from this write on, any earlier run of
@@ -821,7 +846,9 @@ def create_app(
             status="queued",
             target_bytes=target_bytes,
             prepared="1" if prepared else "0",
-            run_params=run_params(target_bytes, resize, fit, min_bytes, focus),
+            needs_jpeg="0",
+            png_shrunk="0",
+            run_params=run_params(target_bytes, resize, fit, min_bytes, focus, allow_jpeg, keep_png),
         )
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back. Named for
@@ -848,6 +875,8 @@ def create_app(
             run_id=run_id,  # by name: the worker's killed-run handler reads it
             min_bytes=min_bytes,
             focus=focus,
+            allow_jpeg=allow_jpeg,
+            keep_png=keep_png,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,

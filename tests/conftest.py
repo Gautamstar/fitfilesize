@@ -38,6 +38,29 @@ def photo_jpg(tmp_path_factory) -> Path:
 
 
 @pytest.fixture(scope="session")
+def photo_png(tmp_path_factory) -> Path:
+    """A photo saved as PNG: gradients and grain, which 256 colours cannot
+    hold. No 256-colour PNG of it gets under PHOTO_PNG_LIMIT; a JPEG does."""
+    path = tmp_path_factory.mktemp("corpus") / "photo.png"
+    w, h = 2000, 1500
+    g = Image.linear_gradient("L").resize((w, h))
+    base = Image.merge("RGB", (g, g.transpose(Image.ROTATE_90).resize((w, h)), g.transpose(Image.FLIP_LEFT_RIGHT)))
+    Image.blend(base, Image.effect_noise((w, h), 60).convert("RGB"), 0.5).save(path, "PNG")
+    return path
+
+
+@pytest.fixture(scope="session")
+def transparent_photo_png(photo_png, tmp_path_factory) -> Path:
+    """photo_png with see-through parts: it can only fit as a JPEG, which
+    turns them white."""
+    path = tmp_path_factory.mktemp("corpus") / "photo-alpha.png"
+    img = Image.open(photo_png).convert("RGBA")
+    img.putalpha(Image.linear_gradient("L").resize(img.size))
+    img.save(path, "PNG")
+    return path
+
+
+@pytest.fixture(scope="session")
 def transparent_png(tmp_path_factory) -> Path:
     """RGBA PNG, to exercise the alpha-flattening path."""
     path = tmp_path_factory.mktemp("corpus") / "logo.png"
