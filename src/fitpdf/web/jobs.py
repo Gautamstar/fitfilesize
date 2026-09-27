@@ -36,6 +36,7 @@ def run_compress(
     min_bytes: int | None = None,
     focus: tuple[float, float] | None = None,
     allow_jpeg: bool = True,
+    keep_png: bool = True,
 ) -> None:
     rq_job = get_current_job()
     if rq_job is None:
@@ -92,6 +93,7 @@ def run_compress(
                 prerendered=_floor_render(Path(src)) if strategy is None else None,
                 min_bytes=min_bytes,
                 allow_jpeg=allow_jpeg,
+                keep_png=keep_png,
             )
         except store.Superseded:
             raise
@@ -111,6 +113,7 @@ def run_compress(
                 "rungs_tried": result.rungs_tried,
                 "warnings": json.dumps(result.warnings),
                 "needs_jpeg": int(result.needs_jpeg),
+                "png_shrunk": int(result.png_shrunk),
             },
             {
                 "stage": "done",
@@ -121,6 +124,7 @@ def run_compress(
                 "method": result.method,
                 "warnings": result.warnings,
                 "needs_jpeg": result.needs_jpeg,
+                "png_shrunk": result.png_shrunk,
                 # The deletion clock restarts at completion (or, for a
                 # head-start, when the visitor adopts it). The page opened its
                 # stream while the job was pending and read the 30-minute

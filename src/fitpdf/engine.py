@@ -76,12 +76,19 @@ class CompressResult:
     # A PNG that could not get under the limit as a PNG, in a run that was
     # not allowed to turn it into a JPEG: the caller should ask first.
     needs_jpeg: bool = False
+    # A PNG kept a PNG by shrinking its longest side below PNG_SHRUNK of the
+    # original: a JPEG would usually keep more of the detail, so offer one.
+    png_shrunk: bool = False
 
     @property
     def saved_pct(self) -> float:
         if self.original_bytes == 0:
             return 0.0
         return 100.0 * (1 - self.final_bytes / self.original_bytes)
+
+
+# See CompressResult.png_shrunk.
+PNG_SHRUNK = 0.7
 
 
 def analyze(path: Path | str) -> Analysis:
@@ -241,6 +248,7 @@ def compress_to_target(
     prerendered: dict[int, Path] | None = None,
     min_bytes: int | None = None,
     allow_jpeg: bool = True,
+    keep_png: bool = True,
 ) -> CompressResult:
     """Compress src to fit under target_bytes, degrading as little as possible.
 
@@ -262,6 +270,7 @@ def compress_to_target(
     first and stays a PNG if any rung fits. If none does, it goes on to the
     JPEG ladder only with `allow_jpeg`; without it the smallest PNG comes back
     with hit_target=False and needs_jpeg=True, so a person can be asked.
+    `keep_png=False` skips the PNG ladder: the person chose JPEG.
 
     `prerendered` maps rung indexes to files already rendered at that rung for
     this same source and strategy (the analyze step's floor render). They are
@@ -302,6 +311,7 @@ def compress_to_target(
         tried: int,
         lossy: bool,
         needs_jpeg: bool = False,
+        png_shrunk: bool = False,
     ) -> CompressResult:
         # Named after what was produced: a run can end on a PNG rung, a JPEG
         # rung or the lossless copy, whatever mode the strategy is left in.
@@ -334,6 +344,7 @@ def compress_to_target(
         return CompressResult(
             target_path, original, size, target_bytes, hit, method, tried, warnings, strategy.kind,
             needs_jpeg=needs_jpeg,
+            png_shrunk=png_shrunk,
         )
 
     # A strategy that must transform the file (exact pixel dimensions, say)
@@ -469,7 +480,7 @@ def compress_to_target(
         png_tried = 0
         png_results: list[tuple[int, Path]] = []
         png_first = getattr(strategy, "png_first", None)
-        if not always_render and png_first is not None and png_first(src):
+        if keep_png and not always_render and png_first is not None and png_first(src):
             strategy.use_png(True)
             # Full size first when it has a chance: a 256-colour copy of a
             # compressed PNG is rarely under a fifth of it, and below that the
@@ -482,7 +493,10 @@ def compress_to_target(
             if fit is not None:
                 size, out = cache[fit]
                 assert size is not None
-                return finish(out, size, True, f"rung:{fit}", png_tried, lossy=True)
+                shrunk = strategy.rungs[fit]["max_edge"] < PNG_SHRUNK * max(probe.width, probe.height)
+                return finish(
+                    out, size, True, f"rung:{fit}", png_tried, lossy=True, png_shrunk=shrunk
+                )
             strategy.use_png(False)
             if not allow_jpeg:
                 pngs = [(s, p, True) for s, p in cache.values() if s is not None]

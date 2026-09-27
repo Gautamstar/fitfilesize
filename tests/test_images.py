@@ -179,6 +179,31 @@ def test_a_png_that_cannot_stay_a_png_asks_before_becoming_a_jpg(photo_png, tmp_
     assert any("as a PNG it could not get under your limit" in w for w in result.warnings)
 
 
+def test_a_png_kept_only_by_shrinking_it_a_lot_offers_a_jpeg(photo_jpg, tmp_path):
+    png = tmp_path / "sheet.png"
+    Image.open(photo_jpg).save(png, "PNG")  # 3000 x 2000
+    full = compress_to_target(png, tmp_path / "a.png", png.stat().st_size // 2)
+    assert full.output.suffix == ".png" and not full.png_shrunk
+    # Small enough that no PNG over 70 percent of 3000 px fits.
+    tight = compress_to_target(png, tmp_path / "b.png", 12_000)
+    assert tight.hit_target and tight.output.suffix == ".png"
+    with Image.open(tight.output) as out:
+        assert max(out.size) < 0.7 * 3000
+    assert tight.png_shrunk
+
+
+def test_keep_png_false_goes_straight_to_jpeg(photo_jpg, tmp_path):
+    # The visitor chose JPEG: no PNG is searched even though one would fit.
+    png = tmp_path / "sheet.png"
+    Image.open(photo_jpg).save(png, "PNG")
+    events = []
+    result = compress_to_target(
+        png, tmp_path / "out.png", png.stat().st_size // 2, keep_png=False, on_progress=events.append
+    )
+    assert result.output.suffix == ".jpg"
+    assert not any("colors" in e for e in events if e["stage"] == "rung_start")
+
+
 def test_pngquant_refusing_a_photo_skips_the_rest_of_the_png_ladder(
     photo_png, tmp_path, monkeypatch
 ):

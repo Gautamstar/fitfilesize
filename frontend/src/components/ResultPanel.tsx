@@ -29,6 +29,8 @@ export function ResultPanel({
   search,
 }: ResultPanelProps) {
   const offerJpeg = Boolean(result.needs_jpeg && onConvertToJpeg)
+  // Fitted as a PNG, but only by shrinking it a lot: a JPEG may keep more.
+  const offerSharper = Boolean(result.hit_target && result.png_shrunk && onConvertToJpeg)
   const savedPct = savedPercent(result.final_bytes, result.original_bytes)
   // "rung:6" names the setting the run kept; "floor", "lossless" and "none" keep none.
   const chosenRung = result.method.startsWith('rung:') ? Number(result.method.slice(5)) : null
@@ -59,6 +61,18 @@ export function ResultPanel({
           </p>
           <button type="button" className="btn-primary" onClick={onConvertToJpeg}>
             Convert to JPEG
+          </button>
+        </div>
+      ) : null}
+
+      {offerSharper ? (
+        <div className="convert-offer">
+          <p>
+            To stay a PNG it had to be made smaller in pixels. A JPEG usually keeps more of the
+            detail at this size, though it has no transparency.
+          </p>
+          <button type="button" className="btn-ghost" onClick={onConvertToJpeg}>
+            Try it as a JPEG
           </button>
         </div>
       ) : null}

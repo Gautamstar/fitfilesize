@@ -38,6 +38,14 @@ describe('ResultPanel', () => {
     expect(convert).toHaveBeenCalledOnce()
   })
 
+  it('offers a JPEG when a PNG only fitted by shrinking a lot', () => {
+    const convert = vi.fn()
+    panel({ ...pngFloor, hit_target: true, needs_jpeg: false, png_shrunk: true, method: 'rung:6', warnings: [] }, convert)
+    expect(screen.getByRole('link', { name: 'Download' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Try it as a JPEG' }))
+    expect(convert).toHaveBeenCalledOnce()
+  })
+
   it('offers nothing when the file fitted', () => {
     panel({ ...pngFloor, hit_target: true, needs_jpeg: false, method: 'rung:0', warnings: [] })
     expect(screen.queryByRole('button', { name: 'Convert to JPEG' })).toBeNull()

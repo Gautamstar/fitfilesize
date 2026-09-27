@@ -211,6 +211,8 @@ export function startCompress(
         ...(minBytes ? { min_bytes: minBytes } : {}),
         ...(prepare ? { prepare } : {}),
         allow_jpeg: allowJpeg,
+        // Choosing JPEG means JPEG: no second look for a PNG that fits.
+        ...(allowJpeg ? { keep_png: false } : {}),
       }),
       signal,
     },
