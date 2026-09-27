@@ -231,7 +231,7 @@ they share an origin, so it is not.
 
 | Method | Path | What it does |
 | --- | --- | --- |
-| POST | `/api/fit` | one call for agents and scripts: multipart `file` + `target` (`200KB`, `1.5MB`, bytes; 1000-based), optional `width` + `height` (+ `fit`: `crop` or `pad`) for an exact pixel size, waits up to 80s and returns `download_url`, or `202` with `status_url` |
+| POST | `/api/fit` | one call for agents and scripts: multipart `file` + `target` (`200KB`, `1.5MB`, bytes; 1000-based), optional `width` + `height` (+ `fit`: `crop` or `pad`) for an exact pixel size, `minimum`, `allow_jpeg`, waits up to 80s and returns `download_url`, or `202` with `status_url` |
 | POST | `/api/upload` | multipart upload, returns job id, media kind and basic info |
 | POST | `/api/jobs/{id}/analyze` | estimates the floor, returns slider bounds |
 | POST | `/api/jobs/{id}/compress` | queues a run with `{"target_bytes": n}`, optionally `width`, `height` and `fit` for images |

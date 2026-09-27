@@ -769,6 +769,34 @@ def test_fit_compresses_in_one_call_and_links_the_result(web, photo_jpg):
     assert len(download.content) == body["final_bytes"]
 
 
+def test_fit_keeps_a_png_a_png_unless_jpeg_is_allowed(web, photo_png):
+    # The photo_png fixture has no 256-colour PNG under 40 KB; a JPEG gets there.
+    client, _, _ = web
+    with open(photo_png, "rb") as f:
+        data = f.read()
+    kept = client.post("/api/fit", files={"file": ("p.png", data, "image/png")}, data={"target": "40KB"})
+    assert kept.status_code == 200
+    body = kept.json()
+    assert body["fits"] is False and body["needs_jpeg"] is True
+    assert client.get(body["download_url"].split("testserver", 1)[1]).content[:4] == b"\x89PNG"
+
+    allowed = client.post(
+        "/api/fit", files={"file": ("p.png", data, "image/png")},
+        data={"target": "40KB", "allow_jpeg": "true"},
+    )
+    body = allowed.json()
+    assert body["fits"] is True and body["needs_jpeg"] is False
+    assert client.get(body["download_url"].split("testserver", 1)[1]).content[:2] == b"\xff\xd8"
+
+
+def test_fit_logs_only_the_callers_product_name(web, photo_jpg, caplog):
+    client, _, _ = web
+    with caplog.at_level("INFO", logger="uvicorn.error"):
+        _fit(client, photo_jpg, "1MB", headers={"User-Agent": "fitfilesize-mcp/0.2.0 (client: claude-ai 1.0)"})
+    assert "api/fit from fitfilesize-mcp/0.2.0" in caplog.text
+    assert "claude-ai" not in caplog.text
+
+
 def test_fit_rejects_a_target_it_cannot_read(web, photo_jpg):
     client, _, settings = web
     res = _fit(client, photo_jpg, "about two hundred")
