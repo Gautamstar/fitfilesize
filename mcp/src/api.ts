@@ -5,8 +5,11 @@
 
 import { readFile, stat, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join } from 'node:path'
+import { VERSION } from './version.js'
 
 export const DEFAULT_API = 'https://api.fitfilesize.com'
+// Tells the API a request came from this package (it logs the name only).
+const HEADERS = { 'User-Agent': `fitfilesize-mcp/${VERSION}` }
 
 export interface FitRequest {
   path: string
@@ -16,6 +19,8 @@ export interface FitRequest {
   width?: number
   height?: number
   fit?: 'crop' | 'pad'
+  /** A PNG, WebP, TIFF or BMP may come back as a JPEG if that is what fits. */
+  allowJpeg?: boolean
   /** Where to save the result; defaults to "<name>.fit.<ext>" beside the original. */
   output?: string
 }
@@ -26,6 +31,8 @@ export interface FitResult {
   finalBytes: number
   targetBytes: number
   fits: boolean
+  /** It could not fit in its own format, and a JPEG could have (see allowJpeg). */
+  needsJpeg: boolean
   warnings: string[]
 }
 
@@ -84,10 +91,11 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
   if (req.width !== undefined) form.append('width', String(req.width))
   if (req.height !== undefined) form.append('height', String(req.height))
   if (req.fit) form.append('fit', req.fit)
+  if (req.allowJpeg) form.append('allow_jpeg', 'true')
 
   let res: Response
   try {
-    res = await f(`${api}/api/fit`, { method: 'POST', body: form })
+    res = await f(`${api}/api/fit`, { method: 'POST', body: form, headers: HEADERS })
   } catch {
     throw new FitError('Could not reach fitfilesize.com. Check the internet connection and try again.')
   }
@@ -98,6 +106,7 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
     status_url?: string
     download_url: string
     fits?: boolean
+    needs_jpeg?: boolean
     original_bytes?: number
     final_bytes?: number
     target_bytes?: number
@@ -109,12 +118,13 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
   while (body.status !== 'done') {
     if (Date.now() > deadline) throw new FitError('The file is taking too long to compress. Try again later.')
     await new Promise((r) => setTimeout(r, pollMs))
-    const st = await f(body.status_url ?? `${api}/api/jobs/${body.job_id}`)
+    const st = await f(body.status_url ?? `${api}/api/jobs/${body.job_id}`, { headers: HEADERS })
     if (!st.ok) throw new FitError(sentence(await detail(st)))
     const state = (await st.json()) as {
       status: string
       error?: string
       hit_target?: boolean
+      needs_jpeg?: boolean
       size_bytes?: number
       final_bytes?: number
       target_bytes?: number
@@ -125,6 +135,7 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
       ...body,
       status: state.status,
       fits: state.hit_target,
+      needs_jpeg: state.needs_jpeg,
       original_bytes: state.size_bytes,
       final_bytes: state.final_bytes,
       target_bytes: state.target_bytes,
@@ -132,7 +143,7 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
     }
   }
 
-  const dl = await f(body.download_url)
+  const dl = await f(body.download_url, { headers: HEADERS })
   if (!dl.ok) throw new FitError(sentence(await detail(dl)))
   const bytes = new Uint8Array(await dl.arrayBuffer())
   const type = (dl.headers.get('content-type') ?? '').split(';')[0].trim()
@@ -142,7 +153,7 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
   await writeFile(output, bytes)
 
   // The result is saved here; nothing needs to stay on the server.
-  await f(`${api}/api/jobs/${body.job_id}`, { method: 'DELETE' }).catch(() => undefined)
+  await f(`${api}/api/jobs/${body.job_id}`, { method: 'DELETE', headers: HEADERS }).catch(() => undefined)
 
   return {
     output,
@@ -150,6 +161,7 @@ export async function fitFile(req: FitRequest, opts: Options = {}): Promise<FitR
     finalBytes: bytes.length,
     targetBytes: body.target_bytes ?? 0,
     fits: body.fits ?? false,
+    needsJpeg: body.needs_jpeg ?? false,
     warnings: (body.warnings ?? []).map(sentence),
   }
 }

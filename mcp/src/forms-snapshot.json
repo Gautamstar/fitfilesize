@@ -178,6 +178,19 @@
       "source": "https://rrbajmer.gov.in/Upload_PDF/Final-Detailed%20CEN%2009-2025%20Level-1-updated%20on%2030012026-639054049190206941.pdf",
       "checked": "2026-09-26",
       "page": "https://fitfilesize.com/rrb-sc-st-certificate-pdf"
+    },
+    {
+      "id": "ircc-document-pdf",
+      "name": "IRCC document upload",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "4 MB or less"
+      ],
+      "limit_bytes": 4000000,
+      "source": "https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1123&top=23",
+      "checked": "2026-09-26",
+      "page": "https://fitfilesize.com/ircc-document-pdf"
     }
   ]
 }

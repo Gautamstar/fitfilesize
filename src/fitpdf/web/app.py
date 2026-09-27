@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import shutil
 import time
 from contextlib import asynccontextmanager
@@ -922,6 +923,12 @@ def create_app(
             description="For forms that also set a minimum, like 10KB: a JPEG result under it "
             "is padded up to it, the picture unchanged. Same units as target.",
         ),
+        allow_jpeg: bool = Form(
+            False,
+            description="For a PNG, WebP, TIFF or BMP that cannot fit in its own format: "
+            "whether it may come back as a JPEG. By default it keeps its format, and a run "
+            "that cannot fit ends on its smallest version with needs_jpeg true.",
+        ),
     ):
         """Upload a file and compress it to fit under `target`.
 
@@ -931,6 +938,10 @@ def create_app(
         `fits` is false, the file could not get that small and the result is
         the smallest version that could be made.
         """
+        # Which kind of caller, to see whether the MCP package is used: the
+        # User-Agent's first word only ("fitfilesize-mcp/0.2.0", "curl/8.7").
+        agent = (request.headers.get("user-agent") or "-").split(" ", 1)[0][:60]
+        logging.getLogger("uvicorn.error").info("api/fit from %s", agent)
         try:
             target_bytes = parse_limit(target)
             min_bytes = parse_limit(minimum) if minimum else None
@@ -947,7 +958,10 @@ def create_app(
             remove_tree(job_dir(job_id))
             raise
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
-        queue_run(job_id, require_input(job_id, job), target_bytes, resize, fit, min_bytes=min_bytes)
+        queue_run(
+            job_id, require_input(job_id, job), target_bytes, resize, fit,
+            min_bytes=min_bytes, allow_jpeg=allow_jpeg,
+        )
 
         waited = 0.0
         job = store.get_job(r, job_id) or {}
@@ -980,6 +994,7 @@ def create_app(
             "download_url": public_url(request, f"{status_path}/download"),
             "expires_in": state["expires_in"],
             "warnings": state.get("warnings", []),
+            "needs_jpeg": state.get("needs_jpeg", False),
         }
 
     @app.get("/api/jobs/{job_id}")

@@ -22,10 +22,22 @@ const FORMS: Form[] = [
   },
 ]
 
-interface Call { method: string; url: string; fields?: Record<string, string> }
+interface Call { method: string; url: string; fields?: Record<string, string>; file?: string; agent?: string }
 
 /** A stand-in for the FitFileSize API that records what it was sent. */
-function fakeApi({ pending = 0, fail }: { pending?: number; fail?: { status: number; detail: string } } = {}) {
+function fakeApi({
+  pending = 0,
+  fail,
+  failFile,
+  needsJpeg = false,
+}: {
+  pending?: number
+  fail?: { status: number; detail: string }
+  /** Refuse just this uploaded file name, as for a file the server cannot read. */
+  failFile?: string
+  /** The result could not fit in its own format (and a JPEG could have). */
+  needsJpeg?: boolean
+} = {}) {
   const calls: Call[] = []
   let polls = 0
   const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
@@ -36,16 +48,22 @@ function fakeApi({ pending = 0, fail }: { pending?: number; fail?: { status: num
       call.fields = Object.fromEntries(
         [...init.body.entries()].filter(([, v]) => typeof v === 'string') as [string, string][],
       )
+      call.file = (init.body.get('file') as File | null)?.name
     }
+    call.agent = new Headers(init?.headers).get('user-agent') ?? undefined
     calls.push(call)
     const json = (body: unknown, status = 200) =>
       new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
     if (url.endsWith('/api/fit')) {
       if (fail) return json({ detail: fail.detail }, fail.status)
+      if (failFile && call.file === failFile) return json({ detail: 'could not read this file' }, 422)
       const base = { job_id: 'j1', download_url: 'https://api.test/api/jobs/j1/download' }
       return pending
         ? json({ ...base, status: 'compressing', status_url: 'https://api.test/api/jobs/j1' }, 202)
-        : json({ ...base, status: 'done', fits: true, original_bytes: 5000, final_bytes: 1200, target_bytes: 20_000, warnings: [] })
+        : json({
+            ...base, status: 'done', fits: !needsJpeg, needs_jpeg: needsJpeg,
+            original_bytes: 5000, final_bytes: 1200, target_bytes: 20_000, warnings: [],
+          })
     }
     if (url.endsWith('/api/jobs/j1') && method === 'GET') {
       polls += 1
@@ -140,6 +158,83 @@ describe('fit_file', () => {
     const client = await connect(api.fetchImpl)
     const r = await client.callTool({ name: 'fit_file', arguments: { path: 'sign.png', limit: '1MB' } })
     expect(text(r)).toMatch(/full path/)
+    expect(api.calls).toEqual([])
+  })
+
+  it('names itself to the API on every request', async () => {
+    const api = fakeApi()
+    const client = await connect(api.fetchImpl)
+    await client.callTool({ name: 'fit_file', arguments: { path: photo, limit: '200KB' } })
+    const { VERSION } = await import('../src/server.js')
+    expect(api.calls.length).toBeGreaterThan(2)
+    expect(api.calls.every((c) => c.agent === `fitfilesize-mcp/${VERSION}`)).toBe(true)
+  })
+
+  it('keeps the format unless jpeg_ok, and says when a JPEG would have fitted', async () => {
+    const api = fakeApi({ needsJpeg: true })
+    const client = await connect(api.fetchImpl)
+    const r = await client.callTool({ name: 'fit_file', arguments: { path: photo, limit: '20KB' } })
+    expect(api.calls[0].fields).not.toHaveProperty('allow_jpeg')
+    expect(text(r)).toMatch(/still over the .* limit/)
+    expect(text(r)).toMatch(/call fit_file again with jpeg_ok true/)
+
+    const again = fakeApi()
+    const client2 = await connect(again.fetchImpl)
+    await client2.callTool({ name: 'fit_file', arguments: { path: photo, limit: '20KB', jpeg_ok: true } })
+    expect(again.calls[0].fields).toMatchObject({ allow_jpeg: 'true' })
+  })
+
+  it('fits several files one after another, each saved beside its original', async () => {
+    const second = join(dir, 'photo.png')
+    await writeFile(second, new Uint8Array(4000))
+    const api = fakeApi()
+    const client = await connect(api.fetchImpl)
+    const r = await client.callTool({ name: 'fit_file', arguments: { paths: [photo, second], form: 'ibps-signature' } })
+    expect(r.isError).toBeFalsy()
+    const uploads = api.calls.filter((c) => c.url.endsWith('/api/fit'))
+    expect(uploads.map((c) => c.file)).toEqual(['sign.png', 'photo.png'])
+    expect(uploads.every((c) => c.fields?.target === '20000')).toBe(true)
+    expect(text(r)).toMatch(/^All 2 files done\./)
+    for (const out of ['sign.fit.jpg', 'photo.fit.jpg']) expect((await readFile(join(dir, out))).length).toBe(1200)
+  })
+
+  it('reports a file that fails without stopping the rest', async () => {
+    const bad = join(dir, 'broken.png')
+    await writeFile(bad, new Uint8Array(10))
+    const api = fakeApi({ failFile: 'broken.png' })
+    const client = await connect(api.fetchImpl)
+    const r = await client.callTool({
+      name: 'fit_file',
+      arguments: { paths: [bad, photo, join(dir, 'missing.png')], limit: '1MB' },
+    })
+    expect(r.isError).toBeFalsy() // one of three worked
+    expect(text(r)).toMatch(/^1 of 3 files done\./)
+    expect(text(r)).toContain(`${bad}: not done. Could not read this file.`)
+    expect(text(r)).toContain(`Saved ${join(dir, 'sign.fit.jpg')}`)
+    expect(text(r)).toMatch(/missing\.png: not done\. No file at/)
+  })
+
+  it.each([
+    [{ paths: ['/a.png'] }, /either `path`/],
+    [{ path: undefined }, /either `path`/],
+  ])('refuses %j alongside path', async (extra, message) => {
+    const api = fakeApi()
+    const client = await connect(api.fetchImpl)
+    const r = await client.callTool({ name: 'fit_file', arguments: { path: photo, limit: '1MB', ...extra } })
+    expect(r.isError).toBe(true)
+    expect(text(r)).toMatch(message)
+    expect(api.calls).toEqual([])
+  })
+
+  it('refuses one output name for several files', async () => {
+    const api = fakeApi()
+    const client = await connect(api.fetchImpl)
+    const r = await client.callTool({
+      name: 'fit_file',
+      arguments: { paths: [photo], limit: '1MB', output: join(dir, 'x.png') },
+    })
+    expect(r.isError).toBe(true)
+    expect(text(r)).toMatch(/`output` names one file/)
     expect(api.calls).toEqual([])
   })
 
