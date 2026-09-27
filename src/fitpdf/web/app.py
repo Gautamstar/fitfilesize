@@ -35,6 +35,11 @@ WORKER_GRACE_SECONDS = 60
 HEALTH_TIMEOUT = 3.0
 # Free disk kept for uploads in flight; see receive_upload.
 MIN_FREE_BYTES = 500 * 1024 * 1024
+# Floor estimates the API renders at once. Each decodes the whole upload in
+# the API process: a 50 MP transparent PNG peaks around 420 MB, and two
+# measured 830 MB together against the API's 1 GB. A third waits its turn
+# rather than taking the API down for everyone.
+MAX_CONCURRENT_FLOORS = 2
 # /api/fit waits this long for the run before answering 202 with a status URL.
 # Kept under the ~100s a proxy in front of the API (Cloudflare, on Render) lets
 # a request sit without a response before cutting it off.
@@ -543,6 +548,7 @@ def create_app(
                 "max_bytes": settings.max_upload_bytes,
                 "max_pixels": {
                     "jpeg": MAX_IMAGE_PIXELS["JPEG"],
+                    "webp": MAX_IMAGE_PIXELS["WEBP"],
                     "other": MAX_OTHER_IMAGE_PIXELS,
                 },
             }
@@ -611,6 +617,8 @@ def create_app(
             state["hit_target"] = job["hit_target"] == "1"
         if "method" in job:
             state["method"] = job["method"]
+        if job.get("waiting"):
+            state["waiting"] = job["waiting"]
         if "error" in job:
             state["error"] = job["error"]
         if "warnings" in job:
@@ -716,6 +724,8 @@ def create_app(
             "expires_in": settings.pending_ttl_seconds,
         }
 
+    floors = asyncio.Semaphore(MAX_CONCURRENT_FLOORS)
+
     @app.post("/api/jobs/{job_id}/analyze")
     async def analyze_job(job_id: str, request: Request, response: Response):
         job = require_job(job_id)
@@ -723,9 +733,16 @@ def create_app(
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
         # The floor render is kept next to the upload: the compression run
         # reuses it as its harshest rung instead of rendering it again.
-        floor = await run_in_threadpool(
-            estimate_floor, src, timeout=settings.gs_timeout, keep=job_dir(job_id) / "floor"
-        )
+        # The page polls the job while it waits, and says it is queued.
+        queued = floors.locked()
+        if queued:
+            store.update_job(r, job_id, waiting="analysis")
+        async with floors:
+            if queued:
+                store.update_job(r, job_id, waiting="")
+            floor = await run_in_threadpool(
+                estimate_floor, src, timeout=settings.gs_timeout, keep=job_dir(job_id) / "floor"
+            )
         store.update_job(r, job_id, floor_estimate=floor, status="analyzed")
         return {
             "job_id": job_id,

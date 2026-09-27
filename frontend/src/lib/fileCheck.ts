@@ -14,8 +14,12 @@ import { fmt } from './format'
 
 export interface FileLimits {
   maxBytes: number
-  /** Pixel caps: JPEG decodes at reduced size, so it gets a higher one. */
-  maxPixels: { jpeg: number; other: number }
+  /**
+   * Pixel caps: JPEG decodes at reduced size, so it gets a higher one; WebP
+   * decodes at several times the memory of a PNG, so it gets a lower one.
+   * Optional because a server from before WebP had its own cap does not send it.
+   */
+  maxPixels: { jpeg: number; other: number; webp?: number }
 }
 
 /**
@@ -24,7 +28,7 @@ export interface FileLimits {
  */
 let limits: FileLimits = {
   maxBytes: 26_214_400,
-  maxPixels: { jpeg: 64_000_000, other: 34_000_000 },
+  maxPixels: { jpeg: 64_000_000, webp: 16_000_000, other: 50_000_000 },
 }
 
 export function setFileLimits(next: FileLimits): void {
@@ -59,7 +63,8 @@ export async function fileProblem(file: File): Promise<string | null> {
   }
   if (!size) return null
   const pixels = size.width * size.height
-  const cap = size.format === 'JPEG' ? limits.maxPixels.jpeg : limits.maxPixels.other
+  const { jpeg, webp, other } = limits.maxPixels
+  const cap = size.format === 'JPEG' ? jpeg : size.format === 'WEBP' ? (webp ?? other) : other
   if (pixels <= cap) return null
   const mp = Math.round(pixels / 1e6)
   const capMp = Math.floor(cap / 1e6)

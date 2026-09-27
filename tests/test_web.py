@@ -1193,12 +1193,68 @@ def test_low_disk_sweeps_first_then_refuses_before_reading_the_upload(web, photo
 def test_an_image_too_big_to_process_is_refused_with_the_reason(web, tmp_path):
     client, _, settings = web
     png = tmp_path / "huge.png"
-    Image.new("RGB", (7000, 5000)).save(png)  # 35 MP, a few KB: flat
+    Image.new("RGB", (8000, 7000)).save(png)  # 56 MP, a few KB: flat
     res = _upload(client, png, "huge.png")
     assert res.status_code == 422
-    assert "35 megapixels" in res.json()["detail"]
+    assert "56 megapixels" in res.json()["detail"]
     assert "JPEG" in res.json()["detail"]
     assert not any(settings.data_dir.iterdir())
+
+
+def test_the_api_renders_at_most_two_floor_estimates_at_once(web, photo_jpg, monkeypatch):
+    # Each decodes a whole upload in the API; a third waits instead of
+    # pushing the API past its memory.
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    client, _, _ = web
+    lock, running, most = threading.Lock(), [0], [0]
+
+    def slow_floor(*args, **kwargs):
+        with lock:
+            running[0] += 1
+            most[0] = max(most[0], running[0])
+        time.sleep(0.3)
+        with lock:
+            running[0] -= 1
+        return 1000
+
+    monkeypatch.setattr(web_app, "estimate_floor", slow_floor)
+    jobs = [_upload(client, photo_jpg, "a.jpg").json()["job_id"] for _ in range(4)]
+    seen_waiting = set()
+
+    def watch():
+        # What the page polls: a job whose analysis waits says so.
+        deadline = time.time() + 2
+        while time.time() < deadline:
+            for j in jobs:
+                if client.get(f"/api/jobs/{j}").json().get("waiting") == "analysis":
+                    seen_waiting.add(j)
+            time.sleep(0.05)
+
+    with ThreadPoolExecutor(5) as ex:
+        watcher = ex.submit(watch)
+        codes = list(ex.map(lambda j: client.post(f"/api/jobs/{j}/analyze").status_code, jobs))
+        watcher.result()
+    assert codes == [200] * 4
+    assert most[0] == 2
+    assert 1 <= len(seen_waiting) <= 2  # only ones past the first two wait
+    assert all("waiting" not in client.get(f"/api/jobs/{j}").json() for j in jobs)
+
+
+def test_a_webp_has_its_own_lower_pixel_cap(web, tmp_path):
+    # WebP decodes at about 15 bytes a pixel, so 20 MP is refused although
+    # a PNG that size is taken.
+    client, _, _ = web
+    webp = tmp_path / "big.webp"
+    Image.new("RGB", (5000, 4000)).save(webp, "WEBP")
+    res = _upload(client, webp, "big.webp")
+    assert res.status_code == 422
+    assert "20 megapixels" in res.json()["detail"]
+    assert "for a WEBP is 16" in res.json()["detail"]
+    png = tmp_path / "big.png"
+    Image.new("RGB", (5000, 4000)).save(png)
+    assert _upload(client, png, "big.png").status_code == 200
 
 
 def test_a_large_phone_photo_is_still_taken(web, tmp_path):
@@ -1216,7 +1272,11 @@ def test_limits_say_which_files_the_server_takes(web):
     files = client.get("/api/limits").json()["files"]
     assert files == {
         "max_bytes": settings.max_upload_bytes,
-        "max_pixels": {"jpeg": MAX_IMAGE_PIXELS["JPEG"], "other": MAX_OTHER_IMAGE_PIXELS},
+        "max_pixels": {
+            "jpeg": MAX_IMAGE_PIXELS["JPEG"],
+            "webp": MAX_IMAGE_PIXELS["WEBP"],
+            "other": MAX_OTHER_IMAGE_PIXELS,
+        },
     }
 
 

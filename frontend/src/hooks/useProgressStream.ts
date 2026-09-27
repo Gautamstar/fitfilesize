@@ -80,6 +80,8 @@ export interface StreamState {
   error: string | null
   /** Epoch ms when the stored file is deleted, from the `state` event. */
   expiresAt: number | null
+  /** Waiting for a free worker: other visitors' runs go first. */
+  queued: boolean
 }
 
 const EMPTY_SEARCH: SearchState = {
@@ -97,6 +99,7 @@ const EMPTY: StreamState = {
   result: null,
   error: null,
   expiresAt: null,
+  queued: false,
 }
 
 /**
@@ -153,7 +156,11 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
     const settleFromState = (st: JobState) => {
       if (settled) return
-      setState((s) => ({ ...s, expiresAt: Date.now() + st.expires_in * 1000 }))
+      setState((s) => ({
+        ...s,
+        expiresAt: Date.now() + st.expires_in * 1000,
+        queued: st.status === 'queued',
+      }))
       if (st.status === 'done') {
         setState((s) => ({ ...s, result: resultFromState(st) }))
         stop()
@@ -203,7 +210,7 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
       switch (ev.stage) {
         case 'start': {
           const target = ev.target_bytes
-          setState((s) => ({ ...s, search: { ...s.search, target } }))
+          setState((s) => ({ ...s, queued: false, search: { ...s.search, target } }))
           addStep(`Starting, target ${fmtLimit(target)}`)
           break
         }

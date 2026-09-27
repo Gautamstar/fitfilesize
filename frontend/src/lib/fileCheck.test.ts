@@ -92,6 +92,14 @@ describe('fileProblem', () => {
     expect(await fileProblem(file(fixture('image.png'), 'a.png'))).not.toBeNull()
   })
 
+  it('gives a WebP its own lower cap, and the general one when the server sends none', async () => {
+    setFileLimits({ ...saved, maxPixels: { jpeg: 10_000, webp: 1, other: 10_000 } })
+    expect(await fileProblem(file(fixture('lossy.webp'), 'a.webp'))).toMatch(/for a WEBP is 0/)
+    expect(await fileProblem(file(fixture('image.png'), 'a.png'))).toBeNull()
+    setFileLimits({ ...saved, maxPixels: { jpeg: 10_000, other: 10_000 } })
+    expect(await fileProblem(file(fixture('lossy.webp'), 'a.webp'))).toBeNull()
+  })
+
   it('refuses a file over the upload size', async () => {
     setFileLimits({ ...saved, maxBytes: 100 })
     expect(await fileProblem(file(fixture('baseline.jpg'), 'a.jpg'))).toBe(
