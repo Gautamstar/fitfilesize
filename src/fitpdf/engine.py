@@ -34,6 +34,13 @@ RUNGS = PDF_RUNGS
 # 0.6% of runs keep a setting one step harsher than needed, and those files
 # come out about 5% smaller than they had to be.
 CLOSE_ENOUGH = 0.9
+# The most a big file's draft runs over its proper render (see
+# strategies.DRAFT_MIN_BYTES): measured at 5 to 15 percent on photos and
+# dense graphics.
+DRAFT_OVERSHOOT = 1.15
+# A target at least this share of the file is usually met at full size, so
+# the gentlest-first render is made properly rather than drafted and redone.
+LIKELY_FULL_SIZE = 0.5
 
 __all__ = [
     "IMAGE_RUNGS",
@@ -411,6 +418,9 @@ def compress_to_target(
                     return cache[i]
                 emit({"stage": "rung_start", "rung": i, **strategy.rungs[i]})
                 out = outdir / f"rung{i}{lossy_suffix}"
+                is_draft = getattr(strategy, "is_draft", None)
+                if is_draft is not None and is_draft(strategy.rungs[i]):
+                    drafts[out] = i
                 try:
                     size: int | None = strategy.render(src, out, strategy.rungs[i], timeout=timeout)
                 except Exception:
@@ -453,21 +463,40 @@ def compress_to_target(
                     ],
                 }
             )
-            if gentlest_first and fit is None and lo == 0 and hi >= 0:
+            # Not held back by a seeded fit: the analyze step's floor always
+            # fits a target above it, and says nothing about rung 0.
+            # The rungs the search predicts from. Full size tried first and
+            # missed is left out: on a graphic it can be smaller than the next
+            # rung down (shrinking adds in-between colours), which throws the
+            # prediction for the rest of the ladder.
+            skip: set[int] = set()
+            if gentlest_first and 0 not in cache and lo == 0 and hi >= 0:
+                drafting = getattr(strategy, "draft", False)
+                if target_bytes >= LIKELY_FULL_SIZE * original:
+                    strategy.draft = False
                 size, _ = try_rung(0)
+                strategy.draft = drafting
                 if size is not None and size <= target_bytes:
                     fit, hi = 0, -1
                 else:
                     lo = 1
+                    skip.add(0)
             misses = 0
             while lo <= hi:
-                if fit is not None and cache[fit][0] >= CLOSE_ENOUGH * target_bytes:
+                # Not on a draft, which runs larger than the real thing: the
+                # gentler rung is cheap to draft, and polish needs its size.
+                if (
+                    fit is not None
+                    and cache[fit][0] >= CLOSE_ENOUGH * target_bytes
+                    and cache[fit][1] not in drafts
+                ):
                     break
                 guess = (
                     None
                     if misses >= 2
                     else _predict_boundary(
-                        cache, target_bytes, getattr(strategy, "typical_log_step", None), original
+                        {i: c for i, c in cache.items() if i not in skip},
+                        target_bytes, getattr(strategy, "typical_log_step", None), original,
                     )
                 )
                 # Named `rung`, not `probe`: try_rung's validate() reads the
@@ -493,6 +522,68 @@ def compress_to_target(
                     misses += 1
             return fit, cache, seeded
 
+        # Draft renders (a strategy's quick setting, see ImageStrategy.drafts)
+        # made by this run, by rung: good enough to search with, but whatever
+        # is handed back is rendered again properly first (see polish).
+        drafts: dict[Path, int] = {}
+
+        def polish(fit: int, cache: dict[int, tuple[int | None, Path]]) -> tuple[int, Path, int]:
+            """(size, path, rung) of the result, rendered properly.
+
+            A draft that fit is rendered again at full effort. How much that
+            shrank it says how far this file's drafts run over, so the gentler
+            rungs whose drafts missed can be judged too: one that should now
+            fit is rendered properly and taken if it does. (When the answer
+            was rendered properly to begin with, a small rung under the draft
+            size, DRAFT_OVERSHOOT stands in for that measure.) A proper render
+            that comes out over the target (rare: a flat graphic can come out
+            a hair larger) leaves the draft, which fits.
+            """
+            strategy.draft = False
+            size, out = cache[fit]
+            assert size is not None
+            best = (size, out, fit)
+            # How much a proper render shrinks this file's drafts; until one
+            # is measured, the most they typically run over.
+            shrink = 1 / DRAFT_OVERSHOOT
+
+            def proper(i: int) -> int | None:
+                drafted = cache[i][1]
+                emit({"stage": "rung_start", "rung": i, "final": True, **strategy.rungs[i]})
+                final = drafted.with_name(f"final{i}{drafted.suffix}")
+                try:
+                    got: int | None = strategy.render(src, final, strategy.rungs[i], timeout=timeout)
+                except Exception:
+                    got = None
+                if got is not None and not strategy.validate(final, probe):
+                    got = None
+                return got
+
+            if out in drafts:
+                got = proper(fit)
+                if got is None or got > target_bytes:
+                    emit({"stage": "rung_result", "rung": fit, "size": size, "fits": True})
+                    return best
+                emit({"stage": "rung_result", "rung": fit, "size": got, "fits": True})
+                best = (got, out.with_name(f"final{fit}{out.suffix}"), fit)
+                shrink = got / size
+            # The gentler rungs whose drafts missed, judged by that shrink.
+            # (Rendered properly already, a rung above that missed missed.)
+            i = fit - 1
+            while i >= 0:
+                above, drafted = cache.get(i, (None, out))
+                if above is None or drafted not in drafts or above * shrink > target_bytes:
+                    break
+                got = proper(i)
+                fits = got is not None and got <= target_bytes
+                emit({"stage": "rung_result", "rung": i, "size": got, "fits": fits})
+                if not fits:
+                    break
+                assert got is not None
+                best = (got, drafted.with_name(f"final{i}{drafted.suffix}"), i)
+                i -= 1
+            return best
+
         png_tried = 0
         png_results: list[tuple[int, Path]] = []
         native_first = getattr(strategy, "native_first", None)
@@ -500,6 +591,9 @@ def compress_to_target(
             strategy.use_native(True)
             # Only worth refusing a poor 256-colour copy if a JPEG can follow.
             strategy.png_strict = allow_jpeg
+            # Search with drafts, unless a JPEG may follow: then every PNG
+            # size is compared with a JPEG one, and a draft's would be off.
+            strategy.draft = bool(getattr(strategy, "drafts", False)) and not allow_jpeg
             # Full size first when it has a chance: a 256-colour copy of a
             # compressed PNG is rarely under a fifth of it, and below that the
             # full-size render (10 s at 40 MP) is wasted.
@@ -509,10 +603,8 @@ def compress_to_target(
             png_tried = len(cache)
             png_results = [(s, p) for s, p in cache.values() if s is not None]
             if fit is not None:
-                size, out = cache[fit]
-                assert size is not None
+                size, out, fit = polish(fit, cache)
                 return finish(out, size, True, f"rung:{fit}", png_tried, lossy=True)
-            strategy.use_native(False)
             if not allow_jpeg:
                 pngs = [(s, p, True) for s, p in cache.values() if s is not None]
                 if loss_size is not None:
@@ -520,6 +612,21 @@ def compress_to_target(
                 floor_size, floor_path, floor_lossy = min(
                     pngs or [(original, src, False)], key=lambda c: c[0]
                 )
+                if floor_path in drafts:
+                    # Rendered properly the floor is usually smaller still;
+                    # the smaller of the two is kept.
+                    strategy.draft = False
+                    i = drafts[floor_path]
+                    final = floor_path.with_name(f"final{i}{floor_path.suffix}")
+                    try:
+                        got = strategy.render(src, final, strategy.rungs[i], timeout=timeout)
+                        if got < floor_size and strategy.validate(final, probe):
+                            floor_size, floor_path = got, final
+                    except Exception:
+                        pass
+            strategy.use_native(False)
+            strategy.draft = False
+            if not allow_jpeg:
                 warnings.append(
                     "target not reachable; returning the smallest achievable file (the floor)"
                 )

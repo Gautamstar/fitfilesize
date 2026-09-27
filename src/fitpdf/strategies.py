@@ -261,6 +261,17 @@ PNG_RUNGS: list[dict] = [
 PNG_QUALITY = "60-100"
 # pngquant's own default; 3 was a third slower for no visible difference.
 PNGQUANT_SPEED = "4"
+# Its fastest, for drafts: the search only needs each rung's size, and at
+# 10 a 47 MP render takes 1.3 s instead of 6.9 s, for a file about 5% larger
+# (up to 18% on a flat graphic). The chosen rung is rendered again at
+# PNGQUANT_SPEED before it is handed back (see the engine's drafts).
+PNGQUANT_DRAFT_SPEED = "10"
+# Only a rung this big, of a file this big, is drafted. Below either a
+# proper render is quick anyway. And a big file is a photo or a dense
+# graphic, whose drafts run a steady 5 to 15 percent over; a flat graphic
+# (a small file, however many pixels) can have drafts twice the real size.
+DRAFT_MIN_PIXELS = 8_000_000
+DRAFT_MIN_BYTES = 8_000_000
 PNGQUANT_QUALITY_TOO_LOW = 99
 
 
@@ -322,6 +333,38 @@ def fit_exact(im, size: tuple[int, int], fit: str, focus: tuple[float, float] | 
     return ImageOps.pad(im, size, Image.LANCZOS, color=(255, 255, 255))
 
 
+def estimate_png_lossless(im) -> float:
+    """The lossless pass's likely size for an open PNG, in bytes, from strips.
+
+    PNG compresses row by row, so strips across the whole height, compressed
+    as the pass would, stand in for the picture: 16 of them, 6 percent of the
+    rows. Each strip's first row is compressed against an unrelated one above
+    it, so strips are at least 32 rows: thinner ones overestimated a noisy
+    photo by 8 percent. Within 1 percent of the real pass on photos, in a
+    tenth of its time; a flat graphic can be 11 percent over, but is never
+    big enough to be estimated (see ImageStrategy.ESTIMATE_PNG_BYTES).
+    """
+    import io
+
+    from PIL import Image
+
+    im.load()
+    width, height = im.size
+    tall = min(height, max(32, height * 6 // 100 // 16))
+    strips = min(16, height // tall)
+    tops = [i * (height - tall) // max(strips - 1, 1) for i in range(strips)]
+    sample = Image.new(im.mode, (width, tall * strips))
+    for n, top in enumerate(tops):
+        sample.paste(im.crop((0, top, width, top + tall)), (0, n * tall))
+    if im.mode == "P":
+        sample.putpalette(im.getpalette())
+    if "transparency" in im.info:
+        sample.info["transparency"] = im.info["transparency"]
+    buf = io.BytesIO()
+    sample.save(buf, "PNG", optimize=True)
+    return buf.tell() * height / sample.height
+
+
 class ImageStrategy:
     kind = "image"
     # As PdfStrategy.typical_log_step, measured on a 12 MP phone photo.
@@ -358,6 +401,12 @@ class ImageStrategy:
         self._png_refused = False
         # Set by the engine when a JPEG may take over from the PNG ladder.
         self.png_strict = False
+        # Set by the engine while it searches with quick renders (see drafts).
+        self.draft = False
+        # The source's (width, height) and file size, known once native_first
+        # has looked.
+        self._size = (0, 0)
+        self._bytes = 0
         if resize is None:
             self.rungs = IMAGE_RUNGS
         else:
@@ -390,11 +439,14 @@ class ImageStrategy:
         try:
             with Image.open(src) as im:
                 fmt = (im.format or "").upper()
+                size = im.size
         except Exception:
             return False
         if fmt not in PALETTE_FORMATS and fmt != "WEBP":
             return False
         self.native_format = fmt
+        self._size = size
+        self._bytes = src.stat().st_size
         # The visitor's own extension (.tif or .tiff), so the name matches.
         self.native_suffix = src.suffix.lower() or {"PNG": ".png", "TIFF": ".tif", "BMP": ".bmp", "WEBP": ".webp"}[fmt]
         return True
@@ -408,10 +460,32 @@ class ImageStrategy:
             self._pixels.pop(("native", "decoded"), None)
         elif self.native_format == "WEBP":
             self.rungs = [{**r, "format": "WEBP"} for r in IMAGE_RUNGS]
-        elif self.native_format == "PNG":
-            self.rungs = PNG_RUNGS
         else:
-            self.rungs = [{**r, "format": self.native_format} for r in PNG_RUNGS]
+            # Only the sizes this image can take: a rung at or above its
+            # longest side renders the same full-size picture as FULL_SIZE,
+            # and a 4032 px photo would otherwise have three of them.
+            longest = max(self._size) or FULL_SIZE
+            rungs = [r for r in PNG_RUNGS if r["max_edge"] == FULL_SIZE or r["max_edge"] < longest]
+            if self.native_format == "PNG":
+                self.rungs = rungs
+            else:
+                self.rungs = [{**r, "format": self.native_format} for r in rungs]
+
+    @property
+    def drafts(self) -> bool:
+        """Whether this ladder can be searched with quick draft renders: the
+        256-colour one, where pngquant has a fast setting (see
+        PNGQUANT_DRAFT_SPEED)."""
+        return self.mode == "native" and self.native_format in PALETTE_FORMATS
+
+    def is_draft(self, rung: dict) -> bool:
+        """Whether rendering this rung now makes a draft: drafts are on and
+        the rung is big enough to be worth one (see DRAFT_MIN_PIXELS)."""
+        if not (self.draft and "colors" in rung and self._bytes >= DRAFT_MIN_BYTES):
+            return False
+        width, height = self._size
+        scale = min(1.0, rung["max_edge"] / max(width, height, 1))
+        return width * height * scale * scale >= DRAFT_MIN_PIXELS
 
     def probe(self, src: Path) -> Probe:
         from PIL import Image
@@ -472,6 +546,14 @@ class ImageStrategy:
     # A PNG stored close to raw (compression level 0) can shrink many times
     # over and stay a PNG, so it always gets the pass.
     STORED_PNG = 0.9
+    # Above this, a PNG within reach has its pass estimated before it is run
+    # (see estimate_png_lossless): the pass costs by the byte, and on a 48 MB
+    # photo took 22 s to save nothing. Below it the pass is a few seconds.
+    ESTIMATE_PNG_BYTES = 8_000_000
+    # How far over the target an estimate may be and the pass still run: on
+    # photos it came within 1 percent of the real pass, and dense graphics
+    # came out under it, which only means the pass runs.
+    ESTIMATE_SLACK = 1.05
 
     def lossless_hopeless(self, src: Path, original: int, target: int) -> bool:
         """True when the lossless pass cannot get the file down to the target.
@@ -479,7 +561,8 @@ class ImageStrategy:
         JPEG, PNG and WebP by reach, and a large WebP by memory. A TIFF is
         often stored uncompressed and can shrink a great deal deflated, so it
         always gets the pass; a BMP has no compression to gain, so it never
-        does. Reads the header only; no pixels are decoded.
+        does. Reads the header only, except for a large PNG within reach,
+        which is sampled (see ESTIMATE_PNG_BYTES).
         """
         from PIL import Image
 
@@ -496,11 +579,14 @@ class ImageStrategy:
                     return True
                 if fmt == "WEBP" and im.width * im.height > MAX_WEBP_LOSSLESS_PIXELS:
                     return True
-                if reach is None or target >= original * reach:
-                    return False
                 if fmt == "PNG":
                     raw = im.width * im.height * len(im.getbands())
-                    return original < raw * self.STORED_PNG
+                    if original >= raw * self.STORED_PNG:
+                        return False  # stored: the pass is sure to help
+                    if target >= original * reach and original >= self.ESTIMATE_PNG_BYTES:
+                        return estimate_png_lossless(im) > target * self.ESTIMATE_SLACK
+                if reach is None or target >= original * reach:
+                    return False
                 return True
         except Exception:
             return False
@@ -653,7 +739,7 @@ class ImageStrategy:
             done = subprocess.run(
                 [pngquant, str(rung["colors"]),
                  *(["--quality", PNG_QUALITY] if self.png_strict else []),
-                 "--speed", PNGQUANT_SPEED, "--strip", "--force", "--output", str(dst), str(raw)],
+                 "--speed", PNGQUANT_DRAFT_SPEED if self.is_draft(rung) else PNGQUANT_SPEED, "--strip", "--force", "--output", str(dst), str(raw)],
                 capture_output=True, timeout=timeout, check=False,
             )
         if done.returncode == PNGQUANT_QUALITY_TOO_LOW:

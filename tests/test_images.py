@@ -202,20 +202,27 @@ def test_the_floor_estimate_is_for_the_format_that_comes_back(photo_jpg, tmp_pat
     assert bmp_floor > 3 * estimate_floor(jpg)
 
 
-def test_a_run_reuses_the_native_floor_render(photo_jpg, tmp_path):
-    from fitpdf.strategies import PNG_RUNGS
+def _native_ladder(src: Path) -> list[dict]:
+    strategy = ImageStrategy()
+    assert strategy.native_first(src)
+    strategy.use_native(True)
+    return strategy.rungs
 
+
+def test_a_run_reuses_the_native_floor_render(photo_jpg, tmp_path):
     png = tmp_path / "sheet.png"
     Image.open(photo_jpg).save(png, "PNG")
     floor = estimate_floor(png, keep=tmp_path / "floor")
+    last = len(_native_ladder(png)) - 1
     events = []
     result = compress_to_target(
         png, tmp_path / "out.png", floor // 2,
-        prerendered={len(PNG_RUNGS) - 1: tmp_path / "floor.png"}, on_progress=events.append,
+        prerendered={last: tmp_path / "floor.png"}, on_progress=events.append,
     )
     # Under the floor: answered by the analyze step's render, nothing rendered again.
     assert result.method == "floor" and result.output.suffix == ".png"
-    assert not any(e["stage"] == "rung_start" and e["rung"] == len(PNG_RUNGS) - 1 for e in events)
+    assert result.final_bytes == floor
+    assert not any(e["stage"] == "rung_start" for e in events)
 
 
 def test_an_iphone_heic_always_comes_back_as_an_upright_jpeg(iphone_heic, tmp_path):
@@ -622,3 +629,201 @@ def test_padding_reaches_the_minimum_across_segment_boundaries(photo_jpg, tmp_pa
         assert want <= size <= want + 3
         with Image.open(f) as im:
             im.load()  # still a valid JPEG
+
+
+def test_the_png_ladder_has_no_rung_the_image_is_too_small_for(photo_jpg):
+    # A rung at or above the longest side renders the full-size picture again.
+    from fitpdf.strategies import FULL_SIZE
+
+    png = photo_jpg.parent / "ladder.png"
+    Image.open(photo_jpg).save(png, "PNG")  # 3000 x 2000
+    edges = [r["max_edge"] for r in _native_ladder(png)]
+    assert edges[0] == FULL_SIZE
+    assert all(e < 3000 for e in edges[1:])
+    assert edges[1:] == sorted(edges[1:], reverse=True) and len(set(edges)) == len(edges)
+
+
+def _pngquant_speeds(monkeypatch) -> list[str]:
+    import subprocess
+
+    speeds: list[str] = []
+    real_run = subprocess.run
+
+    def run(args, *a, **k):
+        if "pngquant" in str(args[0]):
+            speeds.append(args[args.index("--speed") + 1])
+        return real_run(args, *a, **k)
+
+    monkeypatch.setattr(subprocess, "run", run)
+    return speeds
+
+
+def _proper_sizes(src: Path, tmp_path: Path) -> list[int]:
+    """Every rung of src's PNG ladder, rendered properly."""
+    strategy = ImageStrategy()
+    strategy.native_first(src)
+    strategy.use_native(True)
+    return [
+        strategy.render(src, tmp_path / f"proper{i}.png", rung, timeout=60)
+        for i, rung in enumerate(strategy.rungs)
+    ]
+
+
+def _draft_everything(monkeypatch) -> None:
+    from fitpdf import strategies
+
+    monkeypatch.setattr(strategies, "DRAFT_MIN_PIXELS", 1)
+    monkeypatch.setattr(strategies, "DRAFT_MIN_BYTES", 1)
+
+
+@pytest.fixture
+def sheet_png(photo_jpg, tmp_path) -> Path:
+    png = tmp_path / "sheet.png"
+    Image.open(photo_jpg).save(png, "PNG")
+    return png
+
+
+def test_big_rungs_are_searched_with_drafts_and_the_answer_rendered_properly(
+    sheet_png, tmp_path, monkeypatch
+):
+    import shutil
+
+    from fitpdf import strategies
+
+    if shutil.which("pngquant") is None:
+        pytest.skip("drafts are a pngquant setting")
+    proper = _proper_sizes(sheet_png, tmp_path)
+    # Between two rungs, so one fits and the gentler one does not.
+    target = (proper[3] + proper[2]) // 2
+    _draft_everything(monkeypatch)
+    speeds = _pngquant_speeds(monkeypatch)
+    events = []
+    result = compress_to_target(sheet_png, tmp_path / "out.png", target, on_progress=events.append)
+    assert result.hit_target and result.method == "rung:3"
+    # What comes back is the proper render, byte for byte the size of one.
+    assert result.final_bytes == proper[3] == result.output.stat().st_size
+    assert strategies.PNGQUANT_DRAFT_SPEED in speeds
+    assert speeds[-1] == strategies.PNGQUANT_SPEED
+    finals = [e for e in events if e["stage"] == "rung_start" and e.get("final")]
+    assert [e["rung"] for e in finals][-1] == 3
+
+
+def test_a_small_file_is_never_drafted(sheet_png, tmp_path, monkeypatch):
+    # Under DRAFT_MIN_PIXELS and DRAFT_MIN_BYTES: every render is a proper one.
+    speeds = _pngquant_speeds(monkeypatch)
+    events = []
+    compress_to_target(sheet_png, tmp_path / "out.png", sheet_png.stat().st_size // 8, on_progress=events.append)
+    from fitpdf.strategies import PNGQUANT_SPEED
+
+    assert speeds and set(speeds) == {PNGQUANT_SPEED}
+    assert not any(e.get("final") for e in events)
+
+
+def test_a_proper_render_that_fails_leaves_the_draft_that_fit(sheet_png, tmp_path, monkeypatch):
+    import shutil
+
+
+    if shutil.which("pngquant") is None:
+        pytest.skip("drafts are a pngquant setting")
+    _draft_everything(monkeypatch)
+    real = ImageStrategy._render_png
+
+    def render(self, src, dst, rung, *, timeout):
+        if dst.name.startswith("final"):
+            raise RuntimeError("pngquant failed")
+        return real(self, src, dst, rung, timeout=timeout)
+
+    monkeypatch.setattr(ImageStrategy, "_render_png", render)
+    target = sheet_png.stat().st_size // 8
+    result = compress_to_target(sheet_png, tmp_path / "out.png", target)
+    assert result.hit_target and result.final_bytes <= target
+    assert result.output.suffix == ".png"
+
+
+def test_a_drafted_floor_is_rendered_properly(sheet_png, tmp_path, monkeypatch):
+    import shutil
+
+
+    if shutil.which("pngquant") is None:
+        pytest.skip("drafts are a pngquant setting")
+    proper = _proper_sizes(sheet_png, tmp_path)
+    _draft_everything(monkeypatch)
+    result = compress_to_target(sheet_png, tmp_path / "out.png", 1_000)
+    assert result.method == "floor" and result.output.suffix == ".png"
+    assert result.final_bytes <= proper[-1]
+
+
+def test_full_size_is_tried_first_even_with_the_analyze_steps_floor(sheet_png, tmp_path):
+    # A screenshot or graphic can be smaller at full size than shrunk, since
+    # shrinking adds in-between colours; the seeded floor must not skip that.
+    floor = estimate_floor(sheet_png, keep=tmp_path / "floor")
+    last = len(_native_ladder(sheet_png)) - 1
+    events = []
+    compress_to_target(
+        sheet_png, tmp_path / "out.png", sheet_png.stat().st_size // 2,
+        prerendered={last: tmp_path / "floor.png"}, on_progress=events.append,
+    )
+    assert floor < sheet_png.stat().st_size // 2
+    starts = [e["rung"] for e in events if e["stage"] == "rung_start"]
+    assert starts[0] == 0
+
+
+def test_the_lossless_estimate_is_close_to_the_real_pass_on_a_photo(photo_png, tmp_path):
+    # Only a big file is estimated, and a big PNG is a photo: a flat graphic
+    # compresses to a fraction of that (see ESTIMATE_PNG_BYTES).
+    from fitpdf.strategies import estimate_png_lossless
+
+    stored = tmp_path / "stored.png"
+    Image.open(photo_png).save(stored, "PNG", compress_level=0)
+    for src in (photo_png, stored):
+        real = ImageStrategy().lossless(src, tmp_path / "l.png", strip_metadata=True)
+        with Image.open(src) as im:
+            assert abs(estimate_png_lossless(im) / real - 1) < 0.02, src.name
+
+
+def test_a_big_png_skips_a_lossless_pass_its_sample_says_cannot_fit(photo_jpg, tmp_path, monkeypatch):
+    # The pass costs by the byte (22 s on a 48 MB photo); a sample says first
+    # whether it can reach the target at all.
+    monkeypatch.setattr(ImageStrategy, "ESTIMATE_PNG_BYTES", 0)
+    tight = tmp_path / "tight.png"
+    Image.open(photo_jpg).save(tight, "PNG", optimize=True)
+    stored = tmp_path / "stored.png"
+    Image.open(photo_jpg).save(stored, "PNG", compress_level=0)
+    s = ImageStrategy()
+    size = tight.stat().st_size
+    # Already as small as the pass makes it: 90 percent is out of reach.
+    assert s.lossless_hopeless(tight, size, int(size * 0.9))
+    # A stored PNG deflates many times over: 70 percent is easily in reach.
+    size = stored.stat().st_size
+    assert not s.lossless_hopeless(stored, size, int(size * 0.7))
+
+
+def test_a_drafted_rung_that_just_missed_is_checked_above_a_proper_fit(
+    photo_png, tmp_path, monkeypatch
+):
+    # Only rungs 0 and 1 are big enough to draft (2000 and 1800 px); rung 2
+    # renders properly. Drafts here are proper renders padded 5 percent, so
+    # with the target at rung 1's proper size its draft misses and rung 2
+    # fits; but rung 1 is the answer, and is checked.
+    from fitpdf import strategies
+
+    proper = _proper_sizes(photo_png, tmp_path)
+    monkeypatch.setattr(strategies, "DRAFT_MIN_BYTES", 1)
+    monkeypatch.setattr(strategies, "DRAFT_MIN_PIXELS", 2_000_000)
+    monkeypatch.setattr(strategies, "PNGQUANT_DRAFT_SPEED", strategies.PNGQUANT_SPEED)
+    real = ImageStrategy._render_png
+
+    def render(self, src, dst, rung, *, timeout):
+        size = real(self, src, dst, rung, timeout=timeout)
+        if self.is_draft(rung):
+            with open(dst, "ab") as f:
+                f.write(b"\0" * (size // 20))
+            size = dst.stat().st_size
+        return size
+
+    monkeypatch.setattr(ImageStrategy, "_render_png", render)
+    events = []
+    result = compress_to_target(photo_png, tmp_path / "out.png", proper[1], on_progress=events.append)
+    assert result.method == "rung:1" and result.final_bytes == proper[1]
+    finals = [e["rung"] for e in events if e["stage"] == "rung_start" and e.get("final")]
+    assert finals == [1]

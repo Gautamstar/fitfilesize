@@ -197,6 +197,11 @@ export interface PngRungStartEvent {
   colors: number
   /** 'TIFF' or 'BMP'; absent for a PNG. */
   format?: string
+  /**
+   * The search found this rung with a quick draft; this is it rendered
+   * properly, the file that comes back. Absent on every other render.
+   */
+  final?: boolean
 }
 
 /** An image run at an exact pixel size, where only quality changes. */
