@@ -61,6 +61,9 @@ services:
       replicas: 2
     mem_limit: 1g
     cpu_shares: 512
+    # On a deploy, RQ stops taking jobs and finishes the one it has; Docker's
+    # default 10 s would kill a long PDF halfway and make the visitor redo it.
+    stop_grace_period: 2m
 
   redis:
     image: redis:7-alpine

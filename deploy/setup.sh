@@ -66,6 +66,30 @@ if [ ! -f "$DIR/deploy/.env" ]; then
   chmod 600 "$DIR/deploy/.env"
 fi
 
+echo "== watchdog: restart a container that hangs (Docker only restarts ones that exit)"
+sudo tee /etc/systemd/system/fitfilesize-watchdog.service >/dev/null <<UNIT
+[Unit]
+Description=Restart FitFileSize containers that /health reports stuck
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=$DIR/deploy/watchdog.sh
+UNIT
+sudo tee /etc/systemd/system/fitfilesize-watchdog.timer >/dev/null <<UNIT
+[Unit]
+Description=Check FitFileSize health every minute
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
+UNIT
+sudo systemctl daemon-reload
+sudo systemctl enable --now fitfilesize-watchdog.timer
+
 echo
 echo "Done. Next:"
 echo "  1. Log out and back in (so Docker works without sudo)."

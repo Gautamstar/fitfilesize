@@ -312,6 +312,33 @@ def test_sweeper_removes_orphan_dirs(web, tmp_path):
     assert not orphan.exists()
 
 
+def test_orphan_of_a_finished_run_keeps_the_deletion_promises(web):
+    # Redis restarted after the run finished: the record is gone, the files are not.
+    _, r, settings = web
+    orphan = settings.data_dir / "cafef00d"
+    orphan.mkdir(parents=True)
+    (orphan / "input.jpg").write_bytes(b"original")
+    (orphan / "output-1.jpg").write_bytes(b"result")
+
+    def finished(seconds_ago):
+        t = time.time() - seconds_ago
+        for f in orphan.iterdir():
+            os.utime(f, (t, t))
+
+    finished(settings.input_grace_seconds - 30)
+    sweep_expired(settings.data_dir, settings, r)
+    assert (orphan / "input.jpg").exists()  # still inside the grace window
+
+    finished(settings.input_grace_seconds + 30)
+    assert sweep_expired(settings.data_dir, settings, r) == 0
+    assert not (orphan / "input.jpg").exists()  # the original goes on time
+    assert (orphan / "output-1.jpg").exists()  # the result stays downloadable
+
+    finished(settings.ttl_seconds + 30)
+    assert sweep_expired(settings.data_dir, settings, r) == 1
+    assert not orphan.exists()
+
+
 def test_expires_in_restarts_at_completion(web, image_pdf):
     client, r, settings = web
     job_id = _upload(client, image_pdf).json()["job_id"]
