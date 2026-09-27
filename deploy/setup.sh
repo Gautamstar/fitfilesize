@@ -87,11 +87,36 @@ OnUnitActiveSec=1min
 [Install]
 WantedBy=timers.target
 UNIT
+
+echo "== autodeploy: deploy main within two minutes of a merge"
+sudo tee /etc/systemd/system/fitfilesize-autodeploy.service >/dev/null <<UNIT
+[Unit]
+Description=Deploy FitFileSize when main has new commits
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=$USER
+StateDirectory=fitfilesize
+ExecStart=$DIR/deploy/autodeploy.sh
+UNIT
+sudo tee /etc/systemd/system/fitfilesize-autodeploy.timer >/dev/null <<UNIT
+[Unit]
+Description=Check for new FitFileSize commits every two minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target
+UNIT
+
 sudo systemctl daemon-reload
-sudo systemctl enable --now fitfilesize-watchdog.timer
+sudo systemctl enable --now fitfilesize-watchdog.timer fitfilesize-autodeploy.timer
 
 echo
 echo "Done. Next:"
 echo "  1. Log out and back in (so Docker works without sudo)."
 echo "  2. Put the tunnel token in $DIR/deploy/.env"
-echo "  3. Run $DIR/deploy/deploy.sh"
+echo "  3. Run $DIR/deploy/deploy.sh (after that, merges to main deploy themselves)"

@@ -196,30 +196,32 @@ times above.
 
 ## Deploy
 
-Backend on Render, frontend on Vercel, both on free plans.
+Backend on a VPS, frontend on Vercel.
 
-Render (API, worker and Redis):
+VPS (API, two workers and Redis, in Docker Compose behind a Cloudflare Tunnel;
+see `deploy/`):
 
-1. Dashboard, New, Blueprint, pick this repo. `render.yaml` sets up a Docker
-   web service (Ghostscript ships in the image, and the worker runs inside the
-   same container since free plans do not include separate workers) plus a free
-   Key Value instance for the queue.
-2. Set `ALLOWED_ORIGINS` to your Vercel URL once you have it, e.g.
-   `https://fitpdf.vercel.app`.
+1. On a fresh Ubuntu 24.04 box, run `deploy/setup.sh`. It hardens SSH, sets
+   up the firewall, swap and Docker, clones the repo to `/opt/fitfilesize`, and
+   installs two timers: a watchdog that restarts a container `/health` reports
+   stuck, and an autodeploy that deploys `main` within two minutes of a merge.
+2. Put the tunnel token and `ALLOWED_ORIGINS` in `deploy/.env` (see
+   `deploy/.env.example`), then run `deploy/deploy.sh` once.
+
+After that, merging to `main` is the deploy. `journalctl -t
+fitfilesize-autodeploy` shows what went out; a commit that fails to deploy is
+tried once and then waits for the next merge, or for `deploy.sh` by hand.
 
 Vercel (React frontend):
 
 1. Import the repo, set the root directory to `frontend`. Vercel detects Vite;
    the build command is `npm run build` and the output directory is `dist`.
-2. Add an env var `VITE_API_URL` with the Render URL, e.g.
-   `https://fitpdf.onrender.com`. It is read at build time (see
+2. Add an env var `VITE_API_URL` with the API URL, e.g.
+   `https://api.fitfilesize.com`. It is read at build time (see
    `frontend/.env.example`), so changing it needs a redeploy.
 
-Free tier notes: the Render service spins down after 15 minutes idle, so the
-first request after a quiet spell takes about a minute. Storage is ephemeral,
-which is fine here because nothing is kept long anyway. Keep `FITPDF_MAX_UPLOAD`
-well under the 512 MB instance memory: Ghostscript needs several times the file
-size while distilling, and a large upload will get the process OOM-killed.
+Keep `FITPDF_MAX_UPLOAD` well under each worker's memory cap: Ghostscript needs
+several times the file size while distilling.
 
 The API serves no HTML. In production the SPA is a separate origin (Vercel), so
 `ALLOWED_ORIGINS` is required there; in Docker Compose nginx proxies `/api` and
