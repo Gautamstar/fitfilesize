@@ -1,6 +1,7 @@
 """Image compression: the same search harness, a Pillow strategy underneath."""
 
 import pytest
+from pathlib import Path
 from PIL import Image
 
 from fitpdf.engine import analyze, compress_to_target, estimate_floor
@@ -215,6 +216,78 @@ def test_a_run_reuses_the_native_floor_render(photo_jpg, tmp_path):
     # Under the floor: answered by the analyze step's render, nothing rendered again.
     assert result.method == "floor" and result.output.suffix == ".png"
     assert not any(e["stage"] == "rung_start" and e["rung"] == len(PNG_RUNGS) - 1 for e in events)
+
+
+def test_an_iphone_heic_always_comes_back_as_an_upright_jpeg(iphone_heic, tmp_path):
+    # Even far under the limit: handing back the original would hand back
+    # a HEIC, which almost no upload form accepts.
+    result = compress_to_target(iphone_heic, tmp_path / "out.heic", iphone_heic.stat().st_size * 10)
+    assert result.hit_target and result.output.suffix == ".jpg"
+    with Image.open(result.output) as out:
+        assert out.format == "JPEG"
+        assert out.size == (1200, 1600)  # portrait, turned once, full size kept
+    assert any(w.startswith("converted to JPG") for w in result.warnings)
+
+
+def test_an_unreadable_heic_says_what_to_do(iphone_heic, tmp_path, monkeypatch):
+    def fail(*args, **kwargs):
+        raise ValueError("Decoder plugin generated an error")
+
+    monkeypatch.setattr(ImageStrategy, "_decoded", fail)
+    with pytest.raises(RuntimeError, match=r"HEIC.*could not be read"):
+        compress_to_target(iphone_heic, tmp_path / "out.heic", 60_000)
+
+
+def test_a_heic_under_a_tight_limit_fits_as_a_jpeg(iphone_heic, tmp_path):
+    result = compress_to_target(iphone_heic, tmp_path / "out.heic", 60_000)
+    assert result.hit_target and result.output.suffix == ".jpg"
+    assert result.final_bytes <= 60_000
+
+
+def test_display_p3_colours_are_converted_to_srgb(tmp_path):
+    # iPhone photos carry a Display P3 profile; the result has none, so its
+    # numbers must be sRGB or it looks dull everywhere.
+    p3 = Path("/System/Library/ColorSync/Profiles/Display P3.icc")
+    if not p3.exists():
+        pytest.skip("needs the Display P3 profile macOS ships")
+    src = tmp_path / "p3.jpg"
+    Image.new("RGB", (1200, 900), (60, 170, 90)).save(src, "JPEG", quality=95, icc_profile=p3.read_bytes())
+    result = compress_to_target(src, tmp_path / "out.jpg", 5_000)
+    assert result.method.startswith("rung:") or result.method == "floor"
+    with Image.open(result.output) as out:
+        r, g, b = out.convert("RGB").getpixel((600, 450))
+    # That P3 green in sRGB numbers is (0, 173, 80): red all but gone.
+    assert r < 20 and 165 <= g <= 180, (r, g, b)
+
+
+def test_the_lossless_pass_keeps_a_colour_profile(tmp_path):
+    # Same pixels, same profile: dropping an iPhone photo's P3 tag dulls it.
+    p3 = Path("/System/Library/ColorSync/Profiles/Display P3.icc")
+    if not p3.exists():
+        pytest.skip("needs the Display P3 profile macOS ships")
+    for fmt, name in (("JPEG", "a.jpg"), ("PNG", "a.png")):
+        src = tmp_path / name
+        Image.effect_noise((600, 400), 40).convert("RGB").save(src, fmt, icc_profile=p3.read_bytes())
+        out = tmp_path / ("l" + name)
+        ImageStrategy().lossless(src, out, strip_metadata=True)
+        with Image.open(out) as im:
+            assert im.info.get("icc_profile") == p3.read_bytes(), fmt
+
+
+def test_a_p3_png_kept_a_png_is_converted_to_srgb(tmp_path):
+    p3 = Path("/System/Library/ColorSync/Profiles/Display P3.icc")
+    if not p3.exists():
+        pytest.skip("needs the Display P3 profile macOS ships")
+    src = tmp_path / "shot.png"
+    im = Image.new("RGB", (1200, 900), (60, 170, 90))
+    im.paste(Image.effect_noise((600, 900), 60).convert("RGB"), (0, 0))  # too busy for lossless
+    im.save(src, "PNG", compress_level=0, icc_profile=p3.read_bytes())
+    result = compress_to_target(src, tmp_path / "out.png", src.stat().st_size // 50)
+    assert result.output.suffix == ".png" and result.method != "lossless"
+    with Image.open(result.output) as out:
+        w, h = out.size
+        r, g, b = out.convert("RGB").getpixel((w * 3 // 4, h // 2))  # the flat green half
+    assert r < 20 and 165 <= g <= 180, (r, g, b)
 
 
 def test_a_transparent_png_keeps_its_transparency(transparent_png, tmp_path):

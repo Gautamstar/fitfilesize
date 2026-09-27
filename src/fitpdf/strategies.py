@@ -26,7 +26,18 @@ import pikepdf
 from .gs import GhostscriptError, gs_available, run_gs
 
 PDF_SUFFIXES = {".pdf"}
-IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp", ".heic", ".heif"}
+
+# iPhone photos (HEIC). Pillow opens them once pillow-heif registers its
+# plugin; its format name is "HEIF". Almost no upload form accepts HEIC, so
+# unlike every other format a HEIC always comes back as a JPEG, and says so.
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:  # pragma: no cover - a build without HEIC support
+    pass
+CONVERT_TO_JPEG = {"HEIF"}
 
 
 @dataclass
@@ -271,6 +282,12 @@ class PngRefused(Exception):
     """256 colours would visibly damage this image; it should not stay a PNG."""
 
 
+# A HEIC converted to JPEG may keep every pixel: someone converting a 48 MP
+# iPhone photo with room to spare expects all of it, not the 4000 px the
+# JPEG ladder starts at.
+CONVERT_RUNGS: list[dict] = [{"max_edge": FULL_SIZE, "quality": 92}, *IMAGE_RUNGS]
+
+
 # Exact pixel size, as exam and ID forms ask for ("200 x 230 pixels, under
 # 50 KB"). The dimensions are fixed, so JPEG quality is the only lever left.
 RESIZE_QUALITIES = (95, 90, 85, 80, 75, 70, 65, 60, 50, 40, 30, 20)
@@ -346,6 +363,21 @@ class ImageStrategy:
         else:
             width, height = resize
             self.rungs = [{"width": width, "height": height, "quality": q} for q in RESIZE_QUALITIES]
+
+    def must_convert(self, src: Path) -> bool:
+        """Whether src can only come back as a JPEG (see CONVERT_TO_JPEG)."""
+        from PIL import Image
+
+        try:
+            with Image.open(src) as im:
+                return (im.format or "").upper() in CONVERT_TO_JPEG
+        except Exception:
+            return False
+
+    def use_conversion(self) -> None:
+        """The JPEG ladder with a full-size first rung, for a must_convert source."""
+        if self.resize is None:
+            self.rungs = CONVERT_RUNGS
 
     def native_first(self, src: Path) -> bool:
         """Whether src has a ladder that keeps its own format (see
@@ -487,6 +519,9 @@ class ImageStrategy:
         # transform below produces a new in-memory image held separately.
         with Image.open(src) as opened:
             fmt = (opened.format or "JPEG").upper()
+            # Same pixels, so the same colour profile: dropping an iPhone
+            # photo's Display P3 tag would make it look dull everywhere.
+            icc = {"icc_profile": opened.info["icc_profile"]} if opened.info.get("icc_profile") else {}
             # EXIF carries the orientation flag. Dropping EXIF without baking the
             # rotation into the pixels first would leave photos sideways.
             needs_rotation = opened.getexif().get(0x0112, 1) not in (0, 1)
@@ -495,18 +530,18 @@ class ImageStrategy:
                 # quality="keep" reuses the existing DCT coefficients, so this is
                 # genuinely lossless. It only works on an unmodified JPEG, which
                 # is why the rotation case below has to re-encode instead.
-                opened.save(dst, "JPEG", quality="keep", optimize=True, progressive=True)
+                opened.save(dst, "JPEG", quality="keep", optimize=True, progressive=True, **icc)
             elif fmt == "JPEG":
                 ImageOps.exif_transpose(opened).save(
-                    dst, "JPEG", quality=95, optimize=True, progressive=True
+                    dst, "JPEG", quality=95, optimize=True, progressive=True, **icc
                 )
             elif fmt == "PNG":
-                ImageOps.exif_transpose(opened).save(dst, "PNG", optimize=True)
+                ImageOps.exif_transpose(opened).save(dst, "PNG", optimize=True, **icc)
             elif fmt == "WEBP":
-                opened.save(dst, "WEBP", lossless=True, method=6)
+                opened.save(dst, "WEBP", lossless=True, method=6, **icc)
             elif fmt == "TIFF":
                 # Often stored uncompressed: deflate keeps every pixel.
-                ImageOps.exif_transpose(opened).save(dst, **NATIVE_SAVE["TIFF"])
+                ImageOps.exif_transpose(opened).save(dst, **NATIVE_SAVE["TIFF"], **icc)
             else:
                 opened.save(dst, fmt)
         return dst.stat().st_size
@@ -553,7 +588,11 @@ class ImageStrategy:
                 keep_alpha = im.mode in ("RGBA", "LA", "PA") or (
                     im.mode == "P" and "transparency" in im.info
                 )
-                self._pixels[key] = im.convert("RGBA" if keep_alpha else "RGB")
+                # pngquant and the re-encodes drop the profile, so the pixels
+                # go to sRGB first (see _to_srgb): a Mac screenshot is P3.
+                self._pixels[key] = _to_srgb(
+                    im.convert("RGBA" if keep_alpha else "RGB"), opened.info.get("icc_profile")
+                )
         im = self._pixels[key]
         if max(im.size) > max_edge:
             scale = max_edge / max(im.size)
@@ -703,6 +742,7 @@ class ImageStrategy:
                 # once loaded, after the `with` closes the file.
                 ImageOps.exif_transpose(im, in_place=True)
 
+                im = _to_srgb(im, opened.info.get("icc_profile"))
                 if im.mode in ("RGBA", "LA", "P"):
                     # JPEG has no alpha. Composite onto white rather than
                     # letting Pillow drop the channel and produce black
@@ -760,6 +800,32 @@ class ImageStrategy:
 
 # --------------------------------------------------------------------------- #
 
+
+def _to_srgb(im, icc: bytes | None):
+    """im in sRGB, for a JPEG that carries no profile.
+
+    iPhone photos, HEIC and JPEG alike, are Display P3. The rungs write JPEGs
+    without a profile, which every viewer and upload validator reads as sRGB,
+    so P3 numbers left as they are come out dull. Anything already sRGB, or
+    without a profile, or in a mode the colour engine does not take, is left
+    alone.
+    """
+    if not icc or im.mode not in ("RGB", "RGBA"):
+        return im
+    from io import BytesIO
+
+    from PIL import ImageCms
+
+    try:
+        profile = ImageCms.ImageCmsProfile(BytesIO(icc))
+        if "srgb" in ImageCms.getProfileDescription(profile).lower():
+            return im
+        return ImageCms.profileToProfile(
+            im, profile, ImageCms.createProfile("sRGB"), outputMode=im.mode
+        )
+    except Exception:
+        return im  # a broken profile is not worth failing the run over
+
 def detect_strategy(src: Path | str) -> Strategy:
     """Pick a strategy from the file extension, falling back to sniffing."""
     src = Path(src)
@@ -772,7 +838,7 @@ def detect_strategy(src: Path | str) -> Strategy:
     # No usable extension (the web layer stores uploads under a fixed name):
     # sniff the magic bytes instead.
     with src.open("rb") as f:
-        head = f.read(8)
+        head = f.read(12)
     if head.startswith(b"%PDF"):
         return PdfStrategy()
     return ImageStrategy()

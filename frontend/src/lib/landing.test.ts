@@ -27,7 +27,9 @@ describe('landing page data', () => {
     expect(new Set(slugs).size).toBe(slugs.length)
     for (const page of LANDING_PAGES.filter((p) => !p.source)) {
       // The URL and the preset must agree: /…-to-200kb targets 200 KB.
-      // (Form pages are named for their form instead.)
+      // (Form pages are named for their form instead, and a page that names
+      // no size, like /heic-to-jpg, is about something else.)
+      if (!/\d/.test(page.slug)) continue
       const label = pageSizeLabel(page).replace(' ', '').toLowerCase()
       expect(page.slug.endsWith(label)).toBe(true)
     }

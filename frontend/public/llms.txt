@@ -2,7 +2,7 @@
 
 > Compress a PDF or image so it fits under an upload limit, such as "200 KB" on a visa form or "1 MB" on a job application. Free, no sign-up, no API key. Lossless first; if that is not enough, the gentlest lossy setting that fits. Files are deleted within minutes.
 
-FitFileSize is for the situation where a website rejects a file for being too large. Pick the limit, get a file that is under it, or an honest report of the smallest size reachable. It accepts PDF, JPEG, PNG, WebP, TIFF and BMP, up to 25 MB.
+FitFileSize is for the situation where a website rejects a file for being too large. Pick the limit, get a file that is under it, or an honest report of the smallest size reachable. It accepts PDF, JPEG, PNG, WebP, TIFF, BMP and HEIC, up to 50 MB. Every file comes back in the format it was uploaded in, except HEIC (iPhone photos), which comes back as JPEG because almost no upload form accepts HEIC.
 
 ## Using it for someone (API)
 
@@ -16,7 +16,7 @@ curl -F "file=@passport-scan.pdf" -F "target=200KB" https://api.fitfilesize.com/
 - `200` response: `fits` (true if it got under the target), `final_bytes`, and `download_url`. Fetch `download_url` to get the file; it expires about 10 minutes after the run.
 - `202` response: still working (large files). Poll `status_url` until `status` is `done`, then fetch `download_url`.
 - `fits: false` means the file cannot get that small without becoming unusable; the result is the smallest version that could be made. Tell the user, rather than retrying.
-- Lossy image results are always JPEG. Transparent areas become white.
+- Images come back in the format they were sent in (a PNG stays a PNG, transparency kept), except HEIC (iPhone photos), which comes back as JPEG.
 - Exact pixel size (images only): add `-F width=200 -F height=230` when a form asks for set dimensions, as exam and ID photo forms do. `fit=crop` (default) fills the frame and trims the overflow; `fit=pad` keeps the whole image and adds a white border. The result is always a JPEG of exactly that size, and `warnings` says what was trimmed or padded.
 - Limits: 30 uploads and 100 compressions per hour per client. A `429` includes `Retry-After`. `GET https://api.fitfilesize.com/api/limits` shows what is left.
 - Minimum size: add `-F minimum=10KB` for forms that also set one (a signature "between 10 and 20 KB"). A JPEG result under it is padded up to it; the picture is unchanged.

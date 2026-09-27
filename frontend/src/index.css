@@ -793,6 +793,16 @@ button:disabled {
   color: var(--good);
   font-weight: 600;
 }
+/* A HEIC comes back as a JPEG: said before Compress. */
+.convert-note {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--accent-wash);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.55;
+}
 .read-bar {
   position: relative;
   height: 8px;

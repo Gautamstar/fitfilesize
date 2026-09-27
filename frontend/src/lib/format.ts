@@ -144,7 +144,14 @@ export const ACCEPTED_EXTENSIONS = [
   '.tif',
   '.tiff',
   '.bmp',
+  '.heic',
+  '.heif',
 ]
+
+/** iPhone photos, which come back as JPEG (almost no upload form takes HEIC). */
+export function isHeic(filename: string): boolean {
+  return /\.hei[cf]$/i.test(filename)
+}
 
 export function isAcceptedFile(file: File): boolean {
   const name = file.name.toLowerCase()

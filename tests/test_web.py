@@ -242,6 +242,21 @@ def test_a_webp_tiff_or_bmp_downloads_as_itself(web, photo_jpg, tmp_path, fmt, e
     assert f"scan.fit.{ext}" in dl.headers["content-disposition"]
 
 
+def test_an_iphone_heic_uploads_and_downloads_as_a_jpeg(web, iphone_heic):
+    client, _, _ = web
+    res = _upload(client, iphone_heic, name="IMG_0001.HEIC")
+    assert res.status_code == 200 and res.json()["kind"] == "image"
+    job_id = res.json()["job_id"]
+    client.post(f"/api/jobs/{job_id}/analyze")
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": 200_000})
+    state = client.get(f"/api/jobs/{job_id}").json()
+    assert state["hit_target"] is True
+    assert any(w.startswith("converted to JPG") for w in state["warnings"])
+    dl = client.get(f"/api/jobs/{job_id}/download")
+    assert dl.headers["content-type"] == "image/jpeg"
+    assert "IMG_0001.fit.jpg" in dl.headers["content-disposition"]
+
+
 def test_a_graphic_png_comes_back_as_a_png(web, photo_jpg, tmp_path):
     client, _, _ = web
     png = tmp_path / "sheet.png"

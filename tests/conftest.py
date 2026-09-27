@@ -50,6 +50,20 @@ def photo_png(tmp_path_factory) -> Path:
 
 
 @pytest.fixture(scope="session")
+def iphone_heic(tmp_path_factory) -> Path:
+    """An iPhone-style HEIC, taken sideways: stored landscape, EXIF says turn it."""
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+    path = tmp_path_factory.mktemp("corpus") / "IMG_0001.heic"
+    img = _page_image(1600, 1200, 3)
+    exif = img.getexif()
+    exif[0x0112] = 6
+    img.save(path, "HEIF", quality=80, exif=exif.tobytes())
+    return path
+
+
+@pytest.fixture(scope="session")
 def transparent_photo_png(photo_png, tmp_path_factory) -> Path:
     """photo_png with see-through parts: it can only fit as a JPEG, which
     turns them white."""

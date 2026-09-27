@@ -77,7 +77,7 @@ bytes and passes whichever way the destination counts.
 
 **Limits:** uploads up to 50 MB; per client, 30 uploads and 100 compressions
 an hour (`GET /api/limits` shows what is left; a refusal is `429` with
-`Retry-After`). Accepted types: PDF, JPEG, PNG, WebP, TIFF, BMP.
+`Retry-After`). Accepted types: PDF, JPEG, PNG, WebP, TIFF, BMP, HEIC (returned as JPEG).
 
 **Retention:** the original is deleted 5 minutes after a run finishes, the
 result 10 minutes after; `DELETE /api/jobs/{job_id}` removes both at once.
@@ -656,7 +656,7 @@ def create_app(
             raise HTTPException(
                 415,
                 "unsupported file type; upload a PDF or an image "
-                "(JPEG, PNG, WebP, TIFF, BMP)",
+                "(JPEG, PNG, WebP, TIFF, BMP, HEIC)",
             )
 
         # Out of disk, an upload fails halfway with a raw error. Clear expired

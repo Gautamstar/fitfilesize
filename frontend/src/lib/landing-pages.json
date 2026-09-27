@@ -315,7 +315,7 @@
           "We stop at the first setting that fits, so an image that only needs a little squeezing keeps most of its resolution and detail."
         ],
         "tips": [
-          "iPhone photos saved as HEIC need to be JPEG first. Export or share them as JPEG, or set the camera to Most Compatible.",
+          "iPhone photos (HEIC) work too: they come back as a JPG, since almost no upload form accepts HEIC.",
           "We remove camera metadata such as GPS location. It saves space and keeps where you took the photo private.",
           "Every file comes back in the format you uploaded: a PNG stays a PNG, a WebP a WebP."
         ]
@@ -376,7 +376,7 @@
         ],
         "tips": [
           "Stripping metadata also removes the photo's GPS location, which is worth doing before you post it publicly.",
-          "HEIC photos from iPhones need converting to JPEG first. Most phones can save as JPEG in their camera settings.",
+          "iPhone photos (HEIC) work too: they come back as a JPG, since almost no upload form accepts HEIC.",
           "RAW files are not supported. Export a JPEG from your editor, then compress that."
         ]
       }
@@ -420,6 +420,90 @@
           "Zoom in on small text in the result before you upload it, in case the image had to be made smaller in pixels to fit.",
           "For a photo, export a JPEG from your design tool instead: photos shrink much better as JPEG than as PNG.",
           "Images with large flat areas of one color, like diagrams, shrink the most."
+        ]
+      }
+    },
+    {
+      "slug": "heic-to-jpg",
+      "kind": "image",
+      "group": "iPhone photos (HEIC)",
+      "targetKb": 10000,
+      "heading": "Convert HEIC to JPG",
+      "description": "Convert an iPhone HEIC photo to JPG, and fit it under a size limit if you need one. Free, no sign-up, files deleted minutes after.",
+      "blurb": "iPhones save photos as HEIC, which almost no upload form accepts and Windows cannot open without an extra download.",
+      "guide": {
+        "title": "Turning an iPhone photo into a JPG",
+        "paragraphs": [
+          "iPhones save photos as HEIC to use less space. The catch is that very few upload forms take it: the US visa form (DS-160), UK passport photos and Canadian immigration uploads all ask for JPG. Windows needs a paid extension just to open one.",
+          "We convert it to a JPG, turned the right way up, with its colours converted to the standard sRGB every site expects, and keep every pixel when the limit allows. A JPG of the same photo is usually about twice the size of the HEIC, so if the form has a limit, pick it below and we fit the JPG under it in the same step."
+        ],
+        "tips": [
+          "On an iPhone, uploading straight from Safari usually hands the site a JPG already. This is for HEIC files that have reached a computer, by AirDrop, iCloud or email.",
+          "To stop your iPhone saving HEIC at all, go to Settings, Camera, Formats and choose Most Compatible.",
+          "We remove camera metadata such as GPS location from the JPG, which also keeps where you took the photo private."
+        ]
+      }
+    },
+    {
+      "slug": "heic-to-jpg-1mb",
+      "kind": "image",
+      "group": "iPhone photos (HEIC)",
+      "targetKb": 1000,
+      "heading": "Convert HEIC to JPG under 1 MB",
+      "description": "Turn an iPhone HEIC photo into a JPG under 1 MB, in one step. Free, no sign-up, files deleted minutes after.",
+      "blurb": "An iPhone photo converted to JPG is often 3 to 6 MB. 1 MB still keeps plenty of detail.",
+      "guide": {
+        "title": "Getting an iPhone photo under 1 MB as a JPG",
+        "paragraphs": [
+          "Converting a HEIC to JPG roughly doubles its size, so a photo that was 2 MB on your phone can land at 4 MB or more, over a 1 MB upload limit.",
+          "We convert and shrink in one step, keeping the most resolution that fits. A 12-megapixel iPhone photo under 1 MB usually keeps around 2,600 pixels on its long side, plenty for a form, a listing or a profile."
+        ],
+        "tips": [
+          "On an iPhone, uploading straight from Safari usually hands the site a JPG already. This is for HEIC files that have reached a computer, by AirDrop, iCloud or email.",
+          "If the form also asks for exact pixel dimensions, open Exact size in pixels before you compress.",
+          "We remove camera metadata such as GPS location from the JPG, which also keeps where you took the photo private."
+        ]
+      }
+    },
+    {
+      "slug": "heic-to-jpg-200kb",
+      "kind": "image",
+      "group": "iPhone photos (HEIC)",
+      "targetKb": 200,
+      "heading": "Convert HEIC to JPG under 200 KB",
+      "description": "Turn an iPhone HEIC photo into a JPG under 200 KB for an application form. Free, no sign-up, files deleted minutes after.",
+      "blurb": "200 KB is a common limit for photos on visa, exam and job application forms, and none of them take HEIC.",
+      "guide": {
+        "title": "An iPhone photo as a JPG under 200 KB",
+        "paragraphs": [
+          "Application forms that cap photos at 200 KB almost always want JPG too. Uploading the HEIC straight from a computer fails twice: wrong format, and several times too big.",
+          "We fix both at once. A 12-megapixel iPhone photo under 200 KB usually keeps around 1,800 pixels on its long side, still sharp for a portrait or a photo of a document."
+        ],
+        "tips": [
+          "If the form gives exact pixel dimensions, like 600 x 600 for a US visa photo, open Exact size in pixels and enter them; we crop to fill.",
+          "On an iPhone, uploading straight from Safari usually hands the site a JPG already. This is for HEIC files that have reached a computer, by AirDrop, iCloud or email.",
+          "We remove camera metadata such as GPS location from the JPG, which also keeps where you took the photo private."
+        ]
+      }
+    },
+    {
+      "slug": "heic-to-jpg-100kb",
+      "kind": "image",
+      "group": "iPhone photos (HEIC)",
+      "targetKb": 100,
+      "heading": "Convert HEIC to JPG under 100 KB",
+      "description": "Turn an iPhone HEIC photo into a JPG under 100 KB. Free, no sign-up, files deleted minutes after.",
+      "blurb": "100 KB is tight for an iPhone photo, which is often 20 to 50 times that once converted to JPG.",
+      "guide": {
+        "title": "An iPhone photo as a JPG under 100 KB",
+        "paragraphs": [
+          "At 100 KB there is no room for a full iPhone photo, so the pixel size has to come down as well as the quality. We step both down together and keep the first setting that fits, so it stays as sharp as that size allows.",
+          "A 12-megapixel iPhone photo under 100 KB usually keeps around 1,600 pixels on its long side, clear on screen and fine for most form previews."
+        ],
+        "tips": [
+          "Crop to what the form needs before you upload, such as your face for an ID photo. Fewer pixels to keep means more quality for the ones left.",
+          "On an iPhone, uploading straight from Safari usually hands the site a JPG already. This is for HEIC files that have reached a computer, by AirDrop, iCloud or email.",
+          "We remove camera metadata such as GPS location from the JPG, which also keeps where you took the photo private."
         ]
       }
     },
