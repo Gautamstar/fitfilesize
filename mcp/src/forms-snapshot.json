@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-26",
+  "updated": "2026-10-07",
   "forms": [
     {
       "id": "us-visa-photo-ds160",
@@ -178,6 +178,92 @@
       "source": "https://rrbajmer.gov.in/Upload_PDF/Final-Detailed%20CEN%2009-2025%20Level-1-updated%20on%2030012026-639054049190206941.pdf",
       "checked": "2026-09-26",
       "page": "https://fitfilesize.com/rrb-sc-st-certificate-pdf"
+    },
+    {
+      "id": "ssc-signature",
+      "name": "SSC signature (CGL, CHSL)",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "About 6.0 × 2.0 cm",
+        "10 KB to 20 KB"
+      ],
+      "limit_bytes": 20000,
+      "min_bytes": 10240,
+      "width": 600,
+      "height": 200,
+      "source": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsl_2026.pdf",
+      "checked": "2026-10-07",
+      "page": "https://fitfilesize.com/ssc-signature"
+    },
+    {
+      "id": "neet-photo",
+      "name": "NEET (UG) photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "10 KB to 200 KB"
+      ],
+      "limit_bytes": 200000,
+      "min_bytes": 10240,
+      "source": "https://cdnbbsr.s3waas.gov.in/s37bc1ec1d9c3426357e69acd5bf320061/uploads/2026/02/202602231394640855.pdf",
+      "checked": "2026-10-07",
+      "page": "https://fitfilesize.com/neet-photo"
+    },
+    {
+      "id": "neet-signature",
+      "name": "NEET (UG) signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "10 KB to 100 KB"
+      ],
+      "limit_bytes": 100000,
+      "min_bytes": 10240,
+      "source": "https://cdnbbsr.s3waas.gov.in/s37bc1ec1d9c3426357e69acd5bf320061/uploads/2026/02/202602231394640855.pdf",
+      "checked": "2026-10-07",
+      "page": "https://fitfilesize.com/neet-signature"
+    },
+    {
+      "id": "neet-certificate-pdf",
+      "name": "NEET (UG) certificates and documents",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "50 KB to 300 KB"
+      ],
+      "limit_bytes": 300000,
+      "source": "https://cdnbbsr.s3waas.gov.in/s37bc1ec1d9c3426357e69acd5bf320061/uploads/2026/02/202602231394640855.pdf",
+      "checked": "2026-10-07",
+      "page": "https://fitfilesize.com/neet-certificate-pdf"
+    },
+    {
+      "id": "jee-main-photo",
+      "name": "JEE (Main) photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "10 KB to 200 KB"
+      ],
+      "limit_bytes": 200000,
+      "min_bytes": 10240,
+      "source": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2025/11/202511021649722475.pdf",
+      "checked": "2026-10-07",
+      "page": "https://fitfilesize.com/jee-main-photo"
+    },
+    {
+      "id": "jee-main-signature",
+      "name": "JEE (Main) signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "10 KB to 100 KB"
+      ],
+      "limit_bytes": 100000,
+      "min_bytes": 10240,
+      "source": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2025/11/202511021649722475.pdf",
+      "checked": "2026-10-07",
+      "page": "https://fitfilesize.com/jee-main-signature"
     },
     {
       "id": "ircc-document-pdf",

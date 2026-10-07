@@ -122,6 +122,14 @@ writeFileSync(
   renderPage({ path: '/', title: homeTitle, description: homeDescription }),
 )
 
+// Size pages open with the words people search for ("compress pdf to 2 mb"),
+// so the article goes; form pages are searched by the form's name, which
+// their heading already starts with.
+const pageTitle = (page) =>
+  page.source
+    ? `${page.heading} | Free, no sign-up | ${siteName}`
+    : `${page.heading.replace(/^Compress an? /, 'Compress ')} online, free, no sign-up | ${siteName}`
+
 for (const page of pages) {
   const dir = join(dist, page.slug)
   mkdirSync(dir, { recursive: true })
@@ -129,7 +137,7 @@ for (const page of pages) {
     join(dir, 'index.html'),
     renderPage({
       path: `/${page.slug}`,
-      title: `${page.heading} | Free, no sign-up | ${siteName}`,
+      title: pageTitle(page),
       description: page.description,
     }),
   )
