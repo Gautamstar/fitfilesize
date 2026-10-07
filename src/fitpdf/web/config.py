@@ -53,6 +53,11 @@ class Settings:
     dodge the rate limit. Set FITPDF_CLIENT_IP_HEADERS to override, or to an
     empty string to trust only the socket peer when nothing sits in front."""
 
+    usage_db: Path | None = None
+    """SQLite file for the daily upload and download counts (see usage.py).
+    Keep it off data_dir, whose sweeper removes anything that is not a live
+    job. None turns counting off."""
+
     inline: bool = False
     """Run jobs in-process against a fake Redis. Dev convenience for machines
     without Redis or Docker; needs the fakeredis package (dev extra)."""
@@ -89,5 +94,6 @@ class Settings:
                 if "FITPDF_CLIENT_IP_HEADERS" in os.environ
                 else cls.client_ip_headers
             ),
+            usage_db=Path(os.environ["FITPDF_USAGE_DB"]) if os.environ.get("FITPDF_USAGE_DB") else None,
             inline=os.environ.get("FITPDF_INLINE", "") == "1",
         )

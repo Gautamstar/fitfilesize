@@ -141,6 +141,9 @@ function sendUpload(
   onProgress?: (fraction: number) => void,
 ): Promise<UploadResponse> {
   const form = new FormData()
+  // Which page the upload came from, for the server's daily usage counts:
+  // the slug only ("neet-photo", "" for home), nothing about the visitor.
+  form.append('page', typeof location === 'undefined' ? '' : location.pathname.replace(/^\/+|\/+$/g, ''))
   form.append('file', file)
   // XMLHttpRequest rather than fetch: only it reports upload progress, and a
   // 5 MB photo on mobile data takes long enough to need a bar. No
