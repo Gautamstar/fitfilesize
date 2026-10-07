@@ -1,0 +1,33 @@
+name: indexnow
+
+# After a merge changes the site's pages, tell IndexNow search engines (Bing
+# and others) which ones, once Vercel serves them. See frontend/scripts/indexnow.mjs.
+on:
+  push:
+    branches: [main]
+    paths:
+      - frontend/src/lib/landing-pages.json
+  workflow_dispatch:
+    inputs:
+      all:
+        description: Submit every page in the sitemap
+        type: boolean
+        default: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Submit changed pages
+        if: github.event_name == 'push'
+        run: node frontend/scripts/indexnow.mjs ${{ github.event.before }}
+      - name: Submit every page
+        if: github.event_name == 'workflow_dispatch' && inputs.all
+        run: node frontend/scripts/indexnow.mjs --all

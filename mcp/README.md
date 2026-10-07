@@ -7,7 +7,7 @@ Let your AI assistant make a PDF or image fit an upload limit, or a form's exact
 > Saved ~/Downloads/signature.fit.jpg for IBPS signature (JPEG, 140 × 60 pixels, 10 KB to 20 KB): 10,240 bytes (10.0 KB), under the 20,000 bytes limit.
 
 - **Any limit:** "get this scan under 300 KB", "this photo under 50 KB".
-- **Form presets:** US visa photo (DS-160), Indian e-Visa passport page and photo, IBPS, SBI, RRB, SSC, NEET and JEE Main uploads, IRCC documents. The preset sets the size limit, the minimum size and the exact pixels. Ask for `list_forms` to see them all.
+- **Form presets:** US visa photo (DS-160), Indian e-Visa passport page and photo, IBPS, SBI, RRB, SSC, NEET, JEE Main, CUET and GATE uploads, IRCC documents. The preset sets the size limit, the minimum size and the exact pixels. Ask for `list_forms` to see them all.
 - **Several files at once:** "fit these five documents under 2 MB each".
 - Keeps as much quality as the limit allows, and saves the result next to the original as `<name>.fit.<ext>`. Every file keeps its format (a PNG stays a PNG) unless you say a JPEG is fine; iPhone HEIC photos come back as JPEG.
 - Free, no account, no API key. Files up to 50 MB.
