@@ -491,19 +491,19 @@ def test_health_fails_when_redis_is_away(tmp_path, monkeypatch):
 
 
 def test_cors_for_separate_frontend(tmp_path, monkeypatch):
-    monkeypatch.setenv("ALLOWED_ORIGINS", "https://fitpdf.vercel.app, http://localhost:5173")
+    monkeypatch.setenv("ALLOWED_ORIGINS", "https://fitfilesize.com, http://localhost:5173")
     settings = Settings.from_env()
-    assert settings.allowed_origins == ("https://fitpdf.vercel.app", "http://localhost:5173")
+    assert settings.allowed_origins == ("https://fitfilesize.com", "http://localhost:5173")
 
     settings = Settings(
-        data_dir=tmp_path / "data", allowed_origins=("https://fitpdf.vercel.app",)
+        data_dir=tmp_path / "data", allowed_origins=("https://fitfilesize.com",)
     )
     r = fakeredis.FakeRedis()
     q = Queue(settings.queue_name, connection=r, is_async=False)
     app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
     with TestClient(app) as client:
-        res = client.get("/health", headers={"Origin": "https://fitpdf.vercel.app"})
-        assert res.headers["access-control-allow-origin"] == "https://fitpdf.vercel.app"
+        res = client.get("/health", headers={"Origin": "https://fitfilesize.com"})
+        assert res.headers["access-control-allow-origin"] == "https://fitfilesize.com"
 
 
 def _limited_app(tmp_path, **overrides):

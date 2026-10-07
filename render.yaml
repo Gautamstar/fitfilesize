@@ -25,9 +25,8 @@ services:
           name: fitpdf-redis
           property: connectionString
 
-      # Set this in the dashboard to the frontend's origin, e.g.
-      # https://fitfilesize.com once the custom domain is live (list the old
-      # *.vercel.app URL too, comma-separated, until DNS has switched over).
+      # Set this in the dashboard to the frontend's origin,
+      # https://fitfilesize.com (several are comma-separated).
       # Without it the browser blocks every call, because the SPA and the API
       # are on different origins.
       - key: ALLOWED_ORIGINS
