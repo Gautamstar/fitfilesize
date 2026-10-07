@@ -1132,6 +1132,152 @@
       }
     },
     {
+      "slug": "gate-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "GATE photo",
+      "targetKb": 600,
+      "pixels": {
+        "width": 350,
+        "height": 450
+      },
+      "heading": "GATE 2027 photo: 3.5 x 4.5 cm JPEG under 600 KB",
+      "title": "GATE 2027 photo",
+      "spec": [
+        "JPEG",
+        "3.5 × 4.5 cm",
+        "200 × 260 to 530 × 690 pixels",
+        "Up to 600 KB"
+      ],
+      "org": "the GATE 2027 Organizing Institute (IIT Madras)",
+      "description": "Crop your photo to passport size, 350 x 450 pixels, as a JPEG under 600 KB for the GATE 2027 application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "GATE 2027 takes a passport-size colour photo between 200 x 260 and 530 x 690 pixels, up to 600 KB. A phone photo is far bigger and the wrong shape, so it is cropped to 350 x 450 and saved as a JPEG.",
+      "source": {
+        "label": "the GATE 2027 Information Brochure (IIT Madras)",
+        "url": "https://gate2027ib.iitm.ac.in/GATE2027-IB.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a GATE photo to the right shape and size",
+        "paragraphs": [
+          "The GATE 2027 Information Brochure asks for a colour passport-size photograph, 3.5 cm wide and 4.5 cm high, as a JPEG. Its width-to-height ratio must be between 0.66 and 0.89, it must be between 200 x 260 and 530 x 690 pixels, and the file can be up to 600 KB.",
+          "This page crops the photo to 350 x 450 pixels, the 3.5 to 4.5 shape and well inside both pixel limits, where you place the crop box. At that size a photo is far under 600 KB, so it is saved at high quality."
+        ],
+        "tips": [
+          "Place the crop box so your face fills most of the frame: the brochure asks for the face to cover 60 to 70% of the image after cropping.",
+          "Use a plain white background, look straight at the camera, and avoid glare on glasses.",
+          "This photo appears on your admit card and score card, and a live photo is also taken during registration."
+        ]
+      }
+    },
+    {
+      "slug": "gate-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "GATE signature",
+      "targetKb": 300,
+      "pixels": {
+        "width": 480,
+        "height": 160
+      },
+      "heading": "GATE 2027 signature: up to 580 x 180 pixels, under 300 KB",
+      "title": "GATE 2027 signature",
+      "spec": [
+        "JPEG",
+        "250 × 80 to 580 × 180 pixels",
+        "Height to width 1:2.75 to 1:3.75",
+        "Up to 300 KB"
+      ],
+      "org": "the GATE 2027 Organizing Institute (IIT Madras)",
+      "description": "Crop your signature to 480 x 160 pixels, a JPEG under 300 KB, for the GATE 2027 application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "GATE 2027 takes a signature JPEG between 250 x 80 and 580 x 180 pixels, with a height to width ratio from 1:2.75 to 1:3.75, up to 300 KB. A photo of a signature is cropped to 480 x 160 to fit all three.",
+      "source": {
+        "label": "the GATE 2027 Information Brochure (IIT Madras)",
+        "url": "https://gate2027ib.iitm.ac.in/GATE2027-IB.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a GATE signature to the right shape",
+        "paragraphs": [
+          "The GATE 2027 Information Brochure asks for the signature as a JPEG with a height to width ratio of 1 to between 2.75 and 3.75, between 250 x 80 and 580 x 180 pixels, and up to 300 KB. After cropping, the signature should cover 70 to 80% of the image.",
+          "This page crops it to 480 x 160 pixels, a ratio of 1 to 3, inside both pixel limits, where you place the crop box. A signature at that size is a small file, so it is saved at high quality."
+        ],
+        "tips": [
+          "Sign in black or dark blue ink on white paper; the brochure accepts no other colours.",
+          "Drag the crop box tight around the signature so it fills most of the image.",
+          "Sign the way you will at the exam: a signature that does not match can lead to disqualification."
+        ]
+      }
+    },
+    {
+      "slug": "cuet-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "CUET photo",
+      "targetKb": 200,
+      "minKb": 10,
+      "heading": "CUET UG photo: JPEG, 10 KB to 200 KB",
+      "title": "CUET (UG) photo",
+      "spec": [
+        "JPEG",
+        "10 KB to 200 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your passport-size photo to a JPEG between 10 KB and 200 KB for the CUET (UG) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The CUET (UG) form asks for a recent colour passport-size photo as a JPEG between 10 KB and 200 KB. A phone photo is several megabytes, so it is resized and compressed until it fits.",
+      "source": {
+        "label": "the CUET (UG) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s3d1a21da7bca4abff8b0b61b87597de73/uploads/2026/01/202601031633478370.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a CUET photo under 200 KB",
+        "paragraphs": [
+          "The CUET (UG) 2026 Information Bulletin asks for a scanned passport-size photograph in colour, with 80% of the face visible including the ears, without a mask, against a white background, as a JPG or JPEG between 10 KB and 200 KB.",
+          "The bulletin gives no pixel size, so the photo stays as large as 200 KB allows. Each attempt is a little smaller than the last, and you get the first one that fits."
+        ],
+        "tips": [
+          "Crop around your head and shoulders before uploading, so your face fills most of the photo.",
+          "Besides this upload, the form takes a live photo with your webcam or phone.",
+          "NTA checks photos against your Aadhaar details, so keep your Aadhaar photo recent."
+        ]
+      }
+    },
+    {
+      "slug": "cuet-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "CUET signature",
+      "targetKb": 50,
+      "minKb": 10,
+      "heading": "CUET UG signature: JPEG, 10 KB to 50 KB",
+      "title": "CUET (UG) signature",
+      "spec": [
+        "JPEG",
+        "10 KB to 50 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your signature to a JPEG between 10 KB and 50 KB for the CUET (UG) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The CUET (UG) form takes the signature as a JPEG between 10 KB and 50 KB, half the limit NEET and JEE Main allow. If it comes out under 10 KB, it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "the CUET (UG) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s3d1a21da7bca4abff8b0b61b87597de73/uploads/2026/01/202601031633478370.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a CUET signature to 10 KB to 50 KB",
+        "paragraphs": [
+          "The CUET (UG) 2026 Information Bulletin asks for the signature file as a clearly legible JPG or JPEG between 10 KB and 50 KB. It gives no pixel size.",
+          "The signature is kept as large as fits under 50 KB. A small, clean one can come out under 10 KB, and then it is padded up to 10 KB with an invisible comment inside the file, so the image is unchanged."
+        ],
+        "tips": [
+          "The CUET limit is 50 KB, lower than NEET and JEE Main, so a signature made for those may need compressing again.",
+          "Sign in dark ink on plain white paper and photograph it straight on, in good light.",
+          "Crop away the rest of the page so the signature fills the image."
+        ]
+      }
+    },
+    {
       "slug": "ircc-document-pdf",
       "kind": "pdf",
       "group": "Forms and applications",
