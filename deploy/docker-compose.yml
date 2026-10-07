@@ -44,6 +44,15 @@ services:
   api:
     <<: *app
     command: ["uvicorn", "fitpdf.web.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    # Daily upload and download counts (fitpdf.web.usage), on their own
+    # volume: Redis keeps nothing across a restart, and /data is swept.
+    # Read them with: docker compose ... exec api python -m fitpdf.web.usage
+    environment:
+      <<: *env
+      FITPDF_USAGE_DB: /usage/usage.db
+    volumes:
+      - data:/data
+      - usage:/usage
     # Analysing an upload decodes it here: a 50 MP transparent PNG peaks
     # around 420 MB, so two at once need the full gigabyte.
     mem_limit: 1g
@@ -92,3 +101,4 @@ services:
 
 volumes:
   data:
+  usage:

@@ -22,7 +22,7 @@ from ..strategies import (
     image_too_big,
 )
 from ..units import human_size, parse_limit
-from . import limits, store
+from . import limits, store, usage
 from .config import Settings
 from .jobs import run_compress
 
@@ -643,11 +643,14 @@ def create_app(
             state["warnings"] = json.loads(job["warnings"])
         return state
 
-    async def receive_upload(file: UploadFile) -> tuple[str, str, int, object]:
+    async def receive_upload(
+        file: UploadFile, source: str, page: str = "-"
+    ) -> tuple[str, str, int, object]:
         """Store an upload and create its job. Returns (job_id, filename, size, info).
 
         Shared by /api/upload and /api/fit. Rate limiting happens earlier, in
-        the limit_uploads middleware, before the body is read.
+        the limit_uploads middleware, before the body is read. `source` and
+        `page` go on the job so its download is counted the same way (usage.py).
         """
         filename = file.filename or "input"
         # Keep the uploader's extension so detect_strategy can use it, but never
@@ -719,15 +722,33 @@ def create_app(
                 "pages": info.pages,
                 "width": info.width,
                 "height": info.height,
+                "source": source,
+                "page": page,
             },
             settings.pending_ttl_seconds,
         )
+        await run_in_threadpool(usage.record, settings.usage_db, "upload", source, info.kind, page)
         return job_id, filename, size, info
 
+    def caller(request: Request) -> str:
+        return usage.source_for(
+            request.headers.get("user-agent"),
+            request.headers.get("origin"),
+            settings.allowed_origins,
+        )
+
     @app.post("/api/upload", summary="Upload a file (step 1 of the step-by-step flow)")
-    async def upload(file: UploadFile):
+    async def upload(
+        request: Request,
+        file: UploadFile,
+        page: str | None = Form(
+            None, description="The site's landing page slug, for the usage counts only."
+        ),
+    ):
         """Store a PDF or image and return its job id plus basic facts about it."""
-        job_id, filename, size, info = await receive_upload(file)
+        job_id, filename, size, info = await receive_upload(
+            file, caller(request), usage.clean_page(page)
+        )
         return {
             "job_id": job_id,
             "kind": info.kind,
@@ -948,7 +969,7 @@ def create_app(
         except ValueError as e:
             raise HTTPException(422, str(e)) from None
         check_min(min_bytes, target_bytes)
-        job_id, _, _, _ = await receive_upload(file)
+        job_id, _, _, _ = await receive_upload(file, caller(request))
         job = require_job(job_id)
         try:
             resize = resize_for(job, width, height)
@@ -1047,6 +1068,17 @@ def create_app(
         out = output_path(job_id, job)
         if out is None:
             raise HTTPException(404, "no compressed file yet for this job")
+        # Counted once per job, however many times the result is fetched.
+        if r.hsetnx(store.job_key(job_id), "downloaded", "1"):
+            await run_in_threadpool(
+                usage.record,
+                settings.usage_db,
+                "download",
+                job.get("source", "api"),
+                job.get("kind", "pdf"),
+                job.get("page", "-"),
+                "fit" if job.get("hit_target") == "1" else "over",
+            )
         stem = Path(job.get("filename", "input")).stem or "output"
         return FileResponse(
             out,
