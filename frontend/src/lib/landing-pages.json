@@ -1,12 +1,12 @@
 {
-  "updated": "2026-09-26",
+  "updated": "2026-10-07",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
       "kind": "pdf",
       "targetKb": 50,
       "heading": "Compress a PDF to 50 KB",
-      "description": "Shrink a one-page PDF to under 50 KB for strict form uploads like marksheets and certificates. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a one-page PDF to under 50 KB for strict form uploads like marksheets and certificates. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Some portals cap each document at 50 KB. A single page made from text fits easily; a single scanned page usually can too.",
       "guide": {
         "title": "Getting a PDF under 50 KB",
@@ -26,7 +26,7 @@
       "kind": "pdf",
       "targetKb": 100,
       "heading": "Compress a PDF to 100 KB",
-      "description": "Shrink a PDF to under 100 KB for exam, admission and government forms. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 100 KB for exam, admission and government forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Exam and admission forms often cap certificates and ID scans at 100 KB. Scanned pages are mostly image data, so they usually get there with text still readable.",
       "guide": {
         "title": "Getting a PDF under 100 KB",
@@ -46,7 +46,7 @@
       "kind": "pdf",
       "targetKb": 150,
       "heading": "Compress a PDF to 150 KB",
-      "description": "Shrink a PDF to under 150 KB for scholarship, admission and registration forms. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 150 KB for scholarship, admission and registration forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "150 KB is a common cap for certificates and ID proofs on registration portals. Two or three scanned pages usually fit.",
       "guide": {
         "title": "Getting a PDF under 150 KB",
@@ -66,7 +66,7 @@
       "kind": "pdf",
       "targetKb": 200,
       "heading": "Compress a PDF to 200 KB",
-      "description": "Shrink a PDF to under 200 KB for visa, ID and application uploads. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 200 KB for visa, ID and application uploads. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "200 KB is a common limit on visa and ID document uploads. A one or two page scan usually fits with room to spare.",
       "guide": {
         "title": "Getting a PDF under 200 KB",
@@ -86,7 +86,7 @@
       "kind": "pdf",
       "targetKb": 300,
       "heading": "Compress a PDF to 300 KB",
-      "description": "Shrink a PDF to under 300 KB for online application portals. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 300 KB for online application portals. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "300 KB leaves enough room for a few scanned pages at a size that is still comfortable to read on screen.",
       "guide": {
         "title": "Getting a PDF under 300 KB",
@@ -106,7 +106,7 @@
       "kind": "pdf",
       "targetKb": 400,
       "heading": "Compress a PDF to 400 KB",
-      "description": "Shrink a PDF to under 400 KB for application and document verification portals. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 400 KB for application and document verification portals. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "400 KB leaves room for several scanned pages at a comfortable resolution, which is what most verification portals need.",
       "guide": {
         "title": "Getting a PDF under 400 KB",
@@ -126,7 +126,7 @@
       "kind": "pdf",
       "targetKb": 500,
       "heading": "Compress a PDF to 500 KB",
-      "description": "Shrink a PDF to under 500 KB for applications, certificates and forms. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 500 KB for applications, certificates and forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "500 KB fits most multi-page scans, like transcripts or a set of certificates, without the pages turning blurry.",
       "guide": {
         "title": "Getting a PDF under 500 KB",
@@ -146,7 +146,7 @@
       "kind": "pdf",
       "targetKb": 1000,
       "heading": "Compress a PDF to 1 MB",
-      "description": "Shrink a PDF to under 1 MB for job applications and resume uploads. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 1 MB for job applications and resume uploads. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Job sites and applicant tracking systems often limit resumes and cover letters to 1 MB. Text-heavy PDFs usually fit without visible change.",
       "guide": {
         "title": "Getting a PDF under 1 MB",
@@ -166,7 +166,7 @@
       "kind": "pdf",
       "targetKb": 2000,
       "heading": "Compress a PDF to 2 MB",
-      "description": "Shrink a PDF to under 2 MB for upload forms and portals. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PDF to under 2 MB for upload forms and portals. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "2 MB is a common ceiling on upload forms. Photos inside the PDF get resized just enough to fit and no further.",
       "guide": {
         "title": "Getting a PDF under 2 MB",
@@ -186,7 +186,7 @@
       "kind": "pdf",
       "targetKb": 5000,
       "heading": "Compress a PDF to 5 MB",
-      "description": "Shrink a large PDF to under 5 MB for email attachments and portals. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a large PDF to under 5 MB for email attachments and portals. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "For big scans and photo-heavy reports that need to go through email or a portal with a 5 MB cap.",
       "guide": {
         "title": "Getting a PDF under 5 MB",
@@ -206,7 +206,7 @@
       "kind": "pdf",
       "targetKb": 10000,
       "heading": "Compress a PDF to 10 MB",
-      "description": "Shrink a large PDF to under 10 MB for email, court filings and grant or tender portals. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a large PDF to under 10 MB for email, court filings and grant or tender portals. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "For long scans, portfolios and reports that need to get under a 10 MB email or portal limit without losing print quality.",
       "guide": {
         "title": "Getting a PDF under 10 MB",
@@ -226,7 +226,7 @@
       "kind": "image",
       "targetKb": 20,
       "heading": "Compress a JPG to 20 KB",
-      "description": "Shrink a signature or photo to under 20 KB for online application forms. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a signature or photo to under 20 KB for online application forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Signature uploads on application forms are often capped at 10 to 20 KB. A signature on a plain background compresses very well.",
       "guide": {
         "title": "Getting a signature or small image under 20 KB",
@@ -246,7 +246,7 @@
       "kind": "image",
       "targetKb": 50,
       "heading": "Compress a JPG to 50 KB",
-      "description": "Shrink a passport-style photo to under 50 KB for application forms. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a passport-style photo to under 50 KB for application forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Photo uploads on application forms are often limited to 50 KB. A phone photo gets resized and re-encoded until it fits.",
       "guide": {
         "title": "Getting a photo under 50 KB",
@@ -266,7 +266,7 @@
       "kind": "image",
       "targetKb": 100,
       "heading": "Compress a JPG to 100 KB",
-      "description": "Shrink a JPG, PNG or photo to under 100 KB. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a JPG, PNG or photo to under 100 KB. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "100 KB keeps a photo sharp enough for a profile picture or an ID upload.",
       "guide": {
         "title": "Getting an image under 100 KB",
@@ -286,7 +286,7 @@
       "kind": "image",
       "targetKb": 150,
       "heading": "Compress a JPG to 150 KB",
-      "description": "Shrink a photo to under 150 KB for profile pictures, ID uploads and online forms. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a photo to under 150 KB for profile pictures, ID uploads and online forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "150 KB is plenty for a clear profile or ID photo. A phone photo gets resized and re-encoded until it fits.",
       "guide": {
         "title": "Getting a photo under 150 KB",
@@ -306,7 +306,7 @@
       "kind": "image",
       "targetKb": 200,
       "heading": "Compress a JPG to 200 KB",
-      "description": "Shrink a photo or scanned image to under 200 KB. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a photo or scanned image to under 200 KB. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "200 KB is enough for a clear photo of a document or a good-quality portrait.",
       "guide": {
         "title": "Getting an image under 200 KB",
@@ -326,7 +326,7 @@
       "kind": "image",
       "targetKb": 300,
       "heading": "Compress a JPG to 300 KB",
-      "description": "Shrink a photo or scanned document image to under 300 KB for application portals. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a photo or scanned document image to under 300 KB for application portals. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "300 KB is a common cap for document photos on application portals. Text in a photographed page stays readable at this size.",
       "guide": {
         "title": "Getting an image under 300 KB",
@@ -346,7 +346,7 @@
       "kind": "image",
       "targetKb": 500,
       "heading": "Compress a JPG to 500 KB",
-      "description": "Shrink a large phone photo to under 500 KB without it looking compressed. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a large phone photo to under 500 KB without it looking compressed. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Phone photos are often 3 to 5 MB. At 500 KB they still look good on any screen.",
       "guide": {
         "title": "Getting an image under 500 KB",
@@ -366,7 +366,7 @@
       "kind": "image",
       "targetKb": 1000,
       "heading": "Compress a JPG to 1 MB",
-      "description": "Shrink a high-resolution photo to under 1 MB for listings, portfolios and support forms, with no visible loss. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a high-resolution photo to under 1 MB for listings, portfolios and support forms. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Modern phone and camera photos are often 5 MB or more. Under 1 MB they still look sharp full screen.",
       "guide": {
         "title": "Getting a photo under 1 MB",
@@ -387,7 +387,7 @@
       "group": "PNG",
       "targetKb": 100,
       "heading": "Compress a PNG to 100 KB",
-      "description": "Shrink a PNG screenshot, logo or scan to under 100 KB. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a PNG screenshot, logo or scan to under 100 KB. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "PNGs are stored without lossy compression, so screenshots and scans are often ten times bigger than they need to be.",
       "guide": {
         "title": "Getting a PNG under 100 KB",
@@ -408,7 +408,7 @@
       "group": "PNG",
       "targetKb": 500,
       "heading": "Compress a PNG to 500 KB",
-      "description": "Shrink a large PNG, like a screenshot or design export, to under 500 KB. Free, no sign-up, files deleted minutes after.",
+      "description": "Shrink a large PNG, like a screenshot or design export, to under 500 KB. Best quality that fits. Free, no sign-up, files deleted minutes after.",
       "blurb": "Design exports and full-screen screenshots saved as PNG are often 3 to 10 MB. Reduced to 256 colours they usually fit under 500 KB, still a PNG and still sharp.",
       "guide": {
         "title": "Getting a PNG under 500 KB",
@@ -920,6 +920,214 @@
           "Scan the certificate flat and in good light, with the whole page in the frame.",
           "If your certificate is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
           "The certificate must be the latest valid one as on the closing date of the application."
+        ]
+      }
+    },
+    {
+      "slug": "ssc-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "SSC signature (CGL, CHSL)",
+      "targetKb": 20,
+      "minKb": 10,
+      "pixels": {
+        "width": 600,
+        "height": 200
+      },
+      "heading": "SSC signature for CGL and CHSL: 10 KB to 20 KB, about 6 x 2 cm",
+      "title": "SSC signature (CGL, CHSL)",
+      "spec": [
+        "JPEG",
+        "About 6.0 × 2.0 cm",
+        "10 KB to 20 KB"
+      ],
+      "org": "the Staff Selection Commission (SSC)",
+      "description": "Resize your signature to a JPEG of 10 KB to 20 KB, about 6.0 x 2.0 cm, for SSC CGL and CHSL applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "SSC asks for a scanned signature as a JPEG between 10 KB and 20 KB, about 6.0 x 2.0 cm. A clean signature is often under 10 KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "SSC's Combined Higher Secondary Level Examination 2026 notice",
+        "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsl_2026.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting an SSC signature to 10 KB to 20 KB",
+        "paragraphs": [
+          "The 2026 notices for the Combined Graduate Level (CGL) and Combined Higher Secondary Level (CHSL) examinations ask for a scanned signature in JPEG format, between 10 KB and 20 KB, about 6.0 cm wide and 2.0 cm high. They state that blurred or miniature signatures will be rejected.",
+          "This page makes the signature 600 x 200 pixels, the same 3 to 1 shape, cropped where you place the crop box. It is saved at the best quality under 20 KB, and if that comes out under 10 KB it is padded up to it with an invisible comment inside the file. The signature is exactly the same."
+        ],
+        "tips": [
+          "Sign on plain white paper and take the photo close around the signature, so it fills the crop box.",
+          "Your photograph is not uploaded: SSC captures it live with your webcam or phone while you fill in the form.",
+          "Each SSC notice sets its own rules. If yours states a different size, set it in the options before you compress."
+        ]
+      }
+    },
+    {
+      "slug": "neet-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "NEET photo",
+      "targetKb": 200,
+      "minKb": 10,
+      "heading": "NEET UG photo: JPEG, 10 KB to 200 KB",
+      "title": "NEET (UG) photo",
+      "spec": [
+        "JPEG",
+        "10 KB to 200 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your passport-size photo to a JPEG between 10 KB and 200 KB for the NEET (UG) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The NEET (UG) form asks for a passport-size photograph as a JPEG between 10 KB and 200 KB. A phone photo is usually several megabytes, so it is resized and compressed to fit.",
+      "source": {
+        "label": "the NEET (UG) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s37bc1ec1d9c3426357e69acd5bf320061/uploads/2026/02/202602231394640855.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a NEET photo under 200 KB",
+        "paragraphs": [
+          "The NEET (UG) 2026 Information Bulletin asks for a recent passport-size photograph, in colour or black and white, as a JPG or JPEG between 10 KB and 200 KB. 80% of the image should be your face, without a mask, with the ears visible, against a white background.",
+          "The bulletin sets no pixel size, so this page keeps the photo as large as fits under 200 KB, which leaves it sharp. It reduces the size step by step and stops at the first step that fits."
+        ],
+        "tips": [
+          "Crop the photo close around your head and shoulders before you upload it, so your face fills most of the frame.",
+          "Use the same photo you will paste on the attendance sheet at the exam centre; the bulletin asks for the same one.",
+          "The form also takes a live photo with your webcam or phone. That one is not uploaded from a file."
+        ]
+      }
+    },
+    {
+      "slug": "neet-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "NEET signature",
+      "targetKb": 100,
+      "minKb": 10,
+      "heading": "NEET UG signature: JPEG, 10 KB to 100 KB",
+      "title": "NEET (UG) signature",
+      "spec": [
+        "JPEG",
+        "10 KB to 100 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your signature to a JPEG between 10 KB and 100 KB for the NEET (UG) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The NEET (UG) form asks for your signature as a JPEG between 10 KB and 100 KB. A phone photo of it is far bigger, and a tightly cropped one can come out under 10 KB, so it is padded up to the minimum if needed.",
+      "source": {
+        "label": "the NEET (UG) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s37bc1ec1d9c3426357e69acd5bf320061/uploads/2026/02/202602231394640855.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a NEET signature to 10 KB to 100 KB",
+        "paragraphs": [
+          "The NEET (UG) 2026 Information Bulletin asks for the signature file as a JPG or JPEG between 10 KB and 100 KB, clearly legible. It sets no pixel size.",
+          "The image is kept as large as fits under 100 KB. If it comes out under 10 KB, it is padded up to the minimum with an invisible comment inside the file, so the signature itself is unchanged."
+        ],
+        "tips": [
+          "Sign on plain white paper in dark ink and photograph it in good light, without shadows.",
+          "Crop close around the signature first, so it is not a small mark in a large white page.",
+          "There is no correction window for the signature, so check it is legible before you upload it."
+        ]
+      }
+    },
+    {
+      "slug": "neet-certificate-pdf",
+      "kind": "pdf",
+      "group": "Forms and applications",
+      "linkLabel": "NEET certificates (PDF)",
+      "targetKb": 300,
+      "heading": "NEET UG certificates: PDF, 50 KB to 300 KB",
+      "title": "NEET (UG) certificates and documents",
+      "spec": [
+        "PDF",
+        "50 KB to 300 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your Class 10 certificate, category certificate or address proof to a PDF under 300 KB for the NEET (UG) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The NEET (UG) form takes the Class 10 certificate, marksheet, category certificate, address proof and other documents as PDFs between 50 KB and 300 KB each. A scan is usually bigger.",
+      "source": {
+        "label": "the NEET (UG) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s37bc1ec1d9c3426357e69acd5bf320061/uploads/2026/02/202602231394640855.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a NEET document PDF under 300 KB",
+        "paragraphs": [
+          "The NEET (UG) 2026 Information Bulletin asks for the Class 10 certificate and marksheet, the category certificate, the PwD or UDID certificate and the present and permanent address proofs as PDFs between 50 KB and 300 KB, clearly legible.",
+          "A one-page scan fits in 300 KB comfortably. We lower the resolution of the scan step by step and keep the first step that fits, so the text stays as sharp as the limit allows. A real scan is rarely under 50 KB; if yours is, scan it at a higher resolution."
+        ],
+        "tips": [
+          "Make one PDF per document, as the form asks for each one separately.",
+          "If your document is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
+          "Scan flat and in good light, with the whole page in the frame, so it stays legible at a small size."
+        ]
+      }
+    },
+    {
+      "slug": "jee-main-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "JEE Main photo",
+      "targetKb": 200,
+      "minKb": 10,
+      "heading": "JEE Main photo: JPEG, 10 KB to 200 KB",
+      "title": "JEE (Main) photo",
+      "spec": [
+        "JPEG",
+        "10 KB to 200 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your passport-size photo to a JPEG between 10 KB and 200 KB for the JEE (Main) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The JEE (Main) form asks for a colour passport-size photograph as a JPEG between 10 KB and 200 KB. A phone photo is several megabytes, so it is resized and compressed to fit.",
+      "source": {
+        "label": "the JEE (Main) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2025/11/202511021649722475.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a JEE Main photo under 200 KB",
+        "paragraphs": [
+          "The JEE (Main) 2026 Information Bulletin asks for a recent passport-size photograph in colour, with 80% of the face visible including the ears, without a mask, against a white background, as a JPG or JPEG between 10 KB and 200 KB.",
+          "No pixel size is set, so the photo is kept as large as fits under 200 KB. Each step down is a little smaller, and the first one that fits is the one you get."
+        ],
+        "tips": [
+          "Crop close around your head and shoulders first; the bulletin wants the face to fill most of the photo.",
+          "Keep your details on Aadhaar up to date. NTA matches your photos against them.",
+          "You also take a live photo during the application. That one comes from your webcam or phone, not from a file."
+        ]
+      }
+    },
+    {
+      "slug": "jee-main-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "JEE Main signature",
+      "targetKb": 100,
+      "minKb": 10,
+      "heading": "JEE Main signature: JPEG, 10 KB to 100 KB",
+      "title": "JEE (Main) signature",
+      "spec": [
+        "JPEG",
+        "10 KB to 100 KB"
+      ],
+      "org": "the National Testing Agency (NTA)",
+      "description": "Compress your signature to a JPEG between 10 KB and 100 KB for the JEE (Main) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "The JEE (Main) form asks for the signature as a JPEG between 10 KB and 100 KB. If a cropped signature comes out under 10 KB, it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "the JEE (Main) 2026 Information Bulletin",
+        "url": "https://cdnbbsr.s3waas.gov.in/s3f8e59f4b2fe7c5705bf878bbd494ccdf/uploads/2025/11/202511021649722475.pdf",
+        "checked": "2026-10-07"
+      },
+      "guide": {
+        "title": "Getting a JEE Main signature to 10 KB to 100 KB",
+        "paragraphs": [
+          "The JEE (Main) 2026 Information Bulletin asks for the signature file as a clearly legible JPG or JPEG between 10 KB and 100 KB, with no pixel size given.",
+          "It is saved at the highest quality that fits under 100 KB. A small, clean signature can come out under 10 KB, and then it is padded up to 10 KB with an invisible comment inside the file. Nothing in the picture changes."
+        ],
+        "tips": [
+          "Use a dark pen on white paper so the signature stays legible after compression.",
+          "Photograph it straight on, not at an angle, and crop away the rest of the page.",
+          "The same bulletin asks for the Class 10 certificate as a PDF of 50 KB to 300 KB. The NEET certificates page uses the same limits."
         ]
       }
     },
