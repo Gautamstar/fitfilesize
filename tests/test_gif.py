@@ -114,7 +114,16 @@ def test_a_compressed_gif_stays_an_animated_gif_with_its_timing(tmp_path):
 
 
 def test_dropped_frames_keep_the_length_and_match_their_originals(tmp_path):
-    gif = _clip(tmp_path / "a.gif", frames=9, delays=[30, 40, 50] * 3)
+    # A big block jumping across a noisy picture: each frame differs a lot
+    # from the next, so a frame showing the wrong picture stands out.
+    background = Image.effect_noise((240, 135), 40).convert("RGB")
+    pictures = []
+    for i in range(9):
+        im = background.copy()
+        ImageDraw.Draw(im).rectangle((i * 22, 20, i * 22 + 60, 115), fill=(200, 40, 40))
+        pictures.append(im)
+    gif = tmp_path / "a.gif"
+    pictures[0].save(gif, save_all=True, append_images=pictures[1:], duration=[30, 40, 50] * 3, loop=0)
     strategy = GifStrategy()
     rung = next(r for r in GIF_RUNGS if r.get("frame_step") == 2)
     out = tmp_path / "half.gif"
