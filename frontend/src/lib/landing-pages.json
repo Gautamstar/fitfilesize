@@ -1419,6 +1419,111 @@
           "To make the GIF smaller in pixels too, open Exact size in pixels and enter a width and height."
         ]
       }
+    },
+    {
+      "slug": "compress-gif-to-500kb",
+      "kind": "image",
+      "group": "GIF",
+      "targetKb": 500,
+      "heading": "Compress a GIF to 500 KB",
+      "description": "Shrink an animated GIF to under 500 KB for forum posts, profile pictures and chat. Still animated. Best quality that fits. Free, no sign-up, files deleted minutes after.",
+      "blurb": "A short reaction GIF saved from a video is often several MB. To reach 500 KB it is compressed and usually made smaller in pixels, and it stays a GIF that plays at its own speed.",
+      "guide": {
+        "title": "Getting a GIF under 500 KB",
+        "paragraphs": [
+          "500 KB is a tight limit for a GIF, because a GIF stores every frame as its own picture. A two-second loop at a few hundred pixels wide can fit; a long clip at full size cannot.",
+          "After a lossless cleanup we try lossy compression at full size, then fewer colours together with fewer pixels. Only if that is still too big are frames dropped, and the frames that stay are held longer, so it plays at the same speed. The result says if frames were dropped."
+        ],
+        "tips": [
+          "Trim the GIF to the part that loops before you upload it. Fewer frames is the biggest saving there is.",
+          "Small GIFs with flat colours, like stickers and pixel art, fit far more easily than clips cut from video.",
+          "If the result is too small in pixels for you, a shorter clip will fit at a larger size."
+        ]
+      }
+    },
+    {
+      "slug": "compress-gif-to-1mb",
+      "kind": "image",
+      "group": "GIF",
+      "targetKb": 1000,
+      "heading": "Compress a GIF to 1 MB",
+      "description": "Shrink an animated GIF to under 1 MB for chat apps, forums and email. Still animated. Best quality that fits. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Many places that take GIFs cap them around 1 MB. A GIF over that is compressed to the largest file under 1 MB, and it keeps its frame timing and loop.",
+      "guide": {
+        "title": "Getting a GIF under 1 MB",
+        "paragraphs": [
+          "At 1 MB a few seconds of animation usually fits, often at a smaller size in pixels. Every frame keeps its own timing, the loop setting is kept, and see-through areas stay see-through.",
+          "The steps go from gentlest to strongest: lossy compression at full size, then fewer colours and fewer pixels, and as a last resort dropping every other frame. We keep the first step that fits, so the file is as good as 1 MB allows."
+        ],
+        "tips": [
+          "Check the result at the size it will be shown. A GIF made smaller in pixels can look fine in a chat window and soft when enlarged.",
+          "Screen recordings shrink much better than camera footage, because little changes from one frame to the next.",
+          "A GIF already under 1 MB is only cleaned up without visible changes; nothing is made worse to save a few more KB."
+        ]
+      }
+    },
+    {
+      "slug": "compress-gif-to-2mb",
+      "kind": "image",
+      "group": "GIF",
+      "targetKb": 2000,
+      "heading": "Compress a GIF to 2 MB",
+      "description": "Shrink an animated GIF to under 2 MB for websites, docs and messages. Still animated. Best quality that fits. Free, no sign-up, files deleted minutes after.",
+      "blurb": "A GIF made from a screen recording or a video clip is often 5 to 20 MB. To reach 2 MB it is compressed and made smaller in pixels as far as needed, and frames are dropped only as a last resort.",
+      "guide": {
+        "title": "Getting a GIF under 2 MB",
+        "paragraphs": [
+          "The first lossy step adds a little grain that is hard to see in motion. If that is not enough, the GIF uses fewer colours and fewer pixels, a step at a time, and we keep the first step that fits. Dropping frames comes last, after the pixel size.",
+          "The GIF is never converted to a video or another format. It comes back as a GIF, with its frame delays and loop count as they were."
+        ],
+        "tips": [
+          "For a GIF in documentation or a README, crop away empty parts of the screen before recording. Pixels you do not record cost nothing.",
+          "Lower the frame rate in your screen recorder if you can: 10 to 15 frames a second is usually smooth enough for a demo.",
+          "If one GIF has to carry a long demo, splitting it into two shorter GIFs keeps both sharper."
+        ]
+      }
+    },
+    {
+      "slug": "compress-gif-to-5mb",
+      "kind": "image",
+      "group": "GIF",
+      "targetKb": 5000,
+      "heading": "Compress a GIF to 5 MB",
+      "description": "Shrink an animated GIF to under 5 MB, keeping its size and every frame where possible. Still animated. Best quality that fits. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Long screen recordings and high-resolution clips saved as GIF can reach 20 to 50 MB. They are compressed to the largest file under 5 MB, still a GIF, with every frame kept wherever the size allows.",
+      "guide": {
+        "title": "Getting a GIF under 5 MB",
+        "paragraphs": [
+          "Lossy compression comes first: it lets each frame differ very slightly from the original in return for a much smaller file, which is hard to notice while the GIF plays. Clips cut from video usually also need fewer pixels to reach 5 MB.",
+          "Very long or very large GIFs can still need fewer pixels. A GIF of many hundreds of frames at full HD is a lot of pictures. If frames had to be dropped, the result says so."
+        ],
+        "tips": [
+          "If the GIF came from a video converter, check its frame rate. 30 or more frames a second makes a GIF large; 15 to 20 looks almost the same.",
+          "GIFs over 200 million pixels across all frames are refused rather than left running for minutes. Trim or shrink them first.",
+          "A GIF already under 5 MB is only cleaned up, losslessly."
+        ]
+      }
+    },
+    {
+      "slug": "compress-gif-to-10mb",
+      "kind": "image",
+      "group": "GIF",
+      "targetKb": 10000,
+      "heading": "Compress a GIF to 10 MB",
+      "description": "Shrink a large animated GIF to under 10 MB with the gentlest compression that fits. Still animated. Best quality that fits. Free, no sign-up, files deleted minutes after.",
+      "blurb": "A GIF over 10 MB is usually a long or high-resolution clip. It is cleaned up, then compressed, and made smaller in pixels only as far as 10 MB needs.",
+      "guide": {
+        "title": "Getting a GIF under 10 MB",
+        "paragraphs": [
+          "Many large GIFs are bigger than they need to be: GIF makers often store each frame in full when only part of the picture changed. The first step rewrites each frame as only what changed, which changes nothing you can see and is sometimes enough on its own.",
+          "If not, gentle lossy compression follows, still at full size and with every frame. Fewer pixels or dropped frames come only after that, and only if 10 MB needs them."
+        ],
+        "tips": [
+          "The original is deleted minutes after compression, and the result shortly after, so download it straight away.",
+          "Upload limits apply to the file you upload, so check the size shown on the result before you post it.",
+          "For a GIF far over 10 MB, like 50 MB or more, a shorter clip will keep more quality than squeezing the whole one."
+        ]
+      }
     }
   ],
   "faq": [
