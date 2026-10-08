@@ -926,6 +926,12 @@ class GifInfo:
         return len(self.delays)
 
 
+GIF_CUT_OFF = (
+    "this GIF is incomplete: the file ends partway through. Download or save it "
+    "again, then try once more"
+)
+
+
 def read_gif(path: Path | str) -> GifInfo:
     """Walk a GIF's blocks for its size, frame delays and loop count.
 
@@ -934,7 +940,7 @@ def read_gif(path: Path | str) -> GifInfo:
     """
     data = Path(path).read_bytes()
     if data[:6] not in (b"GIF87a", b"GIF89a") or len(data) < 13:
-        raise ValueError("not a GIF")
+        raise ValueError("this file is not a GIF")
     width = int.from_bytes(data[6:8], "little")
     height = int.from_bytes(data[8:10], "little")
     at = 13
@@ -944,7 +950,7 @@ def read_gif(path: Path | str) -> GifInfo:
     def skip_sub_blocks(i: int) -> int:
         while True:
             if i >= len(data):
-                raise ValueError("GIF ends inside a block")
+                raise ValueError(GIF_CUT_OFF)
             n = data[i]
             i += 1
             if n == 0:
@@ -974,7 +980,7 @@ def read_gif(path: Path | str) -> GifInfo:
             at = skip_sub_blocks(body)
         elif block == 0x2C:  # image descriptor
             if at + 10 > len(data):
-                raise ValueError("GIF ends inside a frame")
+                raise ValueError(GIF_CUT_OFF)
             packed = data[at + 9]
             at += 10
             if packed & 0x80:
@@ -983,9 +989,9 @@ def read_gif(path: Path | str) -> GifInfo:
             delays.append(delay)
             delay = 0
         else:
-            raise ValueError("GIF has an unknown block")
+            raise ValueError("this GIF is damaged and cannot be read")
     if not delays or width == 0 or height == 0:
-        raise ValueError("GIF has no frames")
+        raise ValueError("this GIF has no pictures in it")
     return GifInfo(width, height, delays, loop)
 
 
@@ -993,9 +999,25 @@ def read_gif(path: Path | str) -> GifInfo:
 # the worker's memory: about 400 frames of 1000 x 1000. gifsicle works one
 # frame at a time, so this bounds time more than memory.
 MAX_GIF_PIXEL_FRAMES = 400_000_000
-# For an exact size, every frame is fitted in memory first (see
-# GifStrategy._prepared), a byte a pixel once saved: 100 MB at most.
-MAX_GIF_EXACT_PIXEL_FRAMES = 100_000_000
+# For an exact size, every frame is fitted first (see GifStrategy._fitted)
+# and Pillow holds them all, a byte a pixel, until it writes the file:
+# 160 MB at most, a 1500-frame sticker.
+MAX_GIF_EXACT_PIXEL_FRAMES = 160_000_000
+# Searching, a GIF this big (1 MB) is rendered with gifsicle's quick -O1, and
+# only the answer with -O3: on a 24 MB clip -O3 took 13 s a render to -O1's
+# 2.4, for files 0 to 30 percent smaller (most on flat graphics and long
+# GIFs). Above GIF_O3_MAX_PIXEL_FRAMES (a 120-frame 1000 x 1000 clip) -O3
+# would take minutes, so the answer stays at -O1.
+GIF_DRAFT_MIN_BYTES = 1_000_000
+GIF_O3_MAX_PIXEL_FRAMES = 120_000_000
+# -O3 only pays on some GIFs: 23 to 32 percent on screen recordings, flat
+# graphics and long loops, nothing on video-like clips, where it took 31 s on
+# a 1080p one. So a big GIF's first frames, shrunk to this many pixels in
+# all, are tried both ways first; under GIF_O3_MIN_GAIN, everything stays at
+# -O1. The sample's gain came within 4 points of the whole file's on nine
+# kinds of GIF, and takes a second or two.
+GIF_O3_SAMPLE_PIXELS = 1_500_000
+GIF_O3_MIN_GAIN = 0.08
 
 
 def gif_too_big(src: Path) -> str | None:
@@ -1021,30 +1043,37 @@ def gif_too_big(src: Path) -> str | None:
 # 5 MB video-like clip, most steps take 15 to 40 percent off; flat graphics
 # move less, and lossy compression does little for them.
 GIF_RUNGS: list[dict] = [
-    {"lossy": lossy, "colors": colors, "scale": scale, **({"frame_step": 2} if drop else {})}
-    for lossy, colors, scale, drop in (
-        (30, 256, 1.0, False),
-        (60, 256, 1.0, False),
-        (100, 256, 1.0, False),
-        (100, 192, 0.92, False),
-        (110, 160, 0.84, False),
-        (120, 128, 0.76, False),
-        (130, 128, 0.68, False),
-        (140, 96, 0.6, False),
-        (150, 96, 0.53, False),
-        (160, 80, 0.46, False),
-        (170, 64, 0.4, False),
-        (180, 64, 0.34, False),
-        (190, 56, 0.29, False),
-        (200, 48, 0.25, False),
-        (200, 48, 0.25, True),
-        (200, 32, 0.21, True),
+    {"lossy": lossy, "colors": colors, "scale": scale, **({"frame_step": step} if step else {})}
+    for lossy, colors, scale, step in (
+        (30, 256, 1.0, 0),
+        (60, 256, 1.0, 0),
+        (100, 256, 1.0, 0),
+        (100, 192, 0.92, 0),
+        (110, 160, 0.84, 0),
+        (120, 128, 0.76, 0),
+        (130, 128, 0.68, 0),
+        (140, 96, 0.6, 0),
+        (150, 96, 0.53, 0),
+        (160, 80, 0.46, 0),
+        (170, 64, 0.4, 0),
+        (180, 64, 0.34, 0),
+        (190, 56, 0.29, 0),
+        (200, 48, 0.25, 0),
+        # Every other frame, at the size of the step before: starting any
+        # larger to soften the jump made the file bigger on short GIFs.
+        (200, 48, 0.25, 2),
+        (200, 40, 0.22, 2),
+        (200, 32, 0.2, 2),
+        # Long GIFs that still do not fit: every third, then fourth frame.
+        (200, 32, 0.2, 3),
+        (200, 24, 0.18, 4),
     )
 ]
 # At an exact size the pixels are fixed, so the same order without them.
 GIF_EXACT_STEPS: list[tuple[int, int, int]] = [
     (0, 256, 1), (30, 256, 1), (60, 256, 1), (90, 256, 1), (90, 128, 1), (120, 128, 1),
     (120, 64, 1), (150, 64, 1), (150, 32, 1), (200, 32, 1), (200, 32, 2), (200, 16, 2),
+    (200, 16, 3), (200, 16, 4),
 ]
 # Lossless -O3 rarely saves more than this share of a GIF; below it the
 # pass is skipped (see GifStrategy.lossless_hopeless).
@@ -1087,14 +1116,70 @@ class GifStrategy:
                 for lossy, colors, step in GIF_EXACT_STEPS
             ]
         self._info: GifInfo | None = None
+        self._src: Path | None = None
+        self._bytes = 0
+        self._o3_helps: bool | None = None
         # Each render's frame count, checked by validate, and what it gave up.
         self._frames: dict[Path, int] = {}
         self._notes: dict[Path, list[str]] = {}
+        # Set by the engine while it searches with quick renders (see drafts).
+        self.draft = False
 
     def info(self, src: Path) -> GifInfo:
         if self._info is None:
             self._info = read_gif(src)
+            self._src = src
+            self._bytes = src.stat().st_size
         return self._info
+
+    @property
+    def drafts(self) -> bool:
+        """The ladder is searched with quick -O1 renders, and the answer made
+        again with -O3 (see GIF_DRAFT_MIN_BYTES and the engine's polish)."""
+        return True
+
+    def is_draft(self, rung: dict) -> bool:
+        """Whether rendering this rung now makes a draft: drafts are on and
+        the answer will be made at -O3 (see _level). An exact size is small
+        and never drafted."""
+        return self.draft and "width" not in rung and self._level(rung, final=True) == "-O3"
+
+    def _level(self, rung: dict, *, final: bool = False) -> str:
+        """gifsicle's optimisation level for this render. `final` asks what
+        the answer gets, drafting aside."""
+        info = self._info
+        if info is None or "width" in rung or self._bytes < GIF_DRAFT_MIN_BYTES:
+            return "-O3"  # small: -O3 is quick
+        if info.frames * info.width * info.height > GIF_O3_MAX_PIXEL_FRAMES:
+            return "-O1"
+        if not self.o3_helps():
+            return "-O1"
+        return "-O3" if final or not self.draft else "-O1"
+
+    def o3_helps(self) -> bool:
+        """Whether -O3 shrinks this GIF enough to be worth its time, from a
+        small sample (see GIF_O3_SAMPLE_PIXELS). Asked once a run."""
+        import math
+        import tempfile
+
+        if self._o3_helps is None:
+            info, src = self._info, self._src
+            assert info is not None and src is not None
+            n = min(info.frames, 12)
+            scale = min(1.0, math.sqrt(GIF_O3_SAMPLE_PIXELS / (n * info.width * info.height)))
+            # A run of frames from the first: a GIF that stores only what
+            # changed shows them correctly without the rest.
+            args = ["--lossy=60", f"--scale={scale:.4f}"]
+            with tempfile.TemporaryDirectory(prefix="fitpdf-gif-") as tmp:
+                quick, full = Path(tmp) / "o1.gif", Path(tmp) / "o3.gif"
+                try:
+                    self._gifsicle(src, quick, ["-O1", *args], timeout=60, selection=[f"#0-{n - 1}"])
+                    self._gifsicle(src, full, ["-O3", *args], timeout=60, selection=[f"#0-{n - 1}"])
+                    gain = 1 - full.stat().st_size / quick.stat().st_size
+                except Exception:
+                    gain = 1.0  # unsure: let -O3 decide
+            self._o3_helps = gain >= GIF_O3_MIN_GAIN
+        return self._o3_helps
 
     def probe(self, src: Path) -> Probe:
         info = self.info(src)
@@ -1121,7 +1206,9 @@ class GifStrategy:
 
     def lossless(self, src: Path, dst: Path, *, strip_metadata: bool) -> int:
         self.ensure_available()
-        self._gifsicle(src, dst, ["-O3", *(GIF_STRIP if strip_metadata else ())], timeout=120)
+        self.info(src)
+        level = self._level({}, final=True)
+        self._gifsicle(src, dst, [level, *(GIF_STRIP if strip_metadata else ())], timeout=120)
         self._frames[dst] = self.info(src).frames
         return dst.stat().st_size
 
@@ -1133,84 +1220,94 @@ class GifStrategy:
         if size is None and rung.get("scale", 1.0) < 1.0:
             # Never below 16 px on the short side.
             scale = min(1.0, max(rung["scale"], 16 / max(1, min(info.width, info.height))))
-        args = ["-O3", *GIF_STRIP]
+        args = [self._level(rung), *GIF_STRIP]
         if rung["lossy"]:
             args.append(f"--lossy={rung['lossy']}")
         if rung["colors"] < 256:
             args += ["--colors", str(rung["colors"])]
         notes: list[str] = []
-        if size is None and step == 1:
-            # gifsicle scales an animation correctly frame by frame.
-            source = src
+        if size is None:
+            source, frames = src, info
             if scale < 1.0:
+                # gifsicle scales an animation correctly frame by frame.
                 args += ["--scale", f"{scale:.4f}"]
-            frames = info.frames
-        else:
-            # Exact sizes and dropped frames need every frame whole first:
-            # gifsicle dropping frames from a GIF that stores only what
-            # changed loses the dropped frames' changes, and the kept ones
-            # show the wrong picture.
-            source = self._prepared(src, dst.parent, size, scale, step)
-            # Pillow merges frames that came out identical, adding up their
-            # delays, so the prepared copy can have fewer frames.
-            frames = read_gif(source).frames
             if step > 1:
-                notes.append("kept every other frame to fit; it plays at the same speed")
-        self._gifsicle(source, dst, args, timeout=timeout)
-        self._frames[dst] = frames
+                source = self._whole_frames(src, dst.parent)
+        else:
+            source = self._fitted(src, dst.parent, size)
+            # Pillow merges frames that came out identical, adding up their
+            # delays, so the fitted copy can have fewer frames.
+            frames = read_gif(source)
+        selection: list[str] = []
+        if step > 1 and frames.frames > 1:
+            # Each kept frame shows for the frames it stands in for, so the
+            # animation keeps its length and speed.
+            for i in range(0, frames.frames, step):
+                selection += ["-d", str(sum(frames.delays[i : i + step])), f"#{i}"]
+            which = {2: "every other frame"}.get(step, f"one frame in {step}")
+            notes.append(f"kept {which} to fit; it plays at the same speed")
+        self._gifsicle(source, dst, args, timeout=timeout, selection=selection)
+        self._frames[dst] = len(range(0, frames.frames, step)) if selection else frames.frames
         self._notes[dst] = notes
         return dst.stat().st_size
 
-    def _gifsicle(self, src: Path, dst: Path, args: list[str], *, timeout: int) -> None:
+    def _gifsicle(
+        self, src: Path, dst: Path, args: list[str], *, timeout: int, selection: list[str] = ()
+    ) -> None:
         import subprocess
 
         done = subprocess.run(
-            ["gifsicle", "--no-warnings", *args, str(src), "-o", str(dst)],
+            ["gifsicle", "--no-warnings", *args, str(src), *selection, "-o", str(dst)],
             capture_output=True, timeout=timeout, check=False,
         )
         if done.returncode != 0:
             raise RuntimeError(f"gifsicle failed: {done.stderr.decode(errors='replace')[:200]}")
 
-    def _prepared(
-        self, src: Path, workdir: Path, size: tuple[int, int] | None, scale: float, step: int
-    ) -> Path:
-        """src with whole frames: fitted to `size` (or shrunk by `scale`),
-        and only every `step`th one kept, each shown for the frames it
-        replaces. Made once a run for each combination; the rungs compress it.
+    def _whole_frames(self, src: Path, workdir: Path) -> Path:
+        """src with every frame stored whole, so frames can be dropped.
 
-        In Pillow, whose decoder hands back every frame as it is seen. A crop
-        uses fit_exact, so it lands where the visitor put the crop box,
-        exactly as for a photo. Frames are shrunk as they are read, so a long
-        GIF is held small.
+        A GIF usually stores each frame as only what changed since the last,
+        and dropping frames from that loses their changes: the kept frames
+        show the wrong picture. gifsicle's -U stores each one whole, once the
+        frames share one palette (it refuses some GIFs with a palette per
+        frame). Made once a run.
+        """
+        out = workdir / "whole-frames.gif"
+        if not out.exists():
+            shared = workdir / "shared-palette.gif"
+            self._gifsicle(src, shared, ["--colors", "256"], timeout=120)
+            self._gifsicle(shared, out, ["-U"], timeout=120)
+            shared.unlink(missing_ok=True)
+        return out
+
+    def _fitted(self, src: Path, workdir: Path, size: tuple[int, int]) -> Path:
+        """src with every frame cropped or padded to `size`, made once a run.
+
+        In Pillow, whose decoder hands back every frame whole, with
+        fit_exact, so a crop lands where the visitor put the crop box,
+        exactly as for a photo. Each frame is saved whole (disposal 2), so
+        frames can be dropped from it too.
         """
         from PIL import Image
 
-        name = f"{size[0]}x{size[1]}" if size else f"{scale:.4f}"
-        out = workdir / f"prepared-{name}-{step}.gif"
+        out = workdir / f"fitted-{size[0]}x{size[1]}.gif"
         if out.exists():
             return out
         info = self.info(src)
-        kept = range(0, info.frames, step)
-        delays = [sum(info.delays[i : i + step]) * 10 for i in kept]
 
         def frames():
             with Image.open(src) as im:
-                for i in kept:
+                for i in range(info.frames):
                     im.seek(i)
-                    frame = im.convert("RGBA")
-                    if size is not None:
-                        yield fit_exact(frame, size, self.fit, self.focus, SEE_THROUGH)
-                    elif scale < 1.0:
-                        yield frame.resize(
-                            (max(1, round(frame.width * scale)), max(1, round(frame.height * scale))),
-                            Image.LANCZOS,
-                        )
-                    else:
-                        yield frame
+                    yield fit_exact(im.convert("RGBA"), size, self.fit, self.focus, SEE_THROUGH)
 
-        first, *rest = frames()
+        # Streamed: Pillow keeps each frame as it encodes it, a byte a pixel,
+        # rather than the four of every decoded frame held at once.
+        stream = frames()
+        first = next(stream)
         first.save(
-            out, "GIF", save_all=True, append_images=rest, duration=delays, disposal=2,
+            out, "GIF", save_all=True, append_images=stream,
+            duration=[d * 10 for d in info.delays], disposal=2,
             **({"loop": info.loop} if info.loop is not None else {}),
         )
         return out
