@@ -995,10 +995,12 @@ def read_gif(path: Path | str) -> GifInfo:
     return GifInfo(width, height, delays, loop)
 
 
-# Frames times pixels a GIF may have in all, so a run cannot take minutes or
-# the worker's memory: about 400 frames of 1000 x 1000. gifsicle works one
-# frame at a time, so this bounds time more than memory.
-MAX_GIF_PIXEL_FRAMES = 400_000_000
+# Frames times pixels a GIF may have in all: about 200 frames of 1000 x 1000,
+# 650 of 640 x 360, 2000 of 320 x 320 (a 100-frame reaction GIF is 13
+# million). Dropping frames needs every frame whole in gifsicle's memory, a
+# byte a pixel: 409 MB at a 390-million GIF, so this keeps a run near 200 MB
+# of a worker's 1 GB, and its time near 10 s.
+MAX_GIF_PIXEL_FRAMES = 200_000_000
 # For an exact size, every frame is fitted first (see GifStrategy._fitted)
 # and Pillow holds them all, a byte a pixel, until it writes the file:
 # 160 MB at most, a 1500-frame sticker.
