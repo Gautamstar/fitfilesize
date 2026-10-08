@@ -25,6 +25,7 @@ import {
   sliderToBytes,
   tierHint,
   isHeic,
+  isGif,
 } from '../lib/format'
 
 /** The backend refuses sides longer than this (MAX_RESIZE_EDGE). */
@@ -117,6 +118,8 @@ export function TargetPicker({
   // A HEIC always becomes a JPEG, usually two to three times its size, so a
   // limit above the HEIC itself still means something.
   const heic = isHeic(filename)
+  // A GIF stays a GIF at any pixel size, and its border is see-through.
+  const gif = isGif(filename)
   const hi = formPixels
     ? Math.max(originalBytes, initialTarget as number)
     : heic
@@ -268,7 +271,9 @@ export function TargetPicker({
         <details className="resize" open={Boolean(initialResize)}>
           <summary>Exact size in pixels (optional)</summary>
           <p className="resize-note">
-            For forms that ask for set dimensions, like a 200 x 230 photo. The result is a JPEG.
+            {gif
+              ? 'For set dimensions, like a 128 x 128 emoji. The result is a GIF, still animated.'
+              : 'For forms that ask for set dimensions, like a 200 x 230 photo. The result is a JPEG.'}
           </p>
           <div className="resize-row">
             <label>
@@ -319,7 +324,7 @@ export function TargetPicker({
                 checked={fit === 'pad'}
                 onChange={() => changeResize(widthText, heightText, 'pad')}
               />
-              Add a white border
+              {gif ? 'Add a see-through border' : 'Add a white border'}
             </label>
           </fieldset>
           {preview && resize && fit === 'crop' ? (

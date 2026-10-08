@@ -154,6 +154,10 @@ export function isHeic(filename: string): boolean {
   return /\.hei[cf]$/i.test(filename)
 }
 
+export function isGif(filename: string): boolean {
+  return /\.gif$/i.test(filename)
+}
+
 export function isAcceptedFile(file: File): boolean {
   const name = file.name.toLowerCase()
   if (ACCEPTED_EXTENSIONS.some((ext) => name.endsWith(ext))) return true

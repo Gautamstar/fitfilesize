@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07",
+  "updated": "2026-10-08",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
@@ -1308,6 +1308,115 @@
           "Scanning at 150 to 300 DPI is plenty; higher only makes a bigger file to shrink.",
           "Some IRCC forms set a lower limit, as low as 2 MB. If the upload page states one, choose that size instead.",
           "This page is for documents. IRCC photos must be the photographer's original file, not altered in any way, so upload those as they are."
+        ]
+      }
+    },
+    {
+      "slug": "discord-emoji-gif",
+      "kind": "image",
+      "group": "Discord",
+      "linkLabel": "Discord emoji",
+      "targetKb": 256,
+      "pixels": {
+        "width": 128,
+        "height": 128
+      },
+      "heading": "Discord emoji GIF: 128 x 128 under 256 KB",
+      "title": "Discord custom emoji",
+      "spec": [
+        "GIF, PNG, JPEG or WEBP",
+        "Up to 128 × 128 pixels",
+        "Under 256 KB"
+      ],
+      "org": "Discord",
+      "description": "Crop a GIF to 128 x 128 and fit it under 256 KB for a Discord custom emoji, still animated. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Discord takes custom emoji under 256 KB, at up to 128 x 128 pixels. A GIF from a phone or a GIF site is usually far bigger, so it is cropped to 128 x 128 and compressed until it fits, still animated.",
+      "source": {
+        "label": "Discord's help article on adding emojis",
+        "url": "https://support.discord.com/hc/en-us/articles/360041139231-How-to-Add-Emojis-on-Discord",
+        "checked": "2026-10-08"
+      },
+      "guide": {
+        "title": "Getting a GIF under Discord's emoji limit",
+        "paragraphs": [
+          "Discord's help center says a custom emoji file must be smaller than 256 KB, and that emoji look best uploaded at up to 128 x 128 pixels, since they are shown at 32 x 32. Animated emoji are GIFs.",
+          "This page crops the GIF to 128 x 128 where you place the crop box, then compresses it to the largest file under 256 KB. Every frame keeps its timing, and the GIF still loops. If it cannot fit with every frame, some frames are dropped and the rest are held longer, so it plays at the same speed; the result says when that happened."
+        ],
+        "tips": [
+          "Animated emoji use 50 extra slots that a server gets with Nitro or Nitro Basic.",
+          "Short loops fit best. A few seconds at 128 x 128 usually fits with every frame kept.",
+          "Choose Add a see-through border instead of cropping to keep the whole picture."
+        ]
+      }
+    },
+    {
+      "slug": "discord-banner-gif",
+      "kind": "image",
+      "group": "Discord",
+      "linkLabel": "Discord profile banner",
+      "targetKb": 10000,
+      "pixels": {
+        "width": 680,
+        "height": 240
+      },
+      "heading": "Discord banner GIF: 680 x 240 under 10 MB",
+      "title": "Discord profile banner",
+      "spec": [
+        "PNG, JPG or animated GIF",
+        "At least 680 × 240 pixels",
+        "Under 10 MB"
+      ],
+      "org": "Discord",
+      "description": "Crop a GIF to 680 x 240 and fit it under 10 MB for a Discord profile banner, still animated. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Discord profile banners must be under 10 MB and at least 680 x 240 pixels. A GIF is cropped to exactly 680 x 240, the banner's shape, and compressed until it fits, still animated.",
+      "source": {
+        "label": "Discord's help article on custom profiles",
+        "url": "https://support.discord.com/hc/en-us/articles/4403147417623-Custom-Profiles",
+        "checked": "2026-10-08"
+      },
+      "guide": {
+        "title": "Getting a GIF under Discord's banner limit",
+        "paragraphs": [
+          "Discord's help center says banners must be PNG, JPG or animated GIF files under 10 MB, at least 680 x 240 pixels. Only Nitro members can upload an image or GIF as their profile banner.",
+          "This page crops the GIF to 680 x 240 where you place the crop box, so Discord does not have to crop it again, then compresses it to the largest file under 10 MB. Every frame keeps its timing, and the GIF still loops. If it cannot fit with every frame, some frames are dropped and the rest are held longer, so it plays at the same speed; the result says when that happened."
+        ],
+        "tips": [
+          "Place the crop box over the part that matters: a wide clip cut from a tall video loses its top and bottom.",
+          "Long clips are the hardest to fit. Trim the GIF to the loop you want before uploading.",
+          "A still banner works the same way: drop a PNG or JPG instead."
+        ]
+      }
+    },
+    {
+      "slug": "compress-gif-for-discord",
+      "kind": "image",
+      "group": "Discord",
+      "linkLabel": "Discord message (20 MB)",
+      "targetKb": 20000,
+      "heading": "Compress a GIF for Discord: under 20 MB",
+      "title": "Discord message upload",
+      "spec": [
+        "Any file type",
+        "Under 20 MB without Nitro"
+      ],
+      "org": "Discord",
+      "description": "Compress a GIF to under 20 MB, Discord's upload limit without Nitro, still animated at its own size. Best quality that fits. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Without Nitro, Discord takes files up to 20 MB in a message. A GIF over that is compressed to the largest file under 20 MB, still animated, at its own pixel size.",
+      "source": {
+        "label": "Discord's File Attachments FAQ",
+        "url": "https://support.discord.com/hc/en-us/articles/25444343291031-File-Attachments-FAQ",
+        "checked": "2026-10-08"
+      },
+      "guide": {
+        "title": "Getting a GIF under Discord's upload limit",
+        "paragraphs": [
+          "Discord's File Attachments FAQ says that as of August 2026 the upload limit without Nitro is 20 MB, up from 10 MB. Nitro Basic raises it to 50 MB, and Nitro to up to 1 GB.",
+          "This page compresses the GIF to the largest file under 20 MB. It first tries fewer colours and gentle lossy compression; for bigger cuts it scales the frames down and, as a last step, drops some frames and holds the rest longer, so it plays at the same speed. Frame timing and looping are kept, and the result says if frames were dropped."
+        ],
+        "tips": [
+          "Discord checks the size before it compresses anything, so the file you upload is the size that counts.",
+          "With Nitro Basic, pick 50 MB on the slider instead.",
+          "To make the GIF smaller in pixels too, open Exact size in pixels and enter a width and height."
         ]
       }
     }

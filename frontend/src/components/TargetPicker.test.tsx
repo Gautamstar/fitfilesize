@@ -135,6 +135,20 @@ describe('TargetPicker with an iPhone photo', () => {
   })
 })
 
+describe('TargetPicker with a GIF', () => {
+  it('says a GIF stays a GIF and pads with a see-through border', () => {
+    setup('image', undefined, { filename: 'party.gif' })
+    expect(screen.getByText(/The result is a GIF, still animated/)).toBeTruthy()
+    expect(screen.getByLabelText('Add a see-through border')).toBeTruthy()
+    expect(screen.queryByText(/JPEG/)).toBeNull()
+  })
+
+  it('keeps the white border for other images', () => {
+    setup('image')
+    expect(screen.getByLabelText('Add a white border')).toBeTruthy()
+  })
+})
+
 describe('TargetPicker when the file already fits', () => {
   it('says so when the chosen limit is above the file size', () => {
     setup('image', undefined, { originalBytes: 111_000, floor: 20_000, initialTarget: 500_000 })

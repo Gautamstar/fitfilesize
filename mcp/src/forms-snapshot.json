@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07",
+  "updated": "2026-10-08",
   "forms": [
     {
       "id": "us-visa-photo-ds160",
@@ -339,6 +339,51 @@
       "source": "https://ircc.canada.ca/english/helpcentre/answer.asp?qnum=1123&top=23",
       "checked": "2026-09-26",
       "page": "https://fitfilesize.com/ircc-document-pdf"
+    },
+    {
+      "id": "discord-emoji-gif",
+      "name": "Discord custom emoji",
+      "kind": "image",
+      "requirements": [
+        "GIF, PNG, JPEG or WEBP",
+        "Up to 128 × 128 pixels",
+        "Under 256 KB"
+      ],
+      "limit_bytes": 256000,
+      "width": 128,
+      "height": 128,
+      "source": "https://support.discord.com/hc/en-us/articles/360041139231-How-to-Add-Emojis-on-Discord",
+      "checked": "2026-10-08",
+      "page": "https://fitfilesize.com/discord-emoji-gif"
+    },
+    {
+      "id": "discord-banner-gif",
+      "name": "Discord profile banner",
+      "kind": "image",
+      "requirements": [
+        "PNG, JPG or animated GIF",
+        "At least 680 × 240 pixels",
+        "Under 10 MB"
+      ],
+      "limit_bytes": 10000000,
+      "width": 680,
+      "height": 240,
+      "source": "https://support.discord.com/hc/en-us/articles/4403147417623-Custom-Profiles",
+      "checked": "2026-10-08",
+      "page": "https://fitfilesize.com/discord-banner-gif"
+    },
+    {
+      "id": "compress-gif-for-discord",
+      "name": "Discord message upload",
+      "kind": "image",
+      "requirements": [
+        "Any file type",
+        "Under 20 MB without Nitro"
+      ],
+      "limit_bytes": 20000000,
+      "source": "https://support.discord.com/hc/en-us/articles/25444343291031-File-Attachments-FAQ",
+      "checked": "2026-10-08",
+      "page": "https://fitfilesize.com/compress-gif-for-discord"
     }
   ]
 }
