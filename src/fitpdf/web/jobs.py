@@ -6,7 +6,7 @@ from pathlib import Path
 from rq import get_current_job
 
 from ..engine import compress_to_target
-from ..strategies import ImageStrategy, detect_strategy
+from ..strategies import detect_strategy
 from . import store
 
 
@@ -87,7 +87,9 @@ def run_compress(
         try:
             # The API only accepts a resize for images, so no PDF gets here with one.
             strategy = (
-                ImageStrategy(resize=tuple(resize), fit=fit, focus=tuple(focus) if focus else None)
+                detect_strategy(
+                    Path(src), resize=tuple(resize), fit=fit, focus=tuple(focus) if focus else None
+                )
                 if resize
                 else None
             )

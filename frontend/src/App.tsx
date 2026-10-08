@@ -199,7 +199,7 @@ function App({ path }: AppProps) {
     setDropError(null)
 
     if (!isAcceptedFile(file)) {
-      setDropError('We can take a PDF, JPEG, PNG, WebP, TIFF, BMP or HEIC.')
+      setDropError('We can take a PDF, JPEG, PNG, GIF, WebP, TIFF, BMP or HEIC.')
       return
     }
     // What the server would refuse, said now instead of after the upload.

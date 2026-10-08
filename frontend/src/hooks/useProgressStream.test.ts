@@ -208,6 +208,27 @@ describe('useProgressStream', () => {
     expect(result.current.search.points[3]).toMatchObject({ size: 4_700_000, fits: true })
   })
 
+  it('describes a GIF attempt by colours, size and frames', () => {
+    const { result } = renderHook(() => useProgressStream('j1', true))
+    act(() => {
+      const es = FakeEventSource.last!
+      es.emit({ stage: 'start', target_bytes: 256_000 })
+      es.emit({ stage: 'rung_start', rung: 0, lossy: 30, colors: 256, scale: 1 })
+      es.emit({ stage: 'rung_result', rung: 0, size: 300_000, fits: false })
+      es.emit({ stage: 'rung_start', rung: 5, lossy: 120, colors: 128, scale: 0.76 })
+      es.emit({ stage: 'rung_result', rung: 5, size: 200_000, fits: true })
+      es.emit({ stage: 'rung_start', rung: 11, width: 128, height: 128, lossy: 200, colors: 32, frame_step: 2 })
+    })
+    const texts = result.current.steps.map((s) => s.text)
+    expect(texts[1]).toMatch(/^Trying 256 colours at full size, compression 30/)
+    expect(texts[2]).toMatch(/^Trying 128 colours at 76% size, compression 120/)
+    expect(texts[3]).toBe('Trying 32 colours at 128 x 128, compression 200, every other frame')
+    expect(result.current.search.current).toEqual({
+      rung: 11,
+      label: '32 colours at 128 x 128, compression 200, every other frame',
+    })
+  })
+
   it('marks a failed render as skipped instead of reporting a size', () => {
     const { result } = renderHook(() => useProgressStream('j1', true))
     act(() => {

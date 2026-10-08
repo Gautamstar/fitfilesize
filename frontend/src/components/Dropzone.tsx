@@ -87,7 +87,7 @@ export function Dropzone({ onFile, error, disabled = false, children }: Dropzone
         </svg>
         <p className="drop-title">Drop your file here</p>
         <p className="drop-sub">
-          or <span className="drop-link">choose a file</span> · PDF, JPG, PNG, WebP, TIFF, BMP or HEIC
+          or <span className="drop-link">choose a file</span> · PDF, JPG, PNG, GIF, WebP, TIFF, BMP or HEIC
         </p>
 
         <input

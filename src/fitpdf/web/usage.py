@@ -7,7 +7,7 @@ a count for one day and one combination of:
   counted once per job however often it is fetched)
 * source: ``web`` (the site), ``mcp`` (the fitfilesize-mcp package) or
   ``api`` (any other caller)
-* kind: ``pdf`` or ``image``
+* kind: ``pdf``, ``gif`` or ``image`` (any other image)
 * page: the landing page the site was on (``home`` for /), or ``-``
 * outcome: for downloads, ``fit`` or ``over`` (could not get under the
   limit); ``-`` for uploads

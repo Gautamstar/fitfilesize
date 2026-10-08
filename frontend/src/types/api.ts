@@ -163,7 +163,8 @@ export interface SearchEvent {
  * All share `stage: 'rung_start'`, so `stage` alone cannot tell them apart.
  * Narrow with the `in` operator on a field only one of them has:
  *
- *     if ('colors' in ev) { ev.max_edge } else if ('width' in ev) { ev.quality }
+ *     if ('lossy' in ev) { ev.colors } else if ('colors' in ev) { ev.max_edge }
+ *     else if ('width' in ev) { ev.quality }
  *     else if ('max_edge' in ev) { ev.quality } else { ev.jpeg_q }
  */
 export interface PdfRungStartEvent {
@@ -213,7 +214,25 @@ export interface ResizeRungStartEvent {
   quality: number
 }
 
+/**
+ * A GIF kept an animated GIF: gifsicle's lossy level, the colours kept, the
+ * share of its size (or an exact size), and with `frame_step` 2 every other
+ * frame. It has `colors` too, so check for `lossy` before `colors`.
+ */
+export interface GifRungStartEvent {
+  stage: 'rung_start'
+  rung: number
+  lossy: number
+  colors: number
+  /** Share of the original width and height, 1 for full size. */
+  scale?: number
+  width?: number
+  height?: number
+  frame_step?: number
+}
+
 export type RungStartEvent =
+  | GifRungStartEvent
   | PdfRungStartEvent
   | PngRungStartEvent
   | ImageRungStartEvent

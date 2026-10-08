@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import shutil
 import time
 from pathlib import Path
 
@@ -787,6 +788,25 @@ def test_fit_keeps_a_png_a_png_unless_jpeg_is_allowed(web, photo_png):
     body = allowed.json()
     assert body["fits"] is True and body["needs_jpeg"] is False
     assert client.get(body["download_url"].split("testserver", 1)[1]).content[:2] == b"\xff\xd8"
+
+
+@pytest.mark.skipif(shutil.which("gifsicle") is None, reason="gifsicle not installed")
+def test_fit_returns_an_animated_gif_for_a_gif(web, tmp_path):
+    client, _, _ = web
+    frames = [Image.effect_noise((160, 90), 40 + 5 * i).convert("RGB") for i in range(8)]
+    gif = tmp_path / "clip.gif"
+    frames[0].save(gif, save_all=True, append_images=frames[1:], duration=60, loop=0)
+    res = client.post(
+        "/api/fit", files={"file": ("clip.gif", gif.read_bytes(), "image/gif")},
+        data={"target": str(gif.stat().st_size // 3)},
+    )
+    assert res.status_code == 200
+    body = res.json()
+    assert body["fits"] is True
+    got = client.get(body["download_url"].split("testserver", 1)[1])
+    assert got.headers["content-type"] == "image/gif"
+    with Image.open(io.BytesIO(got.content)) as im:
+        assert im.format == "GIF" and im.n_frames == 8
 
 
 def test_fit_logs_only_the_callers_product_name(web, photo_jpg, caplog):

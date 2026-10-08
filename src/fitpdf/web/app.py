@@ -14,11 +14,13 @@ from starlette.concurrency import run_in_threadpool
 
 from ..engine import analyze, estimate_floor
 from ..strategies import (
+    GIF_SUFFIXES,
     IMAGE_SUFFIXES,
     MAX_IMAGE_PIXELS,
     MAX_OTHER_IMAGE_PIXELS,
     MAX_RESIZE_EDGE,
     PDF_SUFFIXES,
+    gif_too_big,
     image_too_big,
 )
 from ..units import human_size, parse_limit
@@ -68,9 +70,9 @@ ready (usually seconds), or `202` with a `status_url` to poll for large files.
 
 **Exact pixel size (images only):** add `width` and `height` to either
 route to get a JPEG of exactly that many pixels, as exam and ID photo forms
-ask for. `fit` decides what happens when the shape differs: `crop` (default)
-fills the frame and trims the overflow, `pad` keeps the whole image and adds
-a white border. On the compress route, `crop_x` and `crop_y` (0 to 1) choose
+ask for (a GIF stays an animated GIF). `fit` decides what happens when the
+shape differs: `crop` (default) fills the frame and trims the overflow, `pad`
+keeps the whole image and adds a border, white, or see-through for a GIF. On the compress route, `crop_x` and `crop_y` (0 to 1) choose
 where a crop cuts from.
 
 **Units:** KB and MB are 1000-based, so a `200KB` target aims under 200,000
@@ -78,7 +80,7 @@ bytes and passes whichever way the destination counts.
 
 **Limits:** uploads up to 50 MB; per client, 30 uploads and 100 compressions
 an hour (`GET /api/limits` shows what is left; a refusal is `429` with
-`Retry-After`). Accepted types: PDF, JPEG, PNG, WebP, TIFF, BMP, HEIC (returned as JPEG).
+`Retry-After`). Accepted types: PDF, JPEG, PNG, WebP, TIFF, BMP, GIF (kept animated), HEIC (returned as JPEG).
 
 **Retention:** the original is deleted 5 minutes after a run finishes, the
 result 10 minutes after; `DELETE /api/jobs/{job_id}` removes both at once.
@@ -90,7 +92,7 @@ Files are used for nothing else. Website: https://fitfilesize.com
 EVENT_POLL_INTERVAL = 0.4
 PING_INTERVAL = 15.0
 
-ACCEPTED_SUFFIXES = PDF_SUFFIXES | IMAGE_SUFFIXES
+ACCEPTED_SUFFIXES = PDF_SUFFIXES | IMAGE_SUFFIXES | GIF_SUFFIXES
 
 MEDIA_TYPES = {
     ".pdf": "application/pdf",
@@ -101,6 +103,7 @@ MEDIA_TYPES = {
     ".tif": "image/tiff",
     ".tiff": "image/tiff",
     ".bmp": "image/bmp",
+    ".gif": "image/gif",
 }
 
 
@@ -127,8 +130,8 @@ class CompressRequest(BaseModel):
     min_bytes: int | None = Field(
         None,
         gt=0,
-        description="For forms that also set a minimum: a JPEG result under this is padded "
-        "up to it with comment blocks, the picture unchanged. Must be below target_bytes.",
+        description="For forms that also set a minimum: a JPEG or GIF result under this is "
+        "padded up to it with comment blocks, the picture unchanged. Must be below target_bytes.",
     )
     allow_jpeg: bool = Field(
         False,
@@ -660,7 +663,7 @@ def create_app(
             raise HTTPException(
                 415,
                 "unsupported file type; upload a PDF or an image "
-                "(JPEG, PNG, WebP, TIFF, BMP, HEIC)",
+                "(JPEG, PNG, WebP, TIFF, BMP, GIF, HEIC)",
             )
 
         # Out of disk, an upload fails halfway with a raw error. Clear expired
@@ -697,6 +700,8 @@ def create_app(
             # Before analyze, which cannot open the very largest images.
             if suffix in IMAGE_SUFFIXES and (reason := image_too_big(dest)):
                 raise HTTPException(422, reason)
+            if suffix in GIF_SUFFIXES and (reason := image_too_big(dest) or gif_too_big(dest)):
+                raise HTTPException(422, reason)
             try:
                 info = await run_in_threadpool(analyze, dest)
             except Exception:
@@ -711,6 +716,8 @@ def create_app(
             remove_tree(d)
             raise
 
+        # GIFs are counted apart from other images, to see whether they are used.
+        counted = "gif" if suffix in GIF_SUFFIXES else info.kind
         store.create_job(
             r,
             job_id,
@@ -724,10 +731,11 @@ def create_app(
                 "height": info.height,
                 "source": source,
                 "page": page,
+                "count_kind": counted,
             },
             settings.pending_ttl_seconds,
         )
-        await run_in_threadpool(usage.record, settings.usage_db, "upload", source, info.kind, page)
+        await run_in_threadpool(usage.record, settings.usage_db, "upload", source, counted, page)
         return job_id, filename, size, info
 
     def caller(request: Request) -> str:
@@ -937,12 +945,13 @@ def create_app(
         ),
         fit: Literal["crop", "pad"] = Form(
             "crop",
-            description="When the shape differs: crop to fill, or pad with a white border.",
+            description="When the shape differs: crop to fill, or pad with a border (white; "
+            "see-through for a GIF).",
         ),
         minimum: str | None = Form(
             None,
-            description="For forms that also set a minimum, like 10KB: a JPEG result under it "
-            "is padded up to it, the picture unchanged. Same units as target.",
+            description="For forms that also set a minimum, like 10KB: a JPEG or GIF result "
+            "under it is padded up to it, the picture unchanged. Same units as target.",
         ),
         allow_jpeg: bool = Form(
             False,
@@ -1075,7 +1084,7 @@ def create_app(
                 settings.usage_db,
                 "download",
                 job.get("source", "api"),
-                job.get("kind", "pdf"),
+                job.get("count_kind") or job.get("kind", "pdf"),
                 job.get("page", "-"),
                 "fit" if job.get("hit_target") == "1" else "over",
             )
