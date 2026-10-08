@@ -108,9 +108,14 @@ export function TargetPicker({
   const resizeIncomplete = kind === 'image' && !resize && Boolean(widthText || heightText)
   const fitName = useId()
 
+  // A GIF stays a GIF at any pixel size, and its border is see-through.
+  const gif = isGif(filename)
   // At a fixed pixel size the file's own floor no longer applies; the pixel
-  // count decides how small it can get.
-  const floorFor = (r: Resize | null) => (r ? resizedFloor(r.width, r.height) : floor)
+  // count decides how small it can get. Not for a GIF: its frames and
+  // content decide that, and no estimate from the pixels alone holds up
+  // (0.3 to 3 times off on test GIFs), so none is shown.
+  const floorFor = (r: Resize | null) =>
+    r ? (gif ? 0 : resizedFloor(r.width, r.height)) : floor
   const effectiveFloor = floorFor(resize)
   // A form's exact pixel size changes the file whatever its size, so its own
   // limit stays on offer even for a file already under it.
@@ -118,8 +123,6 @@ export function TargetPicker({
   // A HEIC always becomes a JPEG, usually two to three times its size, so a
   // limit above the HEIC itself still means something.
   const heic = isHeic(filename)
-  // A GIF stays a GIF at any pixel size, and its border is see-through.
-  const gif = isGif(filename)
   const hi = formPixels
     ? Math.max(originalBytes, initialTarget as number)
     : heic
@@ -231,11 +234,13 @@ export function TargetPicker({
           <span>{fmt(lo)}</span>
           <span>{fmt(hi)}</span>
         </div>
-        <p className="floor-note">
-          {resize
-            ? `at ${resize.width} x ${resize.height} it goes down to about ${fmt(effectiveFloor)}`
-            : `this file goes down to about ${fmt(floor)}`}
-        </p>
+        {resize && gif ? null : (
+          <p className="floor-note">
+            {resize
+              ? `at ${resize.width} x ${resize.height} it goes down to about ${fmt(effectiveFloor)}`
+              : `this file goes down to about ${fmt(floor)}`}
+          </p>
+        )}
       </div>
 
       {/* Limits the file already fits under, or cannot reach, are left out
