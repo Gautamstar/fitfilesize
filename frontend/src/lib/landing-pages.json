@@ -646,7 +646,7 @@
       "guide": {
         "title": "Getting an IBPS photo to 200 x 230 and 20 KB to 50 KB",
         "paragraphs": [
-          "IBPS guidelines ask for the photograph at 200 x 230 pixels with a file size between 20 KB and 50 KB. Most tools get the maximum right and miss the minimum: at 200 x 230 pixels a good-quality JPEG is often only 15 KB or so, and the form turns it away as too small.",
+          "IBPS guidelines ask for the photograph at 200 x 230 pixels with a file size between 20 KB and 50 KB. The minimum matters too: at 200 x 230 pixels a good-quality JPEG is often only 15 KB or so, and the form turns it away as too small.",
           "Here the photo is cropped to 200 x 230 where you place the crop box, saved at the best quality under 50 KB, and if that comes out under 20 KB it is padded up to it. The padding is an invisible comment inside the file, so the picture is exactly the same."
         ],
         "tips": [
@@ -1544,7 +1544,7 @@
       "a": "You get the smallest version we could make and a clear note saying so, instead of a file that silently misses the limit."
     },
     {
-      "q": "Why does the size page aim a little under its limit?",
+      "q": "Why is my file a little under the limit I picked?",
       "a": "Some sites count a kilobyte as 1000 bytes and others as 1024. We aim under the stricter one, so a 200 KB page aims for 200,000 bytes and the file passes either way."
     }
   ]

@@ -126,12 +126,14 @@ export function resizedFloor(width: number, height: number): number {
   return Math.max(1500, Math.round((width * height) / 16))
 }
 
+/**
+ * The limit as a share of the file, a fact the visitor can check. How the
+ * result looks depends on the file, so the hint says nothing about that.
+ */
 export function tierHint(target: number, originalBytes: number): string {
-  const ratio = target / originalBytes
-  if (ratio >= 0.75) return 'Light work. Your images stay sharp at this size.'
-  if (ratio >= 0.45) return 'A good middle ground. Still fine to print.'
-  if (ratio >= 0.25) return 'Images soften a little here, but stay easy to read.'
-  return 'The hardest squeeze. Good for reading on a screen.'
+  const pct = (100 * target) / originalBytes
+  const shown = pct < 1 ? 'Under 1' : `About ${Math.round(pct)}`
+  return `${shown}% of your file's size.`
 }
 
 /** What the backend will accept, mirroring ACCEPTED_SUFFIXES in web/app.py. */
@@ -156,6 +158,29 @@ export function isHeic(filename: string): boolean {
 
 export function isGif(filename: string): boolean {
   return /\.gif$/i.test(filename)
+}
+
+/**
+ * The format a run hands back, as a form would name it. A file keeps its
+ * format, except a HEIC, and a still image cut to an exact pixel size, which
+ * come back as JPEG (the forms that ask for pixels ask for JPEG).
+ */
+export function outputFormat(filename: string, resize: { width: number } | null): string {
+  if (isHeic(filename)) return 'JPEG'
+  const ext = filename.toLowerCase().split('.').pop() ?? ''
+  if (resize && ext !== 'gif') return 'JPEG'
+  const names: Record<string, string> = {
+    jpg: 'JPEG',
+    jpeg: 'JPEG',
+    png: 'PNG',
+    gif: 'GIF',
+    webp: 'WebP',
+    tif: 'TIFF',
+    tiff: 'TIFF',
+    bmp: 'BMP',
+    pdf: 'PDF',
+  }
+  return names[ext] ?? ext.toUpperCase()
 }
 
 export function isAcceptedFile(file: File): boolean {

@@ -15,11 +15,21 @@ interface DropzoneProps {
   disabled?: boolean
   /** Rendered inside the card, under the drop area (the limit chips). */
   children?: ReactNode
+  /** The file types to name, when a page is about one kind of file. */
+  formats?: string
 }
+
+const ALL_FORMATS = 'PDF, JPG, PNG, GIF, WebP, TIFF, BMP or HEIC'
 
 const ACCEPT = 'application/pdf,.pdf,image/*'
 
-export function Dropzone({ onFile, error, disabled = false, children }: DropzoneProps) {
+export function Dropzone({
+  onFile,
+  error,
+  disabled = false,
+  children,
+  formats = ALL_FORMATS,
+}: DropzoneProps) {
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -85,9 +95,18 @@ export function Dropzone({ onFile, error, disabled = false, children }: Dropzone
             strokeLinejoin="round"
           />
         </svg>
-        <p className="drop-title">Drop your file here</p>
+        {/* Phones have nothing to drag, so they get the one line that applies.
+            Both are in the markup and CSS picks by pointer, so the
+            pre-rendered page and the first render agree. */}
+        <p className="drop-title">
+          <span className="drop-fine">Drop your file here</span>
+          <span className="drop-coarse">Choose a file</span>
+        </p>
         <p className="drop-sub">
-          or <span className="drop-link">choose a file</span> · PDF, JPG, PNG, GIF, WebP, TIFF, BMP or HEIC
+          <span className="drop-fine">
+            or <span className="drop-link">choose a file</span> ·{' '}
+          </span>
+          {formats}
         </p>
 
         <input
@@ -104,7 +123,11 @@ export function Dropzone({ onFile, error, disabled = false, children }: Dropzone
         />
       </div>
 
-      {error ? <p className="error-text">{sentence(error)}</p> : null}
+      {error ? (
+        <p className="error-text" role="alert">
+          {sentence(error)}
+        </p>
+      ) : null}
       {children}
     </div>
   )
