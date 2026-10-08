@@ -143,6 +143,16 @@ describe('TargetPicker with a GIF', () => {
     expect(screen.queryByText(/JPEG/)).toBeNull()
   })
 
+  it('gives no size estimate for a GIF at an exact pixel size', () => {
+    setup('image', { width: 128, height: 128, fit: 'crop' }, { filename: 'party.gif' })
+    expect(screen.queryByText(/goes down to/)).toBeNull()
+  })
+
+  it('still gives the server estimate for a GIF at its own size', () => {
+    setup('image', undefined, { filename: 'party.gif' })
+    expect(screen.getByText(/this file goes down to about/)).toBeTruthy()
+  })
+
   it('keeps the white border for other images', () => {
     setup('image')
     expect(screen.getByLabelText('Add a white border')).toBeTruthy()
