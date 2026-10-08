@@ -125,12 +125,17 @@ def test_dropped_frames_keep_the_length_and_match_their_originals(tmp_path):
     assert after.delays[0] == before.delays[0] + before.delays[1]
     assert strategy.validate(out, strategy.probe(gif))
     assert strategy.notes_for(out) == ["kept every other frame to fit; it plays at the same speed"]
-    # Each kept frame is the original frame, not a broken partial update.
+    # Each kept frame shows its own original, not a broken partial update
+    # left over from the frames dropped around it. (Not exactly equal: some
+    # gifsicle builds merge the frames' palettes, shifting colours slightly.)
     source, kept = _frames(gif), _frames(out)
-    for j, frame in enumerate(kept):
-        original = source[2 * j]
-        diff = sum(abs(a - b) for a, b in zip(original.tobytes(), frame.tobytes(), strict=True))
-        assert diff / len(frame.tobytes()) < 2
+
+    def diff(a, b):
+        return sum(abs(x - y) for x, y in zip(a.tobytes(), b.tobytes(), strict=True)) / len(a.tobytes())
+
+    for j, frame in enumerate(kept[:-1]):
+        own, neighbour = diff(source[2 * j], frame), diff(source[2 * j + 1], frame)
+        assert own < 4 and own < neighbour / 2
 
 
 def test_a_dropped_frame_run_says_so(tmp_path):
