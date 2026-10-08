@@ -118,7 +118,8 @@ export function gifSettings(ev: GifRungStartEvent): string {
         : 'full size'
   const parts = [`${ev.colors} colours at ${size}`]
   if (ev.lossy) parts.push(`compression ${ev.lossy}`)
-  if (ev.frame_step && ev.frame_step > 1) parts.push('every other frame')
+  if (ev.frame_step && ev.frame_step > 1)
+    parts.push(ev.frame_step === 2 ? 'every other frame' : `one frame in ${ev.frame_step}`)
   return parts.join(', ')
 }
 

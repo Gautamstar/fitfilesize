@@ -642,12 +642,14 @@ def compress_to_target(
                     lossy=floor_lossy, needs_jpeg=True,
                 )
 
+        # A strategy whose own ladder searches with quick drafts (a GIF;
+        # see GifStrategy.drafts). The JPEG ladder has none.
+        strategy.draft = bool(getattr(strategy, "drafts", False))
         fit, cache, seeded = search_ladder(tmpdir, prerendered or {})
         tried = len(cache) - seeded + png_tried
 
         if fit is not None:
-            size, out = cache[fit]
-            assert size is not None
+            size, out, fit = polish(fit, cache)
             return finish(out, size, True, f"rung:{fit}", tried, lossy=True)
 
         # The smallest of everything tried, PNG rungs included: a small
@@ -667,6 +669,17 @@ def compress_to_target(
             # lossless copy to fall back on.
             raise RuntimeError("could not produce a readable file at those settings")
         floor_size, floor_path, floor_lossy = min(candidates, key=lambda c: c[0])
+        if floor_path in drafts:
+            # As for a PNG floor: rendered properly it is usually smaller.
+            strategy.draft = False
+            i = drafts[floor_path]
+            final = floor_path.with_name(f"final{i}{floor_path.suffix}")
+            try:
+                got = strategy.render(src, final, strategy.rungs[i], timeout=timeout)
+                if got < floor_size and strategy.validate(final, probe):
+                    floor_size, floor_path = got, final
+            except Exception:
+                pass
         warnings.append(
             "target not reachable; returning the smallest achievable file (the floor)"
         )

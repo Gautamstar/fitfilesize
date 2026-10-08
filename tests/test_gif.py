@@ -153,7 +153,7 @@ def test_a_dropped_frame_run_says_so(tmp_path):
     floor = GifStrategy().render(gif, tmp_path / "floor.gif", GIF_RUNGS[-1], timeout=60)
     result = compress_to_target(gif, tmp_path / "out.gif", int(floor * 1.05))
     assert result.hit_target
-    assert "kept every other frame to fit; it plays at the same speed" in result.warnings
+    assert any(w.startswith("kept every other frame") or w.startswith("kept one frame in") for w in result.warnings)
 
 
 def test_transparency_survives_compression(tmp_path):
@@ -226,3 +226,63 @@ def test_the_ladder_only_gets_smaller(tmp_path):
     # each step must not grow the file by more than a little.
     assert all(b <= a * 1.03 for a, b in pairwise(sizes))
     assert sizes[-1] < sizes[0] / 5
+
+
+def test_a_cut_off_gif_says_so_plainly(tmp_path):
+    gif = _clip(tmp_path / "a.gif", frames=3)
+    cut = tmp_path / "cut.gif"
+    cut.write_bytes(gif.read_bytes()[:-200])
+    with pytest.raises(ValueError, match="this GIF is incomplete: the file ends partway through"):
+        read_gif(cut)
+
+
+def test_frames_dropped_at_an_exact_size_are_whole(tmp_path):
+    background = Image.effect_noise((240, 240), 40).convert("RGB")
+    pictures = []
+    for i in range(8):
+        im = background.copy()
+        ImageDraw.Draw(im).rectangle((i * 25, 60, i * 25 + 50, 180), fill=(200, 40, 40))
+        pictures.append(im)
+    gif = tmp_path / "a.gif"
+    pictures[0].save(gif, save_all=True, append_images=pictures[1:], duration=50, loop=0)
+    strategy = detect_strategy(gif, resize=(120, 120))
+    rung = next(r for r in strategy.rungs if r.get("frame_step") == 2)
+    out = tmp_path / "half.gif"
+    strategy.render(gif, out, {**rung, "lossy": 0, "colors": 256}, timeout=60)
+    assert read_gif(out).frames == 4 and sum(read_gif(out).delays) == 40
+    kept = _frames(out)
+    for j, frame in enumerate(kept[:-1]):
+        own = pictures[2 * j].resize((120, 120)).convert("RGBA")
+        neighbour = pictures[2 * j + 1].resize((120, 120)).convert("RGBA")
+
+        def diff(a, b):
+            return sum(abs(x - y) for x, y in zip(a.tobytes(), b.tobytes(), strict=True)) / len(a.tobytes())
+
+        assert diff(own, frame) < diff(neighbour, frame) / 2
+
+
+def test_a_big_gif_is_searched_with_drafts_and_finished_properly(tmp_path):
+    gif = _clip(tmp_path / "big.gif", frames=60, size=(480, 270))
+    assert gif.stat().st_size >= 1_000_000
+    events: list[dict] = []
+    result = compress_to_target(gif, tmp_path / "out.gif", gif.stat().st_size // 3, on_progress=events.append)
+    assert result.hit_target
+    finals = [e for e in events if e["stage"] == "rung_start" and e.get("final")]
+    assert len(finals) >= 1  # the answer was made again at full effort
+    assert read_gif(result.output).frames == 60
+
+
+def test_a_video_like_gif_skips_the_slow_pass_that_would_not_help(tmp_path):
+    # Fresh noise in every frame, as a filmed clip has: nothing for -O3 to
+    # reuse between frames, so the search's renders are the answer.
+    pictures = [Image.effect_noise((400, 225), 50 + i).convert("RGB") for i in range(40)]
+    gif = tmp_path / "video.gif"
+    pictures[0].save(gif, save_all=True, append_images=pictures[1:], duration=50, loop=0)
+    assert gif.stat().st_size >= 1_000_000
+    strategy = GifStrategy()
+    strategy.info(gif)
+    assert strategy.o3_helps() is False
+    events: list[dict] = []
+    result = compress_to_target(gif, tmp_path / "out.gif", gif.stat().st_size // 3, on_progress=events.append)
+    assert result.hit_target
+    assert not [e for e in events if e.get("final")]

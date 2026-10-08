@@ -218,15 +218,14 @@ describe('useProgressStream', () => {
       es.emit({ stage: 'rung_start', rung: 5, lossy: 120, colors: 128, scale: 0.76 })
       es.emit({ stage: 'rung_result', rung: 5, size: 200_000, fits: true })
       es.emit({ stage: 'rung_start', rung: 11, width: 128, height: 128, lossy: 200, colors: 32, frame_step: 2 })
+      es.emit({ stage: 'rung_result', rung: 11, size: 90_000, fits: true })
+      es.emit({ stage: 'rung_start', rung: 20, lossy: 200, colors: 24, scale: 0.18, frame_step: 4 })
     })
     const texts = result.current.steps.map((s) => s.text)
     expect(texts[1]).toMatch(/^Trying 256 colours at full size, compression 30/)
     expect(texts[2]).toMatch(/^Trying 128 colours at 76% size, compression 120/)
-    expect(texts[3]).toBe('Trying 32 colours at 128 x 128, compression 200, every other frame')
-    expect(result.current.search.current).toEqual({
-      rung: 11,
-      label: '32 colours at 128 x 128, compression 200, every other frame',
-    })
+    expect(texts[3]).toMatch(/^Trying 32 colours at 128 x 128, compression 200, every other frame gives/)
+    expect(texts[4]).toBe('Trying 24 colours at 18% size, compression 200, one frame in 4')
   })
 
   it('marks a failed render as skipped instead of reporting a size', () => {
