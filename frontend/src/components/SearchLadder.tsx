@@ -28,8 +28,8 @@ interface SearchLadderProps {
   chosenRung?: number | null
 }
 
-const H = 250
-const PLOT_H = H - 18 - 44
+const H = 260
+const PLOT_H = H - 18 - 54
 
 export function SearchLadder({ search, originalBytes, chosenRung }: SearchLadderProps) {
   const [hover, setHover] = useState<number | null>(null)
@@ -57,7 +57,9 @@ export function SearchLadder({ search, originalBytes, chosenRung }: SearchLadder
   // the limit, with gentler settings never tried.
   const settled = range.settled || (chosenRung !== undefined && chosenRung !== null)
   const narrow = W < 480
-  const M = { top: 18, right: 10, bottom: 44, left: narrow ? 48 : 52 }
+  // The bottom fits the rung numbers, then "Gentle" and "Strong" on a line of
+  // their own, clear of "Original" under the first column.
+  const M = { top: 18, right: 10, bottom: 54, left: narrow ? 48 : 52 }
   const PLOT_W = W - M.left - M.right
   const BASE = M.top + PLOT_H
 

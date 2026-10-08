@@ -1072,13 +1072,15 @@ def create_app(
         )
 
     @app.get("/api/jobs/{job_id}/download")
-    async def download(job_id: str):
+    async def download(job_id: str, preview: bool = False):
+        """The result. `?preview=1` is the page showing it on screen, which is
+        not a download and is not counted as one."""
         job = require_job(job_id)
         out = output_path(job_id, job)
         if out is None:
             raise HTTPException(404, "no compressed file yet for this job")
         # Counted once per job, however many times the result is fetched.
-        if r.hsetnx(store.job_key(job_id), "downloaded", "1"):
+        if not preview and r.hsetnx(store.job_key(job_id), "downloaded", "1"):
             await run_in_threadpool(
                 usage.record,
                 settings.usage_db,

@@ -11,6 +11,7 @@
 import { useId, useState } from 'react'
 import type { MediaKind, Resize } from '../types/api'
 import { CropBox } from './CropBox'
+import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import { DEFAULT_FOCUS, type Focus } from '../lib/crop'
 import {
   LIMIT_PRESETS,
@@ -73,6 +74,11 @@ interface TargetPickerProps {
   minBytes?: number | null
   /** The dropped image, read locally, to place an exact-size crop on. */
   preview?: string | null
+  /**
+   * The form a form page is set up for. Its limit and pixel size are already
+   * chosen, so the controls for picking others start folded away.
+   */
+  form?: { name: string } | null
 }
 
 export function TargetPicker({
@@ -89,7 +95,12 @@ export function TargetPicker({
   initialResize,
   minBytes = null,
   preview = null,
+  form = null,
 }: TargetPickerProps) {
+  // On a form page the form's settings are the answer; "Change" opens the rest.
+  const headRef = useFocusOnMount<HTMLHeadingElement>()
+  const [adjusting, setAdjusting] = useState(false)
+  const adjustId = useId()
   // Exact pixel size, images only. Kept as typed text so a half-typed number
   // is not rewritten under the cursor; `resize` is the parsed result.
   const [widthText, setWidthText] = useState(initialResize ? String(initialResize.width) : '')
@@ -114,8 +125,7 @@ export function TargetPicker({
   // count decides how small it can get. Not for a GIF: its frames and
   // content decide that, and no estimate from the pixels alone holds up
   // (0.3 to 3 times off on test GIFs), so none is shown.
-  const floorFor = (r: Resize | null) =>
-    r ? (gif ? 0 : resizedFloor(r.width, r.height)) : floor
+  const floorFor = (r: Resize | null) => (r ? (gif ? 0 : resizedFloor(r.width, r.height)) : floor)
   const effectiveFloor = floorFor(resize)
   // A form's exact pixel size changes the file whatever its size, so its own
   // limit stays on offer even for a file already under it.
@@ -166,7 +176,11 @@ export function TargetPicker({
   // (for the format it comes back in, so a BMP screenshot is not offered
   // 20 KB). The slider still reaches below the floor for anyone who insists.
   // The one already picked stays, even if a pixel size then raised the floor.
-  const chipLimits = LIMIT_PRESETS.filter(
+  // A landing page's own limit joins them, so a 50 KB form offers 50 KB.
+  const presets = [...new Set([...LIMIT_PRESETS, ...(initialTarget ? [initialTarget] : [])])].sort(
+    (a, b) => a - b,
+  )
+  const chipLimits = presets.filter(
     (bytes) => bytes < hi && (bytes >= effectiveFloor || bytes === chosen),
   )
 
@@ -181,42 +195,21 @@ export function TargetPicker({
       ? 0
       : Math.min(100, (bytesToSlider(effectiveFloor, lo, hi) / SLIDER_STEPS) * 100)
 
-  return (
-    <div className="panel">
-      <header className="file-head">
-        <h2 className="file-name">{filename}</h2>
-        <p className="file-meta">{meta}</p>
-      </header>
+  const cropBox =
+    preview && resize && fit === 'crop' ? (
+      <CropBox
+        src={preview}
+        width={resize.width}
+        height={resize.height}
+        focus={focus ?? DEFAULT_FOCUS}
+        onChange={setFocus}
+      />
+    ) : null
 
-      {/* Said before Compress, not after: this is the one format that comes
-          back as something else. */}
-      {heic ? (
-        <p className="convert-note">HEIC photos are saved as JPEG.</p>
-      ) : null}
-
-      {/* The limit picked before upload (or the landing page's size) is at or
-          above the file itself: say it already fits rather than quietly
-          suggesting a smaller size and squeezing a file that needed nothing. */}
-      {alreadyFits ? (
-        <p className="already-fits">
-          <strong>
-            Your file is {fmt(originalBytes)}, already under {fmtLimit(initialTarget as number)}.
-          </strong>{' '}
-          You can upload it as it is. To make it smaller anyway, pick a size below.
-        </p>
-      ) : null}
-
-      <p className="target-value">{fmtLimit(target)}</p>
-      {minBytes && kind === 'image' && target > minBytes ? (
-        <p className="target-min">
-          This form also needs at least {fmtLimit(Math.round(minBytes / 1024) * 1000)}. If the
-          file comes out smaller, we pad it up to that without changing the picture.
-        </p>
-      ) : null}
-      {/* The hint compares the limit with the file as it is; at a set pixel
-          size the file is rebuilt, and the comparison says nothing. */}
-      {resize ? null : <p className="target-hint">{hint}</p>}
-
+  // The slider, the common limits and the pixel size: everything for
+  // choosing settings other than a form page's own.
+  const controls = (
+    <>
       <div className="slider-wrap">
         <div className="track">
           <div className="track-hatch" style={{ width: `${hatchPct}%` }} />
@@ -229,6 +222,7 @@ export function TargetPicker({
           value={pos}
           onChange={(e) => setChosen(sliderToBytes(Number(e.target.value), lo, hi))}
           aria-label="Target file size"
+          aria-valuetext={fmtLimit(target)}
         />
         <div className="track-labels">
           <span>{fmt(lo)}</span>
@@ -332,15 +326,7 @@ export function TargetPicker({
               {gif ? 'Add a see-through border' : 'Add a white border'}
             </label>
           </fieldset>
-          {preview && resize && fit === 'crop' ? (
-            <CropBox
-              src={preview}
-              width={resize.width}
-              height={resize.height}
-              focus={focus ?? DEFAULT_FOCUS}
-              onChange={setFocus}
-            />
-          ) : null}
+          {form ? null : cropBox}
           {resizeIncomplete ? (
             <p className="custom-limit-error">
               Enter both width and height, as whole numbers up to {MAX_PIXELS.toLocaleString('en')}.
@@ -348,19 +334,90 @@ export function TargetPicker({
           ) : null}
         </details>
       ) : null}
+    </>
+  )
+
+  return (
+    <div className="panel">
+      <header className="file-head">
+        <h2 ref={headRef} tabIndex={-1} className="file-name">
+          {filename}
+        </h2>
+        <p className="file-meta">{meta}</p>
+      </header>
+
+      {form ? (
+        // The rules are in the heading above the panel; not repeated here.
+        <p className="form-set-line">Set to the {form.name} rules above</p>
+      ) : null}
+
+      {/* Said before Compress, not after: this is the one format that comes
+          back as something else. */}
+      {heic ? <p className="convert-note">HEIC photos are saved as JPEG.</p> : null}
+      {/* The other change of format, said as plainly: a still image cut to an
+          exact pixel size comes back as a JPEG. Not on a form page, whose
+          heading already says JPEG. */}
+      {resize && !heic && !gif && !form && !/\.jpe?g$/i.test(filename) ? (
+        <p className="convert-note">At an exact pixel size, the result is a JPEG.</p>
+      ) : null}
+
+      {/* The limit picked before upload (or the landing page's size) is at or
+          above the file itself: say it already fits rather than quietly
+          suggesting a smaller size and squeezing a file that needed nothing. */}
+      {alreadyFits ? (
+        <p className="already-fits">
+          <strong>
+            Your file is {fmt(originalBytes)}, already under {fmtLimit(initialTarget as number)}.
+          </strong>{' '}
+          You can upload it as it is. To make it smaller anyway, pick a size below.
+        </p>
+      ) : null}
+
+      <p className="target-value">{fmtLimit(target)}</p>
+      {minBytes && kind === 'image' && target > minBytes ? (
+        <p className="target-min">
+          This form also needs at least {fmtLimit(Math.round(minBytes / 1024) * 1000)}. If the file
+          comes out smaller, we pad it up to that without changing the picture.
+        </p>
+      ) : null}
+      {/* The hint compares the limit with the file as it is; at a set pixel
+          size the file is rebuilt, and the comparison says nothing. */}
+      {resize ? null : <p className="target-hint">{hint}</p>}
+
+      {form ? (
+        <>
+          {/* Where the crop cuts matters on every form photo, so it stays out
+              in the open while the size controls fold away. */}
+          {cropBox}
+          <button
+            type="button"
+            className="adjust-toggle"
+            aria-expanded={adjusting}
+            aria-controls={adjustId}
+            onClick={() => setAdjusting((open) => !open)}
+          >
+            {adjusting ? 'Hide size settings' : 'Change size or pixels'}
+          </button>
+          <div id={adjustId} className="adjust" hidden={!adjusting}>
+            {controls}
+          </div>
+        </>
+      ) : (
+        controls
+      )}
 
       {warning ? <p className="error-text">{sentence(warning)}</p> : null}
 
       <div className="actions">
         <button
           type="button"
-          className="btn-primary"
+          className="btn-primary btn-wide"
           disabled={busy || resizeIncomplete}
           onClick={() => onCompress(target, resize)}
         >
           {busy ? 'Starting...' : 'Compress'}
         </button>
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+        <button type="button" className="link-button" onClick={onCancel}>
           Cancel
         </button>
       </div>

@@ -7,6 +7,7 @@
  */
 
 import { fmt } from '../lib/format'
+import { useFocusOnMount } from '../hooks/useFocusOnMount'
 
 interface ReadingPanelProps {
   /** Share of the file sent, 0 to 1; null once the upload is done. */
@@ -26,6 +27,7 @@ export function ReadingPanel({
   restarting = false,
   queued = false,
 }: ReadingPanelProps) {
+  const headRef = useFocusOnMount<HTMLParagraphElement>()
   const uploading = uploaded !== null
   const pct = uploading ? Math.round(uploaded * 100) : null
   // A slow upload that is visibly moving is just a big file on a slow
@@ -34,7 +36,7 @@ export function ReadingPanel({
 
   return (
     <div className="panel">
-      <p className="progress-headline">
+      <p ref={headRef} tabIndex={-1} className="progress-headline">
         {restarting
           ? 'The server restarted. Starting again...'
           : uploading

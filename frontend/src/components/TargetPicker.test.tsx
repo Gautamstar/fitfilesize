@@ -172,3 +172,44 @@ describe('TargetPicker when the file already fits', () => {
     expect(screen.getByText('500 KB', { selector: '.target-value' })).toBeTruthy()
   })
 })
+
+describe('TargetPicker on a form page', () => {
+  it('opens on the form settings, with the rest folded away', () => {
+    const onCompress = vi.fn()
+    render(
+      <TargetPicker
+        filename="photo.jpg"
+        meta="1.0 MB, 3000 x 2000"
+        originalBytes={1_000_000}
+        floor={20_000}
+        kind="image"
+        onCompress={onCompress}
+        onCancel={() => {}}
+        initialTarget={50_000}
+        minBytes={20_480}
+        initialResize={{ width: 200, height: 230, fit: 'crop' }}
+        form={{ name: 'IBPS photo' }}
+      />,
+    )
+    expect(screen.getByText('Set to the IBPS photo rules above')).toBeTruthy()
+    const toggle = screen.getByRole('button', { name: 'Change size or pixels' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    fireEvent.click(toggle)
+    // The form's own limit is offered among the common ones.
+    expect(screen.getByRole('button', { name: '50 KB' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
+    expect(onCompress.mock.calls.at(-1)).toEqual([50_000, { width: 200, height: 230, fit: 'crop' }])
+  })
+})
+
+describe('TargetPicker with a PNG at a pixel size', () => {
+  it('says before Compress that the result is a JPEG', () => {
+    setup('image', { width: 200, height: 230, fit: 'crop' }, { filename: 'scan.png' })
+    expect(screen.getByText('At an exact pixel size, the result is a JPEG.')).toBeTruthy()
+  })
+
+  it('says nothing of the kind for a JPEG', () => {
+    setup('image', { width: 200, height: 230, fit: 'crop' })
+    expect(screen.queryByText(/At an exact pixel size/)).toBeNull()
+  })
+})

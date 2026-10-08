@@ -36,7 +36,10 @@ const KIND_GROUP = { pdf: 'PDF', image: 'Photos and images' }
 // In the order the groups first appear in the page data.
 const SIZE_GROUPS = [...new Set(LANDING_PAGES.map(groupOf))].map((title) => ({
   title,
-  pages: LANDING_PAGES.filter((p) => groupOf(p) === title),
+  // Size pages smallest first; form pages keep their order in the data.
+  pages: LANDING_PAGES.filter((p) => groupOf(p) === title).sort((a, b) =>
+    a.title || b.title ? 0 : a.targetKb - b.targetKb,
+  ),
 }))
 
 function groupOf(page: LandingPage): string {

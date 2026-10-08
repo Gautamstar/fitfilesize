@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { fmtLimit } from '../lib/format'
 import { runProgress } from '../lib/search'
+import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import type { SearchState } from '../hooks/useProgressStream'
 
 interface ProgressPanelProps {
@@ -24,7 +25,13 @@ interface ProgressPanelProps {
 /** Silence after which the panel says the run is slow, not stuck. */
 export const QUIET_MS = 45_000
 
-export function ProgressPanel({ filename, targetBytes, search, queued = false }: ProgressPanelProps) {
+export function ProgressPanel({
+  filename,
+  targetBytes,
+  search,
+  queued = false,
+}: ProgressPanelProps) {
+  const headRef = useFocusOnMount<HTMLParagraphElement>()
   const { fraction, tries } = runProgress(search)
   // Any change in the search restarts the clock. A server that has stopped
   // for good is caught elsewhere (the run fails or the job disappears); this
@@ -64,7 +71,9 @@ export function ProgressPanel({ filename, targetBytes, search, queued = false }:
         <p className="file-meta">target {fmtLimit(targetBytes)}</p>
       </header>
 
-      <p className="progress-headline">Finding the best quality that fits</p>
+      <p ref={headRef} tabIndex={-1} className="progress-headline">
+        Finding the best quality that fits
+      </p>
       <div
         className={`read-bar run-bar${search.current || search.rungs === null ? ' working' : ''}`}
         role="progressbar"

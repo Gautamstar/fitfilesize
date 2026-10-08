@@ -12,3 +12,4 @@ data/
 FitPDF-Overview.pdf
 deploy/.env
 dump.rdb
+.impeccable/

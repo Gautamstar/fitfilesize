@@ -12,6 +12,8 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { fadeUp } from './anim'
 import { Dropzone } from './components/Dropzone'
+import { FormFinder } from './components/FormFinder'
+import { FormSet } from './components/FormSet'
 import { ErrorPanel } from './components/ErrorPanel'
 import { Landing } from './components/Landing'
 import { LimitChips } from './components/LimitChips'
@@ -86,6 +88,8 @@ function App({ path }: AppProps) {
   // A form page's own rules: exact pixels and a minimum size, besides its limit.
   const formResize = useMemo(() => (landing ? pageResize(landing) : null), [landing])
   const formMin = landing ? pageMinBytes(landing) : null
+  // A form page names its form and lists what the form asks for.
+  const form = landing?.spec && landing.title ? { name: landing.title, spec: landing.spec } : null
   const [phase, setPhase] = useState<Phase>('drop')
   const [job, setJob] = useState<JobInfo | null>(null)
   const [targetBytes, setTargetBytes] = useState(0)
@@ -121,16 +125,19 @@ function App({ path }: AppProps) {
   const streaming = phase === 'progress' || phase === 'result'
   const stream = useProgressStream(job?.jobId ?? null, streaming)
 
-  const reset = useCallback((message?: string) => {
-    setPhase('drop')
-    setJob(null)
-    setTargetBytes(0)
-    setResize(formResize)
-    setPreview(null)
-    setTargetWarning(null)
-    setFatalError(null)
-    setDropError(message ?? null)
-  }, [formResize])
+  const reset = useCallback(
+    (message?: string) => {
+      setPhase('drop')
+      setJob(null)
+      setTargetBytes(0)
+      setResize(formResize)
+      setPreview(null)
+      setTargetWarning(null)
+      setFatalError(null)
+      setDropError(message ?? null)
+    },
+    [formResize],
+  )
 
   const secondsLeft = useCountdown(phase === 'result' ? stream.expiresAt : null, () =>
     reset('We deleted that file. Upload it again if you still need it.'),
@@ -199,7 +206,9 @@ function App({ path }: AppProps) {
     setDropError(null)
 
     if (!isAcceptedFile(file)) {
-      setDropError('We can take a PDF, JPEG, PNG, GIF, WebP, TIFF, BMP or HEIC.')
+      setDropError(
+        `We take PDF, JPEG, PNG, GIF, WebP, TIFF, BMP and HEIC files, and ${file.name} is none of these.`,
+      )
       return
     }
     // What the server would refuse, said now instead of after the upload.
@@ -324,23 +333,40 @@ function App({ path }: AppProps) {
     reset()
   }
 
+  // A form page names the files its form takes; other pages take anything.
+  const dropFormats = form
+    ? landing?.kind === 'pdf'
+      ? 'PDF'
+      : 'JPG, PNG, HEIC or another photo'
+    : undefined
+
   // One panel per phase. Pulled out so the animation wrapper below stays
   // readable and so `phase` is the single thing deciding what is on screen.
   const panel = () => {
     switch (phase) {
-      case 'drop':
+      case 'drop': {
+        const chips = (
+          <LimitChips
+            value={limit}
+            onChange={(next) => {
+              setLimit(next)
+              setLimitChosen(true)
+            }}
+            extra={landing ? pageTargetBytes(landing) : undefined}
+          />
+        )
         return (
-          <Dropzone onFile={handleFile} error={dropError}>
-            <LimitChips
-              value={limit}
-              onChange={(next) => {
-                setLimit(next)
-                setLimitChosen(true)
-              }}
-              extra={landing ? pageTargetBytes(landing) : undefined}
-            />
+          <Dropzone onFile={handleFile} error={dropError} formats={dropFormats}>
+            {form ? (
+              <FormSet name={form.name}>
+                {chips}
+              </FormSet>
+            ) : (
+              chips
+            )}
           </Dropzone>
         )
+      }
 
       case 'analyzing':
         return (
@@ -373,6 +399,9 @@ function App({ path }: AppProps) {
             minBytes={formMin}
             initialResize={resize}
             preview={preview}
+            // Only while the form's own limit is the one in use: after a
+            // different chip, "Set for" would no longer be true.
+            form={form && landing && limit === pageTargetBytes(landing) ? form : null}
           />
         ) : null
 
@@ -396,6 +425,13 @@ function App({ path }: AppProps) {
             onRetry={() => setPhase('target')}
             onDelete={handleDelete}
             search={stream.search}
+            filename={job.filename}
+            kind={job.kind}
+            resize={job.kind === 'image' ? resize : null}
+            minBytes={minBytes}
+            formName={
+              form && landing && targetBytes === pageTargetBytes(landing) ? form.name : null
+            }
           />
         ) : null
 
@@ -412,7 +448,6 @@ function App({ path }: AppProps) {
           <span className="brand-name">FitFileSize</span>
         </a>
         <div className="topbar-end">
-          <p className="topbar-note">Free · No sign-up</p>
           <ThemeToggle />
         </div>
       </header>
@@ -420,7 +455,9 @@ function App({ path }: AppProps) {
       {/* No entrance animation: this is the page's largest content, and an
           element that starts at opacity 0 does not count as painted until it
           has faded in, which is what Google's LCP measures. */}
-      <section className="hero">
+      {/* Once a file is in, the page is about that file: the heading shrinks
+          and the pitch goes, so the controls start near the top of a phone. */}
+      <section className={phase === 'drop' ? 'hero' : 'hero hero-compact'}>
         {/* On a landing page the H1 is the search phrase itself, since that is
             what the visitor typed and what the page should rank for. */}
         <h1>{landing?.title ?? landing?.heading ?? 'Make any file fit the upload limit'}</h1>
@@ -432,10 +469,14 @@ function App({ path }: AppProps) {
             ))}
           </p>
         ) : null}
-        <p className="tagline">
-          {(landing && keepUnits(landing.blurb)) ??
-            'Compress a PDF or image to the exact size a form asks for. Free, no sign-up, and your file is deleted within minutes.'}
-        </p>
+        {phase === 'drop' ? (
+          <p className="tagline">
+            {(landing && keepUnits(landing.blurb)) ??
+              'Compress a PDF or image to the exact size a form asks for. Free, no sign-up, and your file is deleted within minutes.'}
+          </p>
+        ) : null}
+        {/* A form page is already the answer; everywhere else, find one. */}
+        {phase === 'drop' && !form ? <FormFinder /> : null}
         {landing?.org ? (
           // A page named for a form must not pass for the form's own site.
           <p className="hero-note">Independent tool, not affiliated with {landing.org}.</p>
@@ -471,7 +512,7 @@ function App({ path }: AppProps) {
             </li>
             <li>
               <TrustIcon d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0zm8-4v4l3 2" />
-              Quality kept where possible
+              Gentlest setting that fits
             </li>
           </ul>
         ) : null}
@@ -487,8 +528,8 @@ function App({ path }: AppProps) {
           <span className="brand-name">FitFileSize</span>
         </a>
         <p>
-          Files are deleted automatically: your original 5 minutes after compression, the
-          result after 10. Anything you upload but don't compress is gone within 30 minutes.
+          Files are deleted automatically: your original 5 minutes after compression, the result
+          after 10. Anything you upload but don't compress is gone within 30 minutes.
         </p>
         <nav className="foot-links" aria-label="Site">
           <a href="/privacy.html">Privacy</a>

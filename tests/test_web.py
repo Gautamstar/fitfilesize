@@ -198,6 +198,22 @@ def test_image_round_trip_downloads_jpeg(web, photo_jpg):
     assert "photo.fit.jpg" in dl.headers["content-disposition"]
 
 
+def test_a_preview_fetch_is_not_counted_as_a_download(web, photo_jpg):
+    """The result page shows the image with ?preview=1; only Download counts."""
+    client, r, _ = web
+    job_id = _upload(client, photo_jpg, name="photo.jpg").json()["job_id"]
+    target = int(photo_jpg.stat().st_size * 0.25)
+    client.post(f"/api/jobs/{job_id}/compress", json={"target_bytes": target})
+
+    shown = client.get(f"/api/jobs/{job_id}/download?preview=1")
+    assert shown.status_code == 200
+    assert shown.headers["content-type"] == "image/jpeg"
+    assert not r.hexists(store.job_key(job_id), "downloaded")
+
+    assert client.get(f"/api/jobs/{job_id}/download").status_code == 200
+    assert r.hexists(store.job_key(job_id), "downloaded")
+
+
 def test_png_upload_downloads_as_jpeg_when_the_caller_allows_it(web, photo_png):
     """A PNG that can only fit as a JPEG, and the download name has to follow."""
     client, _, _ = web
