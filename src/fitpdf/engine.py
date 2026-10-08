@@ -20,6 +20,7 @@ from .strategies import (
     copy_through,
     detect_strategy,
     lossless_pass,
+    pad_gif,
     pad_jpeg,
 )
 from .units import human_size
@@ -326,9 +327,15 @@ def compress_to_target(
         # rung or the lossless copy, whatever mode the strategy is left in.
         target_path = dst.with_suffix(produced.suffix.lower())
         copy_through(produced, target_path)
+        notes_for = getattr(strategy, "notes_for", None)
+        if notes_for is not None:
+            warnings.extend(notes_for(produced))
         if min_bytes and size < min_bytes:
-            if target_path.suffix.lower() in (".jpg", ".jpeg"):
-                size = pad_jpeg(target_path, min_bytes)
+            pad = {".jpg": pad_jpeg, ".jpeg": pad_jpeg, ".gif": pad_gif}.get(
+                target_path.suffix.lower()
+            )
+            if pad is not None:
+                size = pad(target_path, min_bytes)
                 warnings.append(
                     f"padded to {human_size(size)} to meet the minimum size; "
                     "the picture itself is unchanged"
@@ -336,7 +343,7 @@ def compress_to_target(
             else:
                 warnings.append(
                     f"this is under the {human_size(min_bytes)} minimum, and only a JPEG "
-                    "can be padded up to it"
+                    "or GIF can be padded up to it"
                 )
         # A PNG that comes back as a JPG can be refused by a site that only
         # takes PNG, and loses any see-through parts, so say which.

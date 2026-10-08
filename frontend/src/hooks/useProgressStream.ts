@@ -18,7 +18,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError, eventsUrl, getJob } from '../lib/api'
 import { fmt, fmtLimit } from '../lib/format'
-import type { DoneEvent, JobState, ProgressEvent } from '../types/api'
+import type { DoneEvent, GifRungStartEvent, JobState, ProgressEvent } from '../types/api'
 
 /** How long to let the stream prove itself before polling as well. */
 const STREAM_GRACE_MS = 6000
@@ -108,6 +108,20 @@ const EMPTY: StreamState = {
  * `enabled` lets the caller keep the hook mounted but disconnected, which is
  * what we want between runs: the component tree stays put, the socket does not.
  */
+/** A GIF rung in words: "128 colours at 76% size, compression 120". */
+export function gifSettings(ev: GifRungStartEvent): string {
+  const size =
+    ev.width && ev.height
+      ? `${ev.width} x ${ev.height}`
+      : ev.scale && ev.scale < 1
+        ? `${Math.round(ev.scale * 100)}% size`
+        : 'full size'
+  const parts = [`${ev.colors} colours at ${size}`]
+  if (ev.lossy) parts.push(`compression ${ev.lossy}`)
+  if (ev.frame_step && ev.frame_step > 1) parts.push('every other frame')
+  return parts.join(', ')
+}
+
 export function useProgressStream(jobId: string | null, enabled: boolean): StreamState {
   const [state, setState] = useState<StreamState>(EMPTY)
   // Which job `state` belongs to. Until the effect below resets it for a new
@@ -247,6 +261,13 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
           setState((s) => ({ ...s, attempts: s.attempts + 1 }))
           // Every kind of run shares this stage, so `stage` cannot separate
           // them. The `in` operator narrows the union to the right variant.
+          if ('lossy' in ev) {
+            const settings = gifSettings(ev)
+            addStep(`Trying ${settings}`, 'pending')
+            const rung = ev.rung
+            setState((s) => ({ ...s, search: { ...s.search, current: { rung, label: settings } } }))
+            break
+          }
           const pngEdge = 'colors' in ev ? (ev.max_edge >= 100_000 ? 'full size' : `${ev.max_edge} px`) : ''
           const label =
             'colors' in ev

@@ -140,6 +140,7 @@ export const ACCEPTED_EXTENSIONS = [
   '.jpg',
   '.jpeg',
   '.png',
+  '.gif',
   '.webp',
   '.tif',
   '.tiff',
