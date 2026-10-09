@@ -15,6 +15,8 @@ import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import { DEFAULT_FOCUS, type Focus } from '../lib/crop'
 import {
   LIMIT_PRESETS,
+  parseLimit,
+  type LimitUnit,
   SLIDER_STEPS,
   bytesToSlider,
   fmt,
@@ -27,6 +29,7 @@ import {
   tierHint,
   isHeic,
   isGif,
+  holdsTransparency,
 } from '../lib/format'
 
 /** The backend refuses sides longer than this (MAX_RESIZE_EDGE). */
@@ -79,6 +82,11 @@ interface TargetPickerProps {
    * chosen, so the controls for picking others start folded away.
    */
   form?: { name: string } | null
+  /**
+   * At an exact pixel size, keep a PNG or WebP in its format. False on a form
+   * page that asks for JPEG, where the result is a JPEG.
+   */
+  keepFormat?: boolean
 }
 
 export function TargetPicker({
@@ -96,10 +104,17 @@ export function TargetPicker({
   minBytes = null,
   preview = null,
   form = null,
+  keepFormat = false,
 }: TargetPickerProps) {
   // On a form page the form's settings are the answer; "Change" opens the rest.
   const headRef = useFocusOnMount<HTMLHeadingElement>()
   const [adjusting, setAdjusting] = useState(false)
+  // "Other": a limit typed in, for one no chip has (a 45 KB form, 50 MB).
+  // Kept as text, so a half-typed "1." is not rewritten under the cursor.
+  const [otherOpen, setOtherOpen] = useState(false)
+  const [otherText, setOtherText] = useState('')
+  const [otherUnit, setOtherUnit] = useState<LimitUnit>('KB')
+  const otherId = useId()
   const adjustId = useId()
   // Exact pixel size, images only. Kept as typed text so a half-typed number
   // is not rewritten under the cursor; `resize` is the parsed result.
@@ -121,18 +136,23 @@ export function TargetPicker({
 
   // A GIF stays a GIF at any pixel size, and its border is see-through.
   const gif = isGif(filename)
+  const heic = isHeic(filename)
+  const jpegFile = /\.jpe?g$/i.test(filename)
+  // What an exact size comes back as: a JPEG, unless the page keeps the
+  // format (a GIF always keeps it; a HEIC never can).
+  const kept = gif || (keepFormat && !heic && !jpegFile)
+  const seeThrough = gif || (kept && holdsTransparency(filename))
   // At a fixed pixel size the file's own floor no longer applies; the pixel
-  // count decides how small it can get. Not for a GIF: its frames and
-  // content decide that, and no estimate from the pixels alone holds up
-  // (0.3 to 3 times off on test GIFs), so none is shown.
-  const floorFor = (r: Resize | null) => (r ? (gif ? 0 : resizedFloor(r.width, r.height)) : floor)
+  // count decides how small it can get. The estimate is a JPEG's: for a GIF
+  // its frames and content decide (0.3 to 3 times off on test GIFs), and a
+  // kept PNG depends on its colours, so for those none is shown.
+  const floorFor = (r: Resize | null) => (r ? (kept ? 0 : resizedFloor(r.width, r.height)) : floor)
   const effectiveFloor = floorFor(resize)
   // A form's exact pixel size changes the file whatever its size, so its own
   // limit stays on offer even for a file already under it.
   const formPixels = kind === 'image' && Boolean(initialResize) && initialTarget !== undefined
   // A HEIC always becomes a JPEG, usually two to three times its size, so a
   // limit above the HEIC itself still means something.
-  const heic = isHeic(filename)
   const hi = formPixels
     ? Math.max(originalBytes, initialTarget as number)
     : heic
@@ -181,7 +201,8 @@ export function TargetPicker({
     (a, b) => a - b,
   )
   const chipLimits = presets.filter(
-    (bytes) => bytes < hi && (bytes >= effectiveFloor || bytes === chosen),
+    (bytes) =>
+      (bytes < hi || bytes === initialTarget) && (bytes >= effectiveFloor || bytes === chosen),
   )
 
   // Everything below is derived from `chosen`. `lo` never rises, so the
@@ -194,6 +215,17 @@ export function TargetPicker({
     effectiveFloor <= lo
       ? 0
       : Math.min(100, (bytesToSlider(effectiveFloor, lo, hi) / SLIDER_STEPS) * 100)
+
+  const otherInvalid = otherText.trim() !== '' && parseLimit(otherText, otherUnit) === null
+  const typeOther = (text: string, unit: LimitUnit) => {
+    setOtherText(text)
+    setOtherUnit(unit)
+    const bytes = parseLimit(text, unit)
+    if (bytes === null) return
+    // Let the slider reach a typed limit below its range, as a preset does.
+    setLo((current) => Math.min(current, Math.max(bytes, 512)))
+    setChosen(bytes)
+  }
 
   const cropBox =
     preview && resize && fit === 'crop' ? (
@@ -226,20 +258,23 @@ export function TargetPicker({
         />
         <div className="track-labels">
           <span>{fmt(lo)}</span>
-          <span>{fmt(hi)}</span>
+          {/* A page's round limit at the top keeps its own number, as the
+              big readout shows it ("256 KB", not "250.0 KB"). */}
+          <span>{fmtLimit(hi)}</span>
         </div>
-        {resize && gif ? null : (
+        {resize && kept ? null : (
           <p className="floor-note">
             {resize
-              ? `at ${resize.width} x ${resize.height} it goes down to about ${fmt(effectiveFloor)}`
-              : `this file goes down to about ${fmt(floor)}`}
+              ? `At ${resize.width} x ${resize.height} it goes down to about ${fmt(effectiveFloor)}.`
+              : `This file goes down to about ${fmt(floor)}.`}{' '}
+            {hatchPct > 0 ? 'The hatched part of the bar is smaller than that.' : null}
           </p>
         )}
       </div>
 
       {/* Limits the file already fits under, or cannot reach, are left out
           rather than shown disabled: a row of dead buttons is noise. */}
-      {chipLimits.length > 0 ? <p className="chips-label">Common limits</p> : null}
+      <p className="chips-label">Common limits</p>
       <div className="chips">
         {chipLimits.map((bytes) => {
           const disabled = bytes < lo
@@ -262,7 +297,51 @@ export function TargetPicker({
             </button>
           )
         })}
+        <button
+          type="button"
+          className={`chip${otherOpen ? ' active' : ''}`}
+          aria-pressed={otherOpen}
+          aria-expanded={otherOpen}
+          aria-controls={otherId}
+          onClick={() => setOtherOpen((open) => !open)}
+        >
+          Other
+        </button>
       </div>
+      {otherOpen ? (
+        <div className="custom-limit" id={otherId}>
+          <label className="custom-limit-label" htmlFor={`${otherId}-input`}>
+            Limit
+          </label>
+          <div className="custom-limit-row">
+            <input
+              id={`${otherId}-input`}
+              className="custom-limit-input"
+              type="text"
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="45"
+              value={otherText}
+              aria-invalid={otherInvalid}
+              onChange={(e) => typeOther(e.target.value, otherUnit)}
+            />
+            <select
+              className="custom-limit-unit"
+              aria-label="Unit"
+              value={otherUnit}
+              onChange={(e) => typeOther(otherText, e.target.value as LimitUnit)}
+            >
+              <option value="KB">KB</option>
+              <option value="MB">MB</option>
+            </select>
+          </div>
+          {otherInvalid ? (
+            <p className="custom-limit-error">
+              Enter a size between 1 KB and 100 MB, like 45 or 1.5.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {kind === 'image' ? (
         // Collapsed unless already in use: most visitors only need a size in
@@ -272,7 +351,9 @@ export function TargetPicker({
           <p className="resize-note">
             {gif
               ? 'For set dimensions, like a 128 x 128 emoji. The result is a GIF, still animated.'
-              : 'For forms that ask for set dimensions, like a 200 x 230 photo. The result is a JPEG.'}
+              : kept
+                ? 'For set dimensions, like a 128 x 128 emoji. The result keeps its format.'
+                : 'For forms that ask for set dimensions, like a 200 x 230 photo. The result is a JPEG.'}
           </p>
           <div className="resize-row">
             <label>
@@ -323,7 +404,7 @@ export function TargetPicker({
                 checked={fit === 'pad'}
                 onChange={() => changeResize(widthText, heightText, 'pad')}
               />
-              {gif ? 'Add a see-through border' : 'Add a white border'}
+              {seeThrough ? 'Add a see-through border' : 'Add a white border'}
             </label>
           </fieldset>
           {form ? null : cropBox}
@@ -354,11 +435,13 @@ export function TargetPicker({
       {/* Said before Compress, not after: this is the one format that comes
           back as something else. */}
       {heic ? <p className="convert-note">HEIC photos are saved as JPEG.</p> : null}
-      {/* The other change of format, said as plainly: a still image cut to an
-          exact pixel size comes back as a JPEG. Not on a form page, whose
-          heading already says JPEG. */}
-      {resize && !heic && !gif && !form && !/\.jpe?g$/i.test(filename) ? (
-        <p className="convert-note">At an exact pixel size, the result is a JPEG.</p>
+      {/* The other change of format, said as plainly: on a page that asks
+          for JPEG, a still image cut to an exact size comes back as one, and
+          any see-through parts turn white. */}
+      {resize && !kept && !heic && !jpegFile ? (
+        <p className="convert-note">
+          At an exact pixel size the result is a JPEG, so any see-through parts become white.
+        </p>
       ) : null}
 
       {/* The limit picked before upload (or the landing page's size) is at or
@@ -396,7 +479,7 @@ export function TargetPicker({
             aria-controls={adjustId}
             onClick={() => setAdjusting((open) => !open)}
           >
-            {adjusting ? 'Hide size settings' : 'Change size or pixels'}
+            {adjusting ? 'Hide size or pixels' : 'Change size or pixels'}
           </button>
           <div id={adjustId} className="adjust" hidden={!adjusting}>
             {controls}

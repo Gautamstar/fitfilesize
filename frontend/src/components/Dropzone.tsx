@@ -17,6 +17,8 @@ interface DropzoneProps {
   children?: ReactNode
   /** The file types to name, when a page is about one kind of file. */
   formats?: string
+  /** A plain message, not an error: "Your files were deleted." */
+  notice?: string | null
 }
 
 const ALL_FORMATS = 'PDF, JPG, PNG, GIF, WebP, TIFF, BMP or HEIC'
@@ -29,6 +31,7 @@ export function Dropzone({
   disabled = false,
   children,
   formats = ALL_FORMATS,
+  notice = null,
 }: DropzoneProps) {
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -123,6 +126,11 @@ export function Dropzone({
         />
       </div>
 
+      {notice && !error ? (
+        <p className="drop-notice" role="status">
+          {notice}
+        </p>
+      ) : null}
       {error ? (
         <p className="error-text" role="alert">
           {sentence(error)}

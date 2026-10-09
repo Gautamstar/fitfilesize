@@ -82,14 +82,14 @@ it('uploads the copy and shows the size of the file the visitor chose', async ()
   expect(vi.mocked(uploadFile).mock.calls[0][0]).toBe(copy)
   expect(document.querySelector('.file-meta')?.textContent).toMatch(/^4\.8 MB/)
   // The page's 200 KB is well under the copy, so its head-start uses it.
-  expect(startCompress).toHaveBeenCalledWith('copy', 200_000, null, undefined, true, null)
+  expect(startCompress).toHaveBeenCalledWith('copy', 200_000, null, undefined, true, null, true)
 })
 
 it('sends the original for a limit the copy is too close to', async () => {
   await drop()
   fireEvent.click(screen.getByRole('button', { name: '1 MB' }))
   fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
-  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('orig', 1_000_000, null, undefined, false, null))
+  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('orig', 1_000_000, null, undefined, false, null, true))
   expect(vi.mocked(uploadFile).mock.calls[1][0]).toBe(original)
   expect(deleteJob).toHaveBeenCalledWith('copy')
 })
@@ -97,6 +97,6 @@ it('sends the original for a limit the copy is too close to', async () => {
 it('keeps the copy for the limit it was made for', async () => {
   await drop()
   fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
-  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('copy', 200_000, null, undefined, false, null))
+  await vi.waitFor(() => expect(startCompress).toHaveBeenLastCalledWith('copy', 200_000, null, undefined, false, null, true))
   expect(uploadFile).toHaveBeenCalledTimes(1)
 })

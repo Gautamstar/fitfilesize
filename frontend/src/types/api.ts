@@ -193,8 +193,15 @@ export interface ImageRungStartEvent {
 export interface PngRungStartEvent {
   stage: 'rung_start'
   rung: number
-  /** Cap on the longest side; larger than the image means full size. */
+  /**
+   * Cap on the longest side; larger than the image means full size. Absent
+   * at an exact size, which gives width and height instead.
+   */
   max_edge: number
+  /** An exact size, when a PNG, TIFF or BMP keeps its format at one. */
+  width?: number
+  height?: number
+  /** 0 for every colour (an exact size's first try). */
   colors: number
   /** 'TIFF' or 'BMP'; absent for a PNG. */
   format?: string

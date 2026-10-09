@@ -58,14 +58,14 @@ it('starts one for a size clicked before upload', async () => {
   render(<App path="/" />)
   fireEvent.click(screen.getByRole('button', { name: '500 KB' }))
   await dropPhoto()
-  expect(startCompress).toHaveBeenCalledWith('job1', 500_000, null, undefined, true, null)
+  expect(startCompress).toHaveBeenCalledWith('job1', 500_000, null, undefined, true, null, true)
 })
 
 it("starts one for a landing page's size", async () => {
   const { default: App } = await import('./App')
   render(<App path="/compress-jpg-to-200kb" />)
   await dropPhoto()
-  expect(startCompress).toHaveBeenCalledWith('job1', 200_000, null, undefined, true, null)
+  expect(startCompress).toHaveBeenCalledWith('job1', 200_000, null, undefined, true, null, true)
 })
 
 it('refuses an image with too many pixels without uploading it', async () => {
@@ -87,8 +87,8 @@ it("sends a form page's pixel size and minimum, which Compress sends too", async
   render(<App path="/ibps-signature" />)
   await dropPhoto()
   const form = [{ width: 140, height: 60, fit: 'crop' }, undefined] as const
-  expect(startCompress).toHaveBeenCalledWith('job1', 20_000, ...form, true, 10_240)
+  expect(startCompress).toHaveBeenCalledWith('job1', 20_000, ...form, true, 10_240, false)
   fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
-  expect(startCompress).toHaveBeenLastCalledWith('job1', 20_000, ...form, false, 10_240)
+  expect(startCompress).toHaveBeenLastCalledWith('job1', 20_000, ...form, false, 10_240, false)
   expect(screen.queryByText(/already under/)).toBeNull()
 })

@@ -37,3 +37,25 @@ describe('FormFinder', () => {
     expect(screen.getByText(/No page for that yet/)).toBeTruthy()
   })
 })
+
+describe('FormFinder keyboard', () => {
+  it('moves from the input into the matches with the arrow keys', () => {
+    render(<FormFinder />)
+    const input = screen.getByLabelText('Uploading for a form?')
+    fireEvent.change(input, { target: { value: 'ibps' } })
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    const links = screen.getAllByRole('link')
+    expect(document.activeElement).toBe(links[0])
+    fireEvent.keyDown(links[0], { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(links[1])
+    fireEvent.keyDown(links[1], { key: 'ArrowUp' })
+    fireEvent.keyDown(links[0], { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(input)
+  })
+
+  it('announces how many pages match', () => {
+    render(<FormFinder />)
+    fireEvent.change(screen.getByLabelText('Uploading for a form?'), { target: { value: 'ibps' } })
+    expect(screen.getByText('2 pages found')).toBeTruthy()
+  })
+})

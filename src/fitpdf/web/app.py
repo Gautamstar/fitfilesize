@@ -144,6 +144,12 @@ class CompressRequest(BaseModel):
         description="For a PNG, with allow_jpeg: false skips the PNG attempts and goes "
         "straight to JPEG.",
     )
+    keep_format: bool = Field(
+        False,
+        description="With width and height: keep a PNG, WebP, TIFF or BMP in its own format "
+        "(transparency kept, a pad's border see-through) instead of the JPEG most forms "
+        "that ask for pixels require. A GIF always stays a GIF.",
+    )
     prepare: bool = Field(
         False,
         description="Start the run ahead of time, before the visitor has confirmed "
@@ -160,6 +166,7 @@ def run_params(
     focus: tuple[float, float] | None = None,
     allow_jpeg: bool = False,
     keep_png: bool = True,
+    keep_format: bool = False,
 ) -> str:
     """What a run was asked for, to tell whether a head-start matches."""
     return json.dumps([
@@ -170,6 +177,7 @@ def run_params(
         list(focus) if focus else None,
         allow_jpeg,
         keep_png,
+        keep_format and resize is not None,
     ])
 
 
@@ -812,7 +820,8 @@ def create_app(
         check_min(req.min_bytes, req.target_bytes)
         focus = focus_for(resize, req.fit, req.crop_x, req.crop_y)
         params = run_params(
-            req.target_bytes, resize, req.fit, req.min_bytes, focus, req.allow_jpeg, req.keep_png
+            req.target_bytes, resize, req.fit, req.min_bytes, focus, req.allow_jpeg, req.keep_png,
+            req.keep_format,
         )
         head_start = job.get("prepared") == "1"
         running = job.get("status") in ("queued", "compressing")
@@ -831,7 +840,7 @@ def create_app(
                 queue_run(
                     job_id, require_input(job_id, job), req.target_bytes, resize, req.fit,
                     min_bytes=req.min_bytes, focus=focus, allow_jpeg=req.allow_jpeg,
-                    keep_png=req.keep_png,
+                    keep_png=req.keep_png, keep_format=req.keep_format,
                 )
                 return {"job_id": job_id, "status": "queued"}
             done_ok = job.get("status") == "done" and output_path(job_id, job) is not None
@@ -847,7 +856,7 @@ def create_app(
         queue_run(
             job_id, src, req.target_bytes, resize, req.fit,
             prepared=req.prepare, min_bytes=req.min_bytes, focus=focus,
-            allow_jpeg=req.allow_jpeg, keep_png=req.keep_png,
+            allow_jpeg=req.allow_jpeg, keep_png=req.keep_png, keep_format=req.keep_format,
         )
         return {"job_id": job_id, "status": "queued"}
 
@@ -862,6 +871,7 @@ def create_app(
         focus: tuple[float, float] | None = None,
         allow_jpeg: bool = False,
         keep_png: bool = True,
+        keep_format: bool = False,
     ) -> None:
         """Reset a job for a fresh run and put it on the worker queue."""
         # The new run id goes in first: from this write on, any earlier run of
@@ -875,7 +885,9 @@ def create_app(
             target_bytes=target_bytes,
             prepared="1" if prepared else "0",
             needs_jpeg="0",
-            run_params=run_params(target_bytes, resize, fit, min_bytes, focus, allow_jpeg, keep_png),
+            run_params=run_params(
+                target_bytes, resize, fit, min_bytes, focus, allow_jpeg, keep_png, keep_format
+            ),
         )
         # No suffix: compress_to_target picks the right one for what it produced
         # (a lossy image result is always JPEG) and reports it back. Named for
@@ -904,6 +916,7 @@ def create_app(
             focus=focus,
             allow_jpeg=allow_jpeg,
             keep_png=keep_png,
+            keep_format=keep_format,
             job_timeout=settings.gs_timeout * 8 + 120,
             result_ttl=settings.ttl_seconds,
             failure_ttl=settings.ttl_seconds,

@@ -608,7 +608,7 @@
         "title": "Getting an e-Visa photo square and under 1 MB",
         "paragraphs": [
           "The e-Visa form asks for a JPEG of at least 10 KB and at most 1 MB, with equal height and width. It does not name a pixel size, so this page makes it 1000 x 1000: square, detailed, and comfortably under 1 MB.",
-          "The photo is cropped to a square where you place the crop box, resized, and saved at the highest JPEG quality that fits. You can change the pixel size in the options before you compress if you prefer another."
+          "The photo is cropped to a square where you place the crop box, resized, and saved at the highest JPEG quality that fits. To use another pixel size, change it under Change size or pixels before you compress."
         ],
         "tips": [
           "If your face is not in the middle, drag the crop box over it before you press Compress.",
@@ -652,7 +652,7 @@
         "tips": [
           "Recent IBPS notifications also ask for a live photo taken during registration, besides this upload. Check the notification for your exam.",
           "Use a recent photo, face centred, on a light background. If your face is off to one side, drag the crop box over it.",
-          "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
+          "Each recruitment publishes its own notification. If a form states a different size, change it under Change size or pixels before you compress."
         ]
       }
     },
@@ -691,7 +691,7 @@
         "tips": [
           "Sign with a black pen on plain white paper, and photograph or scan it in good light.",
           "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
-          "Each recruitment publishes its own notification. If a form states a different size, set it in the options before you compress."
+          "Each recruitment publishes its own notification. If a form states a different size, change it under Change size or pixels before you compress."
         ]
       }
     },
@@ -730,7 +730,7 @@
         "tips": [
           "Use a light, preferably white, background and look straight at the camera. Caps, hats and dark glasses are not accepted.",
           "SBI also asks for a live photo taken with your webcam or phone during the application, besides this upload.",
-          "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
+          "SBI publishes a notice for each recruitment. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       }
     },
@@ -769,7 +769,7 @@
         "tips": [
           "Sign with a black pen on plain white paper, and photograph or scan it in good light.",
           "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
-          "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
+          "SBI publishes a notice for each recruitment. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       }
     },
@@ -847,7 +847,7 @@
         "tips": [
           "Write the declaration in your own handwriting, not in capital letters, and copy the wording from the notice exactly.",
           "Take the photo close around the text, then drag the crop box so it keeps every line.",
-          "SBI publishes a notice for each recruitment. If yours states a different size, set it in the options before you compress."
+          "SBI publishes a notice for each recruitment. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       }
     },
@@ -958,7 +958,7 @@
         "tips": [
           "Sign on plain white paper and take the photo close around the signature, so it fills the crop box.",
           "Your photograph is not uploaded: SSC captures it live with your webcam or phone while you fill in the form.",
-          "Each SSC notice sets its own rules. If yours states a different size, set it in the options before you compress."
+          "Each SSC notice sets its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       }
     },
@@ -1415,8 +1415,8 @@
         ],
         "tips": [
           "Discord checks the size before it compresses anything, so the file you upload is the size that counts.",
-          "With Nitro Basic, pick 50 MB on the slider instead.",
-          "To make the GIF smaller in pixels too, open Exact size in pixels and enter a width and height."
+          "With Nitro Basic, open Change size or pixels and pick 50 MB instead.",
+          "To make the GIF smaller in pixels too, open Change size or pixels, then Exact size in pixels, and enter a width and height."
         ]
       }
     },

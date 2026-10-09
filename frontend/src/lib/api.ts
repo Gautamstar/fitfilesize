@@ -124,9 +124,12 @@ export async function uploadFile(
   try {
     return await sendUpload(file, signal, onProgress)
   } catch (err) {
-    const transient =
-      !(err instanceof ApiError) || TRANSIENT_STATUSES.has(err.status)
-    if (!transient || signal?.aborted || (err instanceof DOMException && err.name === 'AbortError')) {
+    const transient = !(err instanceof ApiError) || TRANSIENT_STATUSES.has(err.status)
+    if (
+      !transient ||
+      signal?.aborted ||
+      (err instanceof DOMException && err.name === 'AbortError')
+    ) {
       throw err
     }
     await sleep(RETRY_DELAYS_MS[0])
@@ -143,7 +146,10 @@ function sendUpload(
   const form = new FormData()
   // Which page the upload came from, for the server's daily usage counts:
   // the slug only ("neet-photo", "" for home), nothing about the visitor.
-  form.append('page', typeof location === 'undefined' ? '' : location.pathname.replace(/^\/+|\/+$/g, ''))
+  form.append(
+    'page',
+    typeof location === 'undefined' ? '' : location.pathname.replace(/^\/+|\/+$/g, ''),
+  )
   form.append('file', file)
   // XMLHttpRequest rather than fetch: only it reports upload progress, and a
   // 5 MB photo on mobile data takes long enough to need a bar. No
@@ -200,6 +206,8 @@ export function startCompress(
   signal?: AbortSignal,
   prepare = false,
   minBytes: number | null = null,
+  /** At a pixel size, keep a PNG or WebP in its format rather than make a JPEG. */
+  keepFormat = false,
 ): Promise<{ job_id: string; status: string }> {
   return request(
     `/api/jobs/${jobId}/compress`,
@@ -211,6 +219,7 @@ export function startCompress(
         ...resize,
         ...(minBytes ? { min_bytes: minBytes } : {}),
         ...(prepare ? { prepare } : {}),
+        ...(keepFormat && resize ? { keep_format: true } : {}),
       }),
       signal,
     },

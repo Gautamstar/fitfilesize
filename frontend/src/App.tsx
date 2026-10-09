@@ -90,6 +90,9 @@ function App({ path }: AppProps) {
   const formMin = landing ? pageMinBytes(landing) : null
   // A form page names its form and lists what the form asks for.
   const form = landing?.spec && landing.title ? { name: landing.title, spec: landing.spec } : null
+  // At an exact pixel size a PNG or WebP keeps its format (a see-through
+  // emoji stays see-through), except for a form whose rules say JPEG.
+  const keepFormat = !landing?.spec?.includes('JPEG')
   const [phase, setPhase] = useState<Phase>('drop')
   const [job, setJob] = useState<JobInfo | null>(null)
   const [targetBytes, setTargetBytes] = useState(0)
@@ -99,6 +102,8 @@ function App({ path }: AppProps) {
   // The minimum sent with the last run, for an automatic restart to reuse.
   const [minBytes, setMinBytes] = useState<number | null>(null)
   const [dropError, setDropError] = useState<string | null>(null)
+  // Said after "Delete now", which otherwise just puts the page back.
+  const [notice, setNotice] = useState<string | null>(null)
   const [targetWarning, setTargetWarning] = useState<string | null>(null)
   const [fatalError, setFatalError] = useState<string | null>(null)
   const [slowUpload, setSlowUpload] = useState(false)
@@ -159,15 +164,15 @@ function App({ path }: AppProps) {
   const [restarting, setRestarting] = useState(false)
   // What a restart needs, read when an error arrives. Through a ref so the
   // effect below runs for a new error, not for every change in these.
-  const runRef = useRef({ job, targetBytes, resize, minBytes })
+  const runRef = useRef({ job, targetBytes, resize, minBytes, keepFormat })
   useEffect(() => {
-    runRef.current = { job, targetBytes, resize, minBytes }
-  }, [job, targetBytes, resize, minBytes])
+    runRef.current = { job, targetBytes, resize, minBytes, keepFormat }
+  }, [job, targetBytes, resize, minBytes, keepFormat])
 
   useEffect(() => {
     if (!stream.error) return
     const file = sentRef.current
-    const { job, targetBytes, resize, minBytes } = runRef.current
+    const { job, targetBytes, resize, minBytes, keepFormat } = runRef.current
     const lostByServer = /server restarted|lost track/i.test(stream.error)
     if (!lostByServer || !file || !job || autoRestarted.current) {
       setFatalError(stream.error)
@@ -186,7 +191,7 @@ function App({ path }: AppProps) {
       try {
         const up = await uploadFile(file, undefined, setUploaded)
         setUploaded(null)
-        await startCompress(up.job_id, targetBytes, resize, undefined, false, minBytes)
+        await startCompress(up.job_id, targetBytes, resize, undefined, false, minBytes, keepFormat)
         setJob({ ...job, jobId: up.job_id })
         setPhase('progress')
       } catch {
@@ -204,6 +209,7 @@ function App({ path }: AppProps) {
   // Upload, then analyze, then show the picker.
   const handleFile = async (file: File) => {
     setDropError(null)
+    setNotice(null)
 
     if (!isAcceptedFile(file)) {
       setDropError(
@@ -271,7 +277,15 @@ function App({ path }: AppProps) {
       const headResize = up.kind === 'image' ? resize : null
       const copyServes = !shrunk || (limit !== null && !needsOriginal(shrunk, limit, headResize))
       if (limitChosen && limit !== null && copyServes && (limit < up.size_bytes || headResize)) {
-        startCompress(up.job_id, limit, headResize, undefined, true, minFor(limit)).catch(() => {})
+        startCompress(
+          up.job_id,
+          limit,
+          headResize,
+          undefined,
+          true,
+          minFor(limit),
+          keepFormat,
+        ).catch(() => {})
       }
     } catch (err) {
       setDropError(err instanceof Error ? err.message : 'upload failed')
@@ -314,7 +328,7 @@ function App({ path }: AppProps) {
       setJob({ ...job, jobId })
     }
     try {
-      await startCompress(jobId, target, nextResize, undefined, false, min)
+      await startCompress(jobId, target, nextResize, undefined, false, min, keepFormat)
       setPhase('progress')
     } catch (err) {
       setTargetWarning(err instanceof Error ? err.message : 'could not start compression')
@@ -331,14 +345,20 @@ function App({ path }: AppProps) {
       }
     }
     reset()
+    setNotice('Your files were deleted.')
   }
 
   // A form page names the files its form takes; other pages take anything.
-  const dropFormats = form
-    ? landing?.kind === 'pdf'
-      ? 'PDF'
-      : 'JPG, PNG, HEIC or another photo'
-    : undefined
+  const dropFormats =
+    landing?.group === 'Discord'
+      ? 'GIF, PNG, JPG or WebP'
+      : landing?.group === 'GIF'
+        ? 'GIF'
+        : form
+          ? landing?.kind === 'pdf'
+            ? 'PDF'
+            : 'JPG, PNG, HEIC or another photo'
+          : undefined
 
   // One panel per phase. Pulled out so the animation wrapper below stays
   // readable and so `phase` is the single thing deciding what is on screen.
@@ -356,14 +376,8 @@ function App({ path }: AppProps) {
           />
         )
         return (
-          <Dropzone onFile={handleFile} error={dropError} formats={dropFormats}>
-            {form ? (
-              <FormSet name={form.name}>
-                {chips}
-              </FormSet>
-            ) : (
-              chips
-            )}
+          <Dropzone onFile={handleFile} error={dropError} formats={dropFormats} notice={notice}>
+            {form ? <FormSet name={form.name}>{chips}</FormSet> : chips}
           </Dropzone>
         )
       }
@@ -402,6 +416,7 @@ function App({ path }: AppProps) {
             // Only while the form's own limit is the one in use: after a
             // different chip, "Set for" would no longer be true.
             form={form && landing && limit === pageTargetBytes(landing) ? form : null}
+            keepFormat={keepFormat}
           />
         ) : null
 
@@ -429,6 +444,7 @@ function App({ path }: AppProps) {
             kind={job.kind}
             resize={job.kind === 'image' ? resize : null}
             minBytes={minBytes}
+            keepFormat={keepFormat}
             formName={
               form && landing && targetBytes === pageTargetBytes(landing) ? form.name : null
             }
@@ -442,6 +458,9 @@ function App({ path }: AppProps) {
 
   return (
     <div className="shell">
+      <a className="skip-link" href="#main">
+        Skip to the upload
+      </a>
       <header className="topbar">
         <a className="brand" href="/" aria-label="FitFileSize home">
           <Logo />
@@ -483,7 +502,7 @@ function App({ path }: AppProps) {
         ) : null}
       </section>
 
-      <main>
+      <main id="main" tabIndex={-1}>
         {/* mode="wait" lets the outgoing panel finish before the next rises in,
             so the two never overlap mid-transition. */}
         {/* initial={false}: the first panel is part of the pre-rendered page

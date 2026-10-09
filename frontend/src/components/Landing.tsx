@@ -16,20 +16,45 @@
 
 import { FAQ, LANDING_PAGES, keepUnits, pageSizeLabel, type LandingPage } from '../lib/landing'
 
-const STEPS = [
-  {
-    title: 'Drop your file',
-    body: 'A PDF or an image. It goes over an encrypted connection and nowhere else.',
-  },
-  {
-    title: 'Pick your limit',
-    body: 'Choose the size the form asks for. We start with a cleanup that changes nothing you can see.',
-  },
-  {
-    title: 'Download it',
-    body: 'If it needs more, we find the gentlest quality setting that still fits, and delete everything soon after.',
-  },
-]
+/**
+ * The three steps, as they go on this page. A page set up for a form or a
+ * size has its limit chosen already, so step 2 says so rather than asking
+ * the visitor to pick what the page has picked.
+ */
+function steps(page?: LandingPage) {
+  const what = !page
+    ? 'A PDF or an image'
+    : page.kind === 'pdf'
+      ? 'Your PDF'
+      : page.group === 'Discord' || page.group === 'GIF'
+        ? 'Your GIF or image'
+        : 'Your photo or image'
+  const second = !page
+    ? {
+        title: 'Pick your limit',
+        body: 'Choose the size the form asks for. We start with a cleanup that changes nothing you can see.',
+      }
+    : page.spec
+      ? {
+          title: 'Check the settings',
+          body: `This page is set to the ${page.title ?? 'form'} rules. Change them only if yours are different.`,
+        }
+      : {
+          title: 'Check the limit',
+          body: `This page is set to ${pageSizeLabel(page)}. Pick another limit if yours is different.`,
+        }
+  return [
+    {
+      title: 'Drop your file',
+      body: `${what}. It goes over an encrypted connection and nowhere else.`,
+    },
+    second,
+    {
+      title: 'Download it',
+      body: 'We find the gentlest setting that still fits, and delete everything soon after.',
+    },
+  ]
+}
 
 const KIND_GROUP = { pdf: 'PDF', image: 'Photos and images' }
 
@@ -49,7 +74,10 @@ function groupOf(page: LandingPage): string {
 /** "2026-09-26" as "26 September 2026", the same in every time zone. */
 function checkedOn(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number)
-  const month = new Date(Date.UTC(y, m - 1, d)).toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' })
+  const month = new Date(Date.UTC(y, m - 1, d)).toLocaleString('en-GB', {
+    month: 'long',
+    timeZone: 'UTC',
+  })
   return `${d} ${month} ${y}`
 }
 
@@ -79,19 +107,19 @@ export function Landing({ page }: { page?: LandingPage }) {
               <a href={page.source.url} rel="noopener" target="_blank">
                 {page.source.label}
               </a>
-              , checked {checkedOn(page.source.checked)}. Forms change their rules, so check the
-              form itself if something is rejected.
+              , checked {checkedOn(page.source.checked)}.{' '}
+              {page.group === 'Discord'
+                ? 'Discord can change its limits, so check its help page if an upload is refused.'
+                : 'Forms change their rules, so check the form itself if something is rejected.'}
             </p>
           ) : null}
         </section>
       ) : null}
 
       <section className="band">
-        <h2 className="band-title">
-          How it works
-        </h2>
+        <h2 className="band-title">How it works</h2>
         <ol className="steps-grid">
-          {STEPS.map((step, i) => (
+          {steps(page).map((step, i) => (
             <li key={step.title} className="step">
               <span className="step-num">{i + 1}</span>
               <h3 className="step-title">{step.title}</h3>
@@ -102,9 +130,7 @@ export function Landing({ page }: { page?: LandingPage }) {
       </section>
 
       <section className="band">
-        <h2 className="band-title">
-          Questions
-        </h2>
+        <h2 className="band-title">Questions</h2>
         <div className="faq">
           {FAQ.map((item) => (
             <details key={item.q} className="faq-item">
@@ -116,9 +142,7 @@ export function Landing({ page }: { page?: LandingPage }) {
       </section>
 
       <section className="band">
-        <h2 className="band-title">
-          Common size limits
-        </h2>
+        <h2 className="band-title">Common size limits</h2>
         {SIZE_GROUPS.map((group) => (
           <div key={group.title} className="size-group">
             <p className="size-group-title">{group.title}</p>

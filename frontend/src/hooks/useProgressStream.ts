@@ -30,8 +30,7 @@ const POLL_MS = 2500
  * The job is gone from the server while the page waits on it: Redis lost it,
  * or it expired. App treats this like a restart and starts the file again.
  */
-export const LOST_MESSAGE =
-  'The server lost track of your file, so it has to be uploaded again.'
+export const LOST_MESSAGE = 'The server lost track of your file, so it has to be uploaded again.'
 
 /** One line in the progress list. */
 export interface ProgressStep {
@@ -232,7 +231,11 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
 
         case 'lossless': {
           const size = ev.size
-          setState((s) => ({ ...s, attempts: s.attempts + 1, search: { ...s.search, lossless: size } }))
+          setState((s) => ({
+            ...s,
+            attempts: s.attempts + 1,
+            search: { ...s.search, lossless: size },
+          }))
           addStep(`Cleanup pass brought it to ${fmt(size)}`)
           break
         }
@@ -269,27 +272,42 @@ export function useProgressStream(jobId: string | null, enabled: boolean): Strea
             setState((s) => ({ ...s, search: { ...s.search, current: { rung, label: settings } } }))
             break
           }
-          const pngEdge = 'colors' in ev ? (ev.max_edge >= 100_000 ? 'full size' : `${ev.max_edge} px`) : ''
+          // A palette rung is either capped at max_edge or, kept in its format
+          // at an exact size, width x height; 0 colours means every colour.
+          const pngEdge =
+            'colors' in ev
+              ? ev.width && ev.height
+                ? `${ev.width} x ${ev.height}`
+                : ev.max_edge >= 100_000
+                  ? 'full size'
+                  : `up to ${ev.max_edge} px`
+              : ''
+          const colours =
+            'colors' in ev && ev.colors === 0
+              ? 'full-colour'
+              : `${'colors' in ev ? ev.colors : ''}-colour`
           const label =
             'colors' in ev
               ? ev.final
                 ? `Making the final ${ev.format ?? 'PNG'}, ${pngEdge}`
-                : `Trying a ${ev.colors}-colour ${ev.format ?? 'PNG'}, ${pngEdge}`
+                : `Trying a ${colours} ${ev.format ?? 'PNG'}, ${pngEdge}`
               : 'width' in ev
-              ? `Trying ${ev.width} x ${ev.height}, quality ${ev.quality}`
-              : 'max_edge' in ev
-                ? `Trying ${ev.max_edge}px wide, quality ${ev.quality}`
-                : `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`
+                ? `Trying ${ev.width} x ${ev.height}, quality ${ev.quality}`
+                : 'max_edge' in ev
+                  ? `Trying up to ${ev.max_edge} px, quality ${ev.quality}`
+                  : `Trying ${ev.color_dpi} DPI, JPEG quality ${ev.jpeg_q}`
           addStep(label, 'pending')
           const rung = ev.rung
+          // "Up to": the cap on the longest side, which a smaller picture is
+          // already under, so it reads as a limit and not as a size.
           const short =
             'colors' in ev
               ? `${ev.format ?? 'PNG'}, ${pngEdge}`
               : 'width' in ev
-              ? `${ev.width} x ${ev.height}, quality ${ev.quality}`
-              : 'max_edge' in ev
-                ? `${ev.max_edge} px, quality ${ev.quality}`
-                : `${ev.color_dpi} DPI, quality ${ev.jpeg_q}`
+                ? `${ev.width} x ${ev.height}, quality ${ev.quality}`
+                : 'max_edge' in ev
+                  ? `up to ${ev.max_edge} px, quality ${ev.quality}`
+                  : `${ev.color_dpi} DPI, quality ${ev.jpeg_q}`
           setState((s) => ({ ...s, search: { ...s.search, current: { rung, label: short } } }))
           break
         }

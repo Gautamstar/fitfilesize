@@ -33,6 +33,8 @@ interface ResultPanelProps {
   minBytes?: number | null
   /** The form the page is set up for, when its settings were used. */
   formName?: string | null
+  /** Whether a pixel-size run kept the file's format (see outputFormat). */
+  keepFormat?: boolean
 }
 
 export function ResultPanel({
@@ -47,13 +49,14 @@ export function ResultPanel({
   resize = null,
   minBytes = null,
   formName = null,
+  keepFormat = false,
 }: ResultPanelProps) {
   const titleRef = useFocusOnMount<HTMLHeadingElement>()
   const [confirming, setConfirming] = useState(false)
   const savedPct = savedPercent(result.final_bytes, result.original_bytes)
   // "rung:6" names the setting the run kept; "floor", "lossless" and "none" keep none.
   const chosenRung = result.method.startsWith('rung:') ? Number(result.method.slice(5)) : null
-  const format = kind === 'pdf' ? 'PDF' : outputFormat(filename, resize)
+  const format = kind === 'pdf' ? 'PDF' : outputFormat(filename, resize, keepFormat)
   const showPreview = kind === 'image' && SHOWABLE.has(format)
   const limit = fmtLimit(result.target_bytes)
   const min = minBytes ? fmtLimit(Math.round(minBytes / 1024) * 1000) : null
@@ -109,8 +112,10 @@ export function ResultPanel({
                 </span>
               </li>
             ) : null}
-            <li className="plain">
-              <FileIcon />
+            {/* A check when the form's own settings made it, whose rules name
+                this format; otherwise just the fact. */}
+            <li className={formName ? 'ok' : 'plain'}>
+              {formName ? <CheckIcon ok /> : <FileIcon />}
               <span>
                 <strong>{format}</strong>
               </span>

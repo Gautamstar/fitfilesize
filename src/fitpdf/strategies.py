@@ -302,6 +302,10 @@ CONVERT_RUNGS: list[dict] = [{"max_edge": FULL_SIZE, "quality": 92}, *IMAGE_RUNG
 # Exact pixel size, as exam and ID forms ask for ("200 x 230 pixels, under
 # 50 KB"). The dimensions are fixed, so JPEG quality is the only lever left.
 RESIZE_QUALITIES = (95, 90, 85, 80, 75, 70, 65, 60, 50, 40, 30, 20)
+# The same for a PNG, TIFF or BMP kept in its format (keep_format): every
+# colour first (0), then fewer. At the few hundred pixels an exact size
+# usually is, a full-colour PNG often fits already.
+RESIZE_COLORS = (0, 256, 128, 64, 32, 16)
 
 FIT_MODES = ("crop", "pad")
 """How an image meets a different aspect ratio: "crop" fills the frame and
@@ -354,8 +358,7 @@ def resize_notes(
             side = "width" if src_ratio > dst_ratio else "height"
             notes.append(
                 f"trimmed about {round(mismatch * 100)}% of the {side} to fill "
-                f"{w} x {h} pixels; choose the {border} border option to keep the "
-                "whole image"
+                f"{w} x {h} pixels; a {border} border instead would keep the whole image"
             )
         else:
             notes.append(f"added a {border} border to keep the whole image at {w} x {h} pixels")
@@ -407,9 +410,13 @@ class ImageStrategy:
         resize: tuple[int, int] | None = None,
         fit: str = "crop",
         focus: tuple[float, float] | None = None,
+        keep_format: bool = False,
     ) -> None:
         """`resize`, if given, is the exact (width, height) of the result;
-        `focus` is where a crop cuts from (see fit_exact)."""
+        `focus` is where a crop cuts from (see fit_exact). With
+        `keep_format`, an exact size keeps a PNG, WebP, TIFF or BMP in its
+        format (a Discord emoji stays a see-through PNG) instead of making
+        the JPEG most forms that ask for pixels require."""
         if fit not in FIT_MODES:
             raise ValueError(f"fit must be one of {', '.join(FIT_MODES)}, not {fit!r}")
         if focus is not None and not all(0 <= n <= 1 for n in focus):
@@ -419,6 +426,7 @@ class ImageStrategy:
             raise ValueError(f"width and height must be between 1 and {MAX_RESIZE_EDGE} pixels")
         self.resize = resize
         self.fit = fit
+        self.keep_format = keep_format and resize is not None
         self.always_render = resize is not None
         # Decoded pictures, reused by every rung of a run. A strategy lives
         # for one run (one file), so this never outlives the file it holds.
@@ -444,6 +452,8 @@ class ImageStrategy:
         else:
             width, height = resize
             self.rungs = [{"width": width, "height": height, "quality": q} for q in RESIZE_QUALITIES]
+        # What use_native(False) goes back to.
+        self._jpeg_rungs = self.rungs
 
     def must_convert(self, src: Path) -> bool:
         """Whether src can only come back as a JPEG (see CONVERT_TO_JPEG)."""
@@ -462,11 +472,12 @@ class ImageStrategy:
 
     def native_first(self, src: Path) -> bool:
         """Whether src has a ladder that keeps its own format (see
-        PALETTE_FORMATS). Not with an exact size: that is a form's
-        requirement, and those forms ask for JPEG."""
+        PALETTE_FORMATS). Not with an exact size, unless keep_format: an
+        exact size is usually a form's requirement, and those forms ask for
+        JPEG."""
         from PIL import Image
 
-        if self.resize is not None:
+        if self.resize is not None and not self.keep_format:
             return False
         try:
             with Image.open(src) as im:
@@ -487,9 +498,22 @@ class ImageStrategy:
         """Switch between the source format's own ladder and the JPEG one."""
         self.mode = "native" if on else "jpeg"
         if not on:
-            self.rungs = IMAGE_RUNGS
+            self.rungs = self._jpeg_rungs
             # Let the full-size decode go before the JPEG ladder decodes.
             self._pixels.pop(("native", "decoded"), None)
+        elif self.resize is not None:
+            # An exact size: the pixels are fixed, so quality or colours alone.
+            width, height = self.resize
+            if self.native_format == "WEBP":
+                self.rungs = [
+                    {"width": width, "height": height, "quality": q, "format": "WEBP"}
+                    for q in RESIZE_QUALITIES
+                ]
+            else:
+                fmt = {} if self.native_format == "PNG" else {"format": self.native_format}
+                self.rungs = [
+                    {"width": width, "height": height, "colors": c, **fmt} for c in RESIZE_COLORS
+                ]
         elif self.native_format == "WEBP":
             self.rungs = [{**r, "format": "WEBP"} for r in IMAGE_RUNGS]
         else:
@@ -513,7 +537,9 @@ class ImageStrategy:
     def is_draft(self, rung: dict) -> bool:
         """Whether rendering this rung now makes a draft: drafts are on and
         the rung is big enough to be worth one (see DRAFT_MIN_PIXELS)."""
-        if not (self.draft and "colors" in rung and self._bytes >= DRAFT_MIN_BYTES):
+        if not (
+            self.draft and "colors" in rung and "max_edge" in rung and self._bytes >= DRAFT_MIN_BYTES
+        ):
             return False
         width, height = self._size
         scale = min(1.0, rung["max_edge"] / max(width, height, 1))
@@ -535,13 +561,21 @@ class ImageStrategy:
                     f"{fmt} has multiple frames; only the first one is kept"
                 )
         if self.resize is not None:
-            warnings.extend(self._resize_notes(*self._upright_size(src)))
+            warnings.extend(self._resize_notes(*self._upright_size(src), border=self._border_word(fmt)))
         return Probe(kind="image", pages=1, width=width, height=height, warnings=warnings)
 
-    def _resize_notes(self, src_w: int, src_h: int) -> list[str]:
+    def _resize_notes(self, src_w: int, src_h: int, border: str = "white") -> list[str]:
         """What an exact resize will do to the picture, beyond losing pixels."""
         assert self.resize is not None
-        return resize_notes(src_w, src_h, self.resize, self.fit)
+        return resize_notes(src_w, src_h, self.resize, self.fit, border)
+
+    def _see_through_border(self, fmt: str) -> bool:
+        """Whether a pad's border is see-through: when the result keeps a
+        format that holds transparency. A JPEG or a BMP gets white."""
+        return self.keep_format and fmt.upper() in ("PNG", "WEBP", "TIFF")
+
+    def _border_word(self, fmt: str) -> str:
+        return "see-through" if self._see_through_border(fmt) else "white"
 
     def ensure_available(self) -> None:
         from PIL import Image  # noqa: F401
@@ -675,9 +709,10 @@ class ImageStrategy:
         im.save(dst, "JPEG", quality=rung["quality"], optimize=True, progressive=True)
         return dst.stat().st_size
 
-    def _native_pixels(self, src: Path, max_edge: int):
-        """The source upright, transparency kept, shrunk to max_edge. The
-        full-size decode is held for the run's other rungs."""
+    def _native_pixels(self, src: Path, rung: dict):
+        """The source upright, transparency kept, shrunk to the rung's
+        max_edge or fitted to its exact size. The full-size decode is held
+        for the run's other rungs."""
         from PIL import Image, ImageOps
 
         key = ("native", "decoded")
@@ -694,6 +729,18 @@ class ImageStrategy:
                     im.convert("RGBA" if keep_alpha else "RGB"), opened.info.get("icc_profile")
                 )
         im = self._pixels[key]
+        if "width" in rung:
+            size = (rung["width"], rung["height"])
+            fitted = ("native", "fit", size)
+            if fitted not in self._pixels:
+                border: tuple[int, ...] = (255, 255, 255)
+                if self.fit == "pad" and self._see_through_border(self.native_format):
+                    im, border = im.convert("RGBA"), SEE_THROUGH
+                elif im.mode == "RGBA":
+                    border = (255, 255, 255, 255)
+                self._pixels[fitted] = fit_exact(im, size, self.fit, self.focus, border)
+            return self._pixels[fitted]
+        max_edge = rung["max_edge"]
         if max(im.size) > max_edge:
             scale = max_edge / max(im.size)
             im = im.resize(
@@ -703,7 +750,7 @@ class ImageStrategy:
 
     def _render_webp(self, src: Path, dst: Path, rung: dict) -> int:
         """A lossy WebP, transparency kept, at the rung's size and quality."""
-        im = self._native_pixels(src, rung["max_edge"])
+        im = self._native_pixels(src, rung)
         im.save(dst, "WEBP", quality=rung["quality"], method=4)
         return dst.stat().st_size
 
@@ -736,7 +783,11 @@ class ImageStrategy:
 
         if self._png_refused:
             raise PngRefused  # pngquant judges the colours, not the size
-        im = self._native_pixels(src, rung["max_edge"])
+        im = self._native_pixels(src, rung)
+        if rung["colors"] == 0:
+            # Every colour: an exact-size rung's first try (see RESIZE_COLORS).
+            im.save(dst, "PNG", optimize=True)
+            return dst.stat().st_size
 
         pngquant = shutil.which("pngquant")
         if pngquant is None:
@@ -1384,10 +1435,12 @@ def detect_strategy(
     resize: tuple[int, int] | None = None,
     fit: str = "crop",
     focus: tuple[float, float] | None = None,
+    keep_format: bool = False,
 ) -> Strategy:
     """Pick a strategy from the file extension, falling back to sniffing.
 
-    `resize`, `fit` and `focus` go to an image strategy (see ImageStrategy).
+    `resize`, `fit`, `focus` and `keep_format` go to an image strategy (see
+    ImageStrategy); a GIF always stays a GIF.
     """
     src = Path(src)
     suffix = src.suffix.lower()
@@ -1396,7 +1449,7 @@ def detect_strategy(
     if suffix in GIF_SUFFIXES:
         return GifStrategy(resize, fit, focus)
     if suffix in IMAGE_SUFFIXES:
-        return ImageStrategy(resize, fit, focus)
+        return ImageStrategy(resize, fit, focus, keep_format)
 
     # No usable extension (the web layer stores uploads under a fixed name):
     # sniff the magic bytes instead.
@@ -1406,7 +1459,7 @@ def detect_strategy(
         return PdfStrategy()
     if head.startswith((b"GIF87a", b"GIF89a")):
         return GifStrategy(resize, fit, focus)
-    return ImageStrategy(resize, fit, focus)
+    return ImageStrategy(resize, fit, focus, keep_format)
 
 
 def pad_jpeg(path: Path, min_bytes: int) -> int:

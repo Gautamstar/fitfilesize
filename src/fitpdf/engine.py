@@ -594,7 +594,15 @@ def compress_to_target(
         png_tried = 0
         png_results: list[tuple[int, Path]] = []
         native_first = getattr(strategy, "native_first", None)
-        if keep_png and not always_render and native_first is not None and native_first(src):
+        # An exact size skips this unless the strategy keeps the format there
+        # too (see ImageStrategy keep_format); native_first decides.
+        keep_at_size = getattr(strategy, "keep_format", False)
+        if (
+            keep_png
+            and (not always_render or keep_at_size)
+            and native_first is not None
+            and native_first(src)
+        ):
             strategy.use_native(True)
             # Only worth refusing a poor 256-colour copy if a JPEG can follow.
             strategy.png_strict = allow_jpeg
