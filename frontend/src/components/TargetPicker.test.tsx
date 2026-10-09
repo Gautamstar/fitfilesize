@@ -150,7 +150,7 @@ describe('TargetPicker with a GIF', () => {
 
   it('still gives the server estimate for a GIF at its own size', () => {
     setup('image', undefined, { filename: 'party.gif' })
-    expect(screen.getByText(/this file goes down to about/)).toBeTruthy()
+    expect(screen.getByText(/This file goes down to about/)).toBeTruthy()
   })
 
   it('keeps the white border for other images', () => {
@@ -203,13 +203,47 @@ describe('TargetPicker on a form page', () => {
 })
 
 describe('TargetPicker with a PNG at a pixel size', () => {
-  it('says before Compress that the result is a JPEG', () => {
+  it('says before Compress that the result is a JPEG on a page that asks for one', () => {
     setup('image', { width: 200, height: 230, fit: 'crop' }, { filename: 'scan.png' })
-    expect(screen.getByText('At an exact pixel size, the result is a JPEG.')).toBeTruthy()
+    expect(screen.getByText(/At an exact pixel size the result is a JPEG/)).toBeTruthy()
   })
 
   it('says nothing of the kind for a JPEG', () => {
     setup('image', { width: 200, height: 230, fit: 'crop' })
     expect(screen.queryByText(/At an exact pixel size/)).toBeNull()
+  })
+})
+
+describe('TargetPicker keeping the format at a pixel size', () => {
+  it('says a PNG keeps its format and pads with a see-through border', () => {
+    render(
+      <TargetPicker
+        filename="logo.png"
+        meta="40 KB, 600 x 400"
+        originalBytes={40_000}
+        floor={5_000}
+        kind="image"
+        onCompress={() => {}}
+        onCancel={() => {}}
+        initialTarget={256_000}
+        initialResize={{ width: 128, height: 128, fit: 'crop' }}
+        keepFormat
+      />,
+    )
+    expect(screen.getByText(/The result keeps its format/)).toBeTruthy()
+    expect(screen.getByLabelText('Add a see-through border')).toBeTruthy()
+    expect(screen.queryByText(/result is a JPEG/)).toBeNull()
+    // No JPEG-based estimate for a PNG's size.
+    expect(screen.queryByText(/goes down to/)).toBeNull()
+  })
+})
+
+describe('TargetPicker Other limit', () => {
+  it('takes a typed limit no chip has, below the slider range too', () => {
+    const onCompress = setup('image', undefined, { initialTarget: null, floor: 60_000 })
+    fireEvent.click(screen.getByRole('button', { name: 'Other' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Limit' }), { target: { value: '45' } })
+    compress()
+    expect(onCompress.mock.calls.at(-1)![0]).toBe(45_000)
   })
 })

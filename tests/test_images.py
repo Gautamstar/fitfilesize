@@ -451,6 +451,48 @@ def test_resize_pad_keeps_the_whole_image_on_white(photo_jpg, tmp_path):
         assert min(r, g, b) > 245
 
 
+def test_keep_format_makes_a_see_through_png_at_an_exact_size(transparent_png, tmp_path):
+    """A Discord emoji: 128 x 128, still a PNG, still see-through."""
+    strategy = ImageStrategy(resize=(128, 128), keep_format=True)
+    result = compress_to_target(transparent_png, tmp_path / "out", 256_000, strategy=strategy)
+    assert result.hit_target
+    with Image.open(result.output) as im:
+        assert im.format == "PNG"
+        assert im.size == (128, 128)
+        assert im.convert("RGBA").getchannel("A").getextrema()[0] < 255
+    assert not any("white" in w for w in result.warnings)
+
+
+def test_keep_format_pads_a_png_with_a_see_through_border(photo_png, tmp_path):
+    strategy = ImageStrategy(resize=(300, 300), fit="pad", keep_format=True)
+    result = compress_to_target(photo_png, tmp_path / "out", 10**9, strategy=strategy)
+    with Image.open(result.output) as im:
+        assert im.format == "PNG"
+        assert im.size == (300, 300)
+        assert im.convert("RGBA").getpixel((150, 2))[3] == 0
+    assert any("see-through border" in w for w in result.warnings)
+
+
+def test_keep_format_keeps_a_webp_a_webp(photo_jpg, tmp_path):
+    webp = tmp_path / "photo.webp"
+    with Image.open(photo_jpg) as im:
+        im.save(webp, "WEBP", quality=90)
+    strategy = ImageStrategy(resize=(200, 230), keep_format=True)
+    result = compress_to_target(webp, tmp_path / "out", 20_000, strategy=strategy)
+    assert result.hit_target and result.final_bytes <= 20_000
+    with Image.open(result.output) as im:
+        assert im.format == "WEBP"
+        assert im.size == (200, 230)
+
+
+def test_an_exact_size_without_keep_format_is_still_a_jpeg(transparent_png, tmp_path):
+    """Exam and ID forms that ask for pixels ask for JPEG, and so does the API by default."""
+    strategy = ImageStrategy(resize=(128, 128))
+    result = compress_to_target(transparent_png, tmp_path / "out", 256_000, strategy=strategy)
+    with Image.open(result.output) as im:
+        assert im.format == "JPEG"
+
+
 def test_resize_crop_cuts_where_the_focus_says(tmp_path):
     # Left half red, right half blue: a square crop of this 2:1 picture keeps
     # one half or the other, depending on where it cuts from.

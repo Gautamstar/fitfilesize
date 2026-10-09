@@ -165,7 +165,7 @@ describe('useProgressStream', () => {
     expect(s.rungs).toBe(12)
     expect(s.target).toBe(200_000)
     expect(s.points[11]).toMatchObject({ size: 17_000, fits: true, known: true, order: null })
-    expect(s.current).toEqual({ rung: 6, label: '1800 px, quality 70' })
+    expect(s.current).toEqual({ rung: 6, label: 'up to 1800 px, quality 70' })
 
     act(() => {
       es().emit({ stage: 'rung_result', rung: 6, size: 154_861, fits: true })
@@ -174,8 +174,8 @@ describe('useProgressStream', () => {
     })
     s = result.current.search
     expect(s.current).toBeNull()
-    expect(s.points[6]).toMatchObject({ fits: true, order: 1, label: '1800 px, quality 70', known: false })
-    expect(s.points[5]).toMatchObject({ fits: false, order: 2, label: '2000 px, quality 75' })
+    expect(s.points[6]).toMatchObject({ fits: true, order: 1, label: 'up to 1800 px, quality 70', known: false })
+    expect(s.points[5]).toMatchObject({ fits: false, order: 2, label: 'up to 2000 px, quality 75' })
   })
 
   it('labels a PDF rung with DPI rather than pixel width', () => {
@@ -203,8 +203,8 @@ describe('useProgressStream', () => {
       es.emit({ stage: 'rung_result', rung: 3, size: 4_700_000, fits: true })
     })
     const texts = result.current.steps.map((s) => s.text)
-    expect(texts[1]).toMatch(/^Trying a 256-colour PNG, 4000 px gives/)
-    expect(texts[2]).toMatch(/^Making the final PNG, 4000 px gives/)
+    expect(texts[1]).toMatch(/^Trying a 256-colour PNG, up to 4000 px gives/)
+    expect(texts[2]).toMatch(/^Making the final PNG, up to 4000 px gives/)
     expect(result.current.search.points[3]).toMatchObject({ size: 4_700_000, fits: true })
   })
 

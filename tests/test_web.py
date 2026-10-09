@@ -214,6 +214,16 @@ def test_a_preview_fetch_is_not_counted_as_a_download(web, photo_jpg):
     assert r.hexists(store.job_key(job_id), "downloaded")
 
 
+def test_keep_format_returns_a_png_at_an_exact_size(web, transparent_png):
+    """The Discord emoji page asks to keep the format; the API default stays JPEG."""
+    client, _, _ = web
+    for keep, mime in ((True, "image/png"), (False, "image/jpeg")):
+        job_id = _upload(client, transparent_png, name="logo.png").json()["job_id"]
+        body = {"target_bytes": 256_000, "width": 128, "height": 128, "keep_format": keep}
+        assert client.post(f"/api/jobs/{job_id}/compress", json=body).status_code == 202
+        assert client.get(f"/api/jobs/{job_id}/download").headers["content-type"] == mime
+
+
 def test_png_upload_downloads_as_jpeg_when_the_caller_allows_it(web, photo_png):
     """A PNG that can only fit as a JPEG, and the download name has to follow."""
     client, _, _ = web

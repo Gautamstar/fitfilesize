@@ -162,13 +162,17 @@ export function isGif(filename: string): boolean {
 
 /**
  * The format a run hands back, as a form would name it. A file keeps its
- * format, except a HEIC, and a still image cut to an exact pixel size, which
- * come back as JPEG (the forms that ask for pixels ask for JPEG).
+ * format, except a HEIC, and a still image cut to an exact pixel size for a
+ * form that asks for JPEG (`keepFormat` false), which come back as JPEG.
  */
-export function outputFormat(filename: string, resize: { width: number } | null): string {
+export function outputFormat(
+  filename: string,
+  resize: { width: number } | null,
+  keepFormat = false,
+): string {
   if (isHeic(filename)) return 'JPEG'
   const ext = filename.toLowerCase().split('.').pop() ?? ''
-  if (resize && ext !== 'gif') return 'JPEG'
+  if (resize && ext !== 'gif' && !keepFormat) return 'JPEG'
   const names: Record<string, string> = {
     jpg: 'JPEG',
     jpeg: 'JPEG',
@@ -181,6 +185,11 @@ export function outputFormat(filename: string, resize: { width: number } | null)
     pdf: 'PDF',
   }
   return names[ext] ?? ext.toUpperCase()
+}
+
+/** Formats that can hold transparency when kept, so a pad's border is see-through. */
+export function holdsTransparency(filename: string): boolean {
+  return /\.(png|webp|tiff?|gif)$/i.test(filename)
 }
 
 export function isAcceptedFile(file: File): boolean {

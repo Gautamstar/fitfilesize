@@ -45,6 +45,7 @@ def run_compress(
     focus: tuple[float, float] | None = None,
     allow_jpeg: bool = False,
     keep_png: bool = True,
+    keep_format: bool = False,
 ) -> None:
     rq_job = get_current_job()
     if rq_job is None:
@@ -88,7 +89,11 @@ def run_compress(
             # The API only accepts a resize for images, so no PDF gets here with one.
             strategy = (
                 detect_strategy(
-                    Path(src), resize=tuple(resize), fit=fit, focus=tuple(focus) if focus else None
+                    Path(src),
+                    resize=tuple(resize),
+                    fit=fit,
+                    focus=tuple(focus) if focus else None,
+                    keep_format=keep_format,
                 )
                 if resize
                 else None
