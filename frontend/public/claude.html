@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Use FitFileSize from Claude | FitFileSize</title>
+    <meta
+      name="description"
+      content="Set up FitFileSize in Claude Desktop, Claude Code, Cursor or VS Code, then ask Claude to make a file fit an upload limit or a form's rules."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      // Same saved light/dark choice as the app (see components/ThemeToggle.tsx).
+      try {
+        var t = localStorage.getItem('fitfilesize-theme')
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
+    <style>
+      /* Same tokens as src/index.css, inlined so this page needs no bundle. */
+      :root {
+        --page: #f6f7f9;
+        --surface: #ffffff;
+        --ink: #111827;
+        --ink-secondary: #4b5563;
+        --ink-muted: #6b7280;
+        --accent: #2451e0;
+        --hairline: #e4e7ec;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) {
+          --page: #0c0e13;
+          --surface: #151821;
+          --ink: #e9ebf0;
+          --ink-secondary: #a8afbd;
+          --ink-muted: #8a92a3;
+          --accent: #7d9bff;
+          --hairline: #262b36;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme='dark'] {
+        --page: #0c0e13;
+        --surface: #151821;
+        --ink: #e9ebf0;
+        --ink-secondary: #a8afbd;
+        --ink-muted: #8a92a3;
+        --accent: #7d9bff;
+        --hairline: #262b36;
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px 16px 72px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--ink);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        text-decoration: none;
+      }
+      .brand img {
+        display: block;
+      }
+      article {
+        margin-top: 28px;
+        padding: 32px;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: 16px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 36px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+      }
+      .updated {
+        margin: 0;
+        color: var(--ink-muted);
+        font-size: 14px;
+      }
+      h2 {
+        margin: 32px 0 8px;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      p,
+      li {
+        color: var(--ink-secondary);
+        font-size: 16px;
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      a {
+        color: var(--accent);
+      }
+      .lede {
+        margin-top: 12px;
+      }
+      .example {
+        margin: 20px 0 0;
+        padding: 16px 20px;
+        border-left: 3px solid var(--accent);
+        background: var(--page);
+        border-radius: 0 10px 10px 0;
+      }
+      .example p {
+        margin: 0;
+      }
+      .example p + p {
+        margin-top: 8px;
+        color: var(--ink-muted);
+        font-size: 15px;
+      }
+      h3 {
+        margin: 24px 0 6px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      code {
+        font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        font-size: 0.9em;
+      }
+      .snippet {
+        position: relative;
+        margin: 8px 0 0;
+      }
+      .snippet pre {
+        margin: 0;
+        padding: 14px 16px;
+        padding-right: 84px;
+        overflow-x: auto;
+        background: var(--page);
+        border: 1px solid var(--hairline);
+        border-radius: 10px;
+        color: var(--ink);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .copy {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--hairline);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink-secondary);
+        font: inherit;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .copy:hover {
+        color: var(--ink);
+      }
+      .copy:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .note {
+        color: var(--ink-muted);
+        font-size: 15px;
+      }
+      @media (max-width: 480px) {
+        article {
+          padding: 20px;
+        }
+        h1 {
+          font-size: 30px;
+        }
+        /* Too narrow to sit on the code without covering it: below the box instead. */
+        .snippet pre {
+          padding-right: 16px;
+        }
+        .copy {
+          position: static;
+          display: block;
+          min-height: 44px;
+          margin: 6px 0 0 auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="brand" href="/">
+        <img src="/favicon.svg" width="28" height="28" alt="" />
+        FitFileSize
+      </a>
+      <article>
+      <h1>Use FitFileSize from Claude</h1>
+
+      <p class="lede">
+        Add FitFileSize to Claude once, then ask in plain words for a file on your computer to fit
+        an upload limit or a form's rules. Claude saves the result next to the original.
+      </p>
+
+      <div class="example">
+        <p>"Make ~/Downloads/signature.jpg fit the IBPS signature rules"</p>
+        <p>
+          Saved ~/Downloads/signature.fit.jpg for IBPS signature (JPEG, 140 × 60 pixels, 10 KB to
+          20 KB): 10,240 bytes (10.0 KB), under the 20,000 bytes limit.
+        </p>
+      </div>
+
+      <h2>What you need</h2>
+      <ul>
+        <li>
+          Claude Desktop or Claude Code. Cursor, VS Code, Windsurf and other apps that support MCP
+          servers work too.
+        </li>
+        <li>
+          <a href="https://nodejs.org/">Node.js</a> 20.10 or newer, which runs the FitFileSize
+          server on your computer.
+        </li>
+      </ul>
+      <p class="note">
+        It does not work in Claude on the web or the phone apps, because those cannot reach files on
+        your computer. Use the <a href="/">website</a> there instead.
+      </p>
+
+      <h2>Set it up</h2>
+
+      <h3>Claude Desktop</h3>
+      <p>
+        Open Settings, then Developer, then Edit Config. Add this to the file, save it, and restart
+        Claude Desktop.
+      </p>
+      <div class="snippet">
+        <pre><code>{
+  "mcpServers": {
+    "fitfilesize": {
+      "command": "npx",
+      "args": ["-y", "fitfilesize-mcp"]
+    }
+  }
+}</code></pre>
+      </div>
+      <p class="note">
+        If the file already has an "mcpServers" section, add the "fitfilesize" entry inside it.
+      </p>
+
+      <h3>Claude Code</h3>
+      <p>Run this in a terminal:</p>
+      <div class="snippet">
+        <pre><code>claude mcp add fitfilesize -- npx -y fitfilesize-mcp</code></pre>
+      </div>
+
+      <h3>Cursor, VS Code and others</h3>
+      <p>
+        Cursor reads the same "mcpServers" block as Claude Desktop, in
+        <code>~/.cursor/mcp.json</code>. VS Code uses <code>.vscode/mcp.json</code>:
+      </p>
+      <div class="snippet">
+        <pre><code>{
+  "servers": {
+    "fitfilesize": { "command": "npx", "args": ["-y", "fitfilesize-mcp"] }
+  }
+}</code></pre>
+      </div>
+
+      <h2>Things to ask</h2>
+      <ul>
+        <li>"Get ~/Documents/passport-scan.pdf under 300 KB"</li>
+        <li>"Make this photo a US visa photo for the DS-160"</li>
+        <li>"Fit these five certificates under 2 MB each"</li>
+        <li>"Which forms do you have presets for?"</li>
+      </ul>
+      <p>
+        Form presets set the size limit, the minimum size and the exact pixels in one go. They
+        include the US visa photo, the Indian e-Visa, IBPS, SBI, RRB, SSC, NEET, JEE Main, CUET and
+        GATE uploads, IRCC documents, Passport Seva documents abroad and Discord emoji and banners.
+        Each one comes from the same rules as its page on this site, with the official source.
+      </p>
+      <p>
+        Every file keeps its format: a PNG stays a PNG. iPhone HEIC photos come back as JPEG.
+      </p>
+
+      <h2>What happens to your file</h2>
+      <p>
+        Claude sends the file to FitFileSize over HTTPS. It is compressed on our server, the same
+        way as on the website, and deleted as soon as the result is saved on your computer. There
+        is no account or API key. Uploads count toward the free limit of 30 files an hour. The
+        <a href="/privacy.html">privacy page</a> has the details.
+      </p>
+
+      <h2>More</h2>
+      <ul>
+        <li>
+          <a href="https://github.com/Gautamstar/fitfilesize/tree/main/mcp">Source code and full
+          tool reference</a> (MIT licence)
+        </li>
+        <li><a href="https://www.npmjs.com/package/fitfilesize-mcp">fitfilesize-mcp on npm</a></li>
+        <li><a href="https://api.fitfilesize.com/docs">The API</a>, for your own scripts and apps</li>
+      </ul>
+      </article>
+    </main>
+    <script>
+      // A Copy button on each snippet; without script the text is still selectable.
+      // When the browser refuses clipboard access, the text is selected and
+      // copied the older way; if that fails too, it stays selected to copy by hand.
+      document.querySelectorAll('.snippet').forEach(function (box) {
+        var code = box.querySelector('code')
+        var button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'copy'
+        button.textContent = 'Copy'
+        function show(label) {
+          button.textContent = label
+          setTimeout(function () {
+            button.textContent = 'Copy'
+          }, 2000)
+        }
+        function fallback() {
+          var range = document.createRange()
+          range.selectNodeContents(code)
+          var selection = window.getSelection()
+          selection.removeAllRanges()
+          selection.addRange(range)
+          var copied = false
+          try {
+            copied = document.execCommand('copy')
+          } catch (e) {}
+          show(copied ? 'Copied' : 'Selected')
+        }
+        button.addEventListener('click', function () {
+          if (!navigator.clipboard) return fallback()
+          navigator.clipboard.writeText(code.textContent).then(function () {
+            show('Copied')
+          }, fallback)
+        })
+        box.appendChild(button)
+      })
+    </script>
+  </body>
+</html>
