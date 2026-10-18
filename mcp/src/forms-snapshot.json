@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-08",
+  "updated": "2026-10-18",
   "forms": [
     {
       "id": "us-visa-photo-ds160",
@@ -46,6 +46,19 @@
       "source": "https://indianvisaonline.gov.in/evisa/tvoa.html",
       "checked": "2026-09-26",
       "page": "https://fitfilesize.com/indian-evisa-photo"
+    },
+    {
+      "id": "passport-seva-embassy-documents-pdf",
+      "name": "Passport Seva documents abroad",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "1 MB or less in total"
+      ],
+      "limit_bytes": 300000,
+      "source": "https://www.eoibogota.gov.in/content/Guidelines-for-uploading-of-ICAO-photograph-signature-and-Documents-which-are-mandatory-at-applicants-level_1.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/passport-seva-embassy-documents-pdf"
     },
     {
       "id": "ibps-photo",
@@ -181,7 +194,7 @@
     },
     {
       "id": "ssc-signature",
-      "name": "SSC signature (CGL, CHSL)",
+      "name": "SSC signature (CGL, CHSL, MTS, GD)",
       "kind": "image",
       "requirements": [
         "JPEG",
@@ -190,10 +203,10 @@
       ],
       "limit_bytes": 20000,
       "min_bytes": 10240,
-      "width": 600,
-      "height": 200,
+      "width": 709,
+      "height": 236,
       "source": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsl_2026.pdf",
-      "checked": "2026-10-07",
+      "checked": "2026-10-18",
       "page": "https://fitfilesize.com/ssc-signature"
     },
     {

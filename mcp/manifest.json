@@ -1,0 +1,43 @@
+{
+  "manifest_version": "0.3",
+  "name": "fitfilesize-mcp",
+  "display_name": "FitFileSize",
+  "version": "0.2.0",
+  "description": "Compress PDFs and images, iPhone HEIC too, to fit an upload limit or a form's rules.",
+  "long_description": "Make a PDF or image on your computer fit an upload limit, like 200 KB, or a form's exact rules, like the US visa photo or IBPS and SSC uploads. Keeps the file's format and as much quality as the limit allows, and saves the result next to the original. Free, no account or API key. Files are sent to fitfilesize.com over HTTPS and deleted once the result is saved.",
+  "author": {
+    "name": "Gautamstar",
+    "url": "https://github.com/Gautamstar"
+  },
+  "homepage": "https://fitfilesize.com",
+  "documentation": "https://github.com/Gautamstar/fitfilesize/tree/main/mcp",
+  "privacy_policies": ["https://fitfilesize.com/privacy.html"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gautamstar/fitfilesize"
+  },
+  "license": "MIT",
+  "keywords": ["compress", "pdf", "image", "file size", "upload limit", "heic"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "fit_file",
+      "description": "Compress a PDF or image on this computer so it fits an upload limit or a form preset, and save it next to the original."
+    },
+    {
+      "name": "list_forms",
+      "description": "The form presets, each with its size limit, minimum, pixel size and official source."
+    }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=20.10.0" }
+  }
+}
