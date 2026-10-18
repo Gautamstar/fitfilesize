@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-08",
+  "updated": "2026-10-18",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
@@ -618,6 +618,40 @@
       }
     },
     {
+      "slug": "passport-seva-embassy-documents-pdf",
+      "kind": "pdf",
+      "group": "Forms and applications",
+      "linkLabel": "Passport Seva documents abroad (PDF)",
+      "targetKb": 300,
+      "heading": "Passport Seva documents at an Indian embassy or consulate: PDF, 1 MB in total",
+      "title": "Passport Seva documents abroad",
+      "spec": [
+        "PDF",
+        "1 MB or less in total"
+      ],
+      "org": "Indian embassies and consulates (Passport Seva)",
+      "description": "Compress your supporting documents to PDFs under 300 KB each, so they fit the 1 MB total for a passport applied for at an Indian embassy or consulate on Passport Seva. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Passport applications at Indian embassies and consulates take supporting documents as PDFs, at most 1 MB for all of them together. This page aims each document at 300 KB, so three of them fit.",
+      "source": {
+        "label": "the Embassy of India, Bogota: guidelines for uploading photographs, signatures and documents",
+        "url": "https://www.eoibogota.gov.in/content/Guidelines-for-uploading-of-ICAO-photograph-signature-and-Documents-which-are-mandatory-at-applicants-level_1.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting Passport Seva documents under 1 MB in total",
+        "paragraphs": [
+          "When you apply for an Indian passport at an embassy or consulate, the Passport Seva applicant portal asks you to upload your documents yourself. The mission guidelines state that each document must be a PDF of at most 1 MB, and that the total of all uploaded documents should be no more than 1 MB. Up to 5 documents can be uploaded, including the photograph and signature, and up to 3 in Upload Supporting Documents.",
+          "Since the limit is shared, this page aims each document at 300 KB, so three supporting documents come to 900 KB. A scan of a page or two fits in 300 KB comfortably. We lower the resolution of the scan step by step and keep the first step that fits, so the text stays as readable as the limit allows."
+        ],
+        "tips": [
+          "Uploading fewer documents? Pick a larger limit under Use a different limit, keeping the total under 1 MB.",
+          "If a document is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
+          "The portal allows 12 upload attempts in all, so check each file's size here before you upload it.",
+          "Applying in India instead? The photograph is taken at the Passport Seva Kendra, so no photo upload is needed."
+        ]
+      }
+    },
+    {
       "slug": "ibps-photo",
       "kind": "image",
       "group": "Forms and applications",
@@ -927,37 +961,37 @@
       "slug": "ssc-signature",
       "kind": "image",
       "group": "Forms and applications",
-      "linkLabel": "SSC signature (CGL, CHSL)",
+      "linkLabel": "SSC signature (CGL, CHSL, MTS, GD)",
       "targetKb": 20,
       "minKb": 10,
       "pixels": {
-        "width": 600,
-        "height": 200
+        "width": 709,
+        "height": 236
       },
-      "heading": "SSC signature for CGL and CHSL: 10 KB to 20 KB, about 6 x 2 cm",
-      "title": "SSC signature (CGL, CHSL)",
+      "heading": "SSC signature for CGL, CHSL, MTS, GD and other exams: 10 KB to 20 KB, about 6 x 2 cm",
+      "title": "SSC signature (CGL, CHSL, MTS, GD)",
       "spec": [
         "JPEG",
         "About 6.0 × 2.0 cm",
         "10 KB to 20 KB"
       ],
       "org": "the Staff Selection Commission (SSC)",
-      "description": "Resize your signature to a JPEG of 10 KB to 20 KB, about 6.0 x 2.0 cm, for SSC CGL and CHSL applications. Free, no sign-up, files deleted minutes after.",
-      "blurb": "SSC asks for a scanned signature as a JPEG between 10 KB and 20 KB, about 6.0 x 2.0 cm. A clean signature is often under 10 KB, so it is padded up to the minimum without changing it.",
+      "description": "Resize your signature to a JPEG of 10 KB to 20 KB, about 6.0 x 2.0 cm, for SSC CGL, CHSL, MTS, Constable GD, JE, Stenographer and CPO applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "SSC asks for a scanned signature as a JPEG between 10 KB and 20 KB, about 6.0 x 2.0 cm, in every current exam notice. A clean signature is often under 10 KB, so it is padded up to the minimum without changing it.",
       "source": {
         "label": "SSC's Combined Higher Secondary Level Examination 2026 notice",
         "url": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsl_2026.pdf",
-        "checked": "2026-10-07"
+        "checked": "2026-10-18"
       },
       "guide": {
         "title": "Getting an SSC signature to 10 KB to 20 KB",
         "paragraphs": [
-          "The 2026 notices for the Combined Graduate Level (CGL) and Combined Higher Secondary Level (CHSL) examinations ask for a scanned signature in JPEG format, between 10 KB and 20 KB, about 6.0 cm wide and 2.0 cm high. They state that blurred or miniature signatures will be rejected.",
-          "This page makes the signature 600 x 200 pixels, the same 3 to 1 shape, cropped where you place the crop box. It is saved at the best quality under 20 KB, and if that comes out under 10 KB it is padded up to it with an invisible comment inside the file. The signature is exactly the same."
+          "SSC's current notices set the same rule for the signature: a scanned signature in JPEG format, between 10 KB and 20 KB, about 6.0 cm wide and 2.0 cm high. That covers CGL, CHSL, MTS, Constable (GD), Junior Engineer, Stenographer, Selection Posts and the Sub-Inspector (CPO) exam.",
+          "The Constable (GD) 2026 notice adds a resolution of 300 DPI, which makes 6.0 x 2.0 cm come to 709 x 236 pixels. This page crops the signature to that size where you place the crop box and saves it at the best quality under 20 KB. If that comes out under 10 KB it is padded up to it with an invisible comment inside the file, so the signature is exactly the same."
         ],
         "tips": [
           "Sign on plain white paper and take the photo close around the signature, so it fills the crop box.",
-          "Your photograph is not uploaded: SSC captures it live with your webcam or phone while you fill in the form.",
+          "Your photograph is not uploaded: the application form captures it live with your camera while you fill it in.",
           "Each SSC notice sets its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       }
