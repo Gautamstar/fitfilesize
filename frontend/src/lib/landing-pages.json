@@ -997,6 +997,268 @@
       }
     },
     {
+      "slug": "upsc-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "UPSC photo (CSE, NDA, CDS, CAPF)",
+      "targetKb": 200,
+      "minKb": 20,
+      "heading": "UPSC photo for CSE, NDA, CDS, CAPF and other exams: JPEG, 20 KB to 200 KB",
+      "title": "UPSC photo (CSE, NDA, CDS, CAPF)",
+      "spec": [
+        "JPEG",
+        "20 KB to 200 KB"
+      ],
+      "org": "the Union Public Service Commission (UPSC)",
+      "description": "Compress your photo to a JPEG between 20 KB and 200 KB for the UPSC application: CSE, NDA, CDS, CAPF, CMS, ESE and more. Free, no sign-up, files deleted minutes after.",
+      "blurb": "UPSC's application portal takes the photograph as a JPEG between 20 KB and 200 KB, the same for every exam. A phone photo is several megabytes, so it is resized and compressed to fit.",
+      "source": {
+        "label": "UPSC's instructions for uploading the photo and signature",
+        "url": "https://upsconline.nic.in/caf/assets/PDF/instruction-photo-signature-upload-upsc.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting a UPSC photo to 20 KB to 200 KB",
+        "paragraphs": [
+          "UPSC now takes one photo for all its exams. You upload it once in the Common Application Form on upsconline.nic.in, and it is used for the Civil Services, NDA, CDS, CAPF, CMS, ESE and the rest. The instructions ask for a passport-size colour photo as a JPEG between 20 KB and 200 KB, on a plain white background, with your face covering at least 75% of the photo and both ear lobes visible.",
+          "UPSC sets no pixel size, so this page keeps the photo as large as fits under 200 KB. It reduces the size step by step and stops at the first step that fits. If the result comes out under 20 KB, it is padded up to it with an invisible comment inside the file, so the photo is exactly the same."
+        ],
+        "tips": [
+          "Crop close around your head and shoulders before you upload, so your face fills at least 75% of the frame.",
+          "Don't sign the photo, and don't use one in uniform: the instructions refuse both.",
+          "The form also takes a live photo with your webcam or phone, and it must match this one. Use a recent photo that looks like you today.",
+          "The instructions ask for the file to be named photo, so save it as photo.jpg before you upload it."
+        ]
+      }
+    },
+    {
+      "slug": "upsc-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "UPSC signature (three signatures)",
+      "targetKb": 100,
+      "minKb": 20,
+      "pixels": {
+        "width": 450,
+        "height": 500
+      },
+      "heading": "UPSC signature: three signatures in one JPEG, 20 KB to 100 KB",
+      "title": "UPSC signature (three signatures)",
+      "spec": [
+        "JPEG",
+        "350 to 500 pixels",
+        "20 KB to 100 KB"
+      ],
+      "org": "the Union Public Service Commission (UPSC)",
+      "description": "Make your three UPSC signatures one JPEG of 20 KB to 100 KB and 350 to 500 pixels, for CSE, NDA, CDS, CAPF and other UPSC exams. Free, no sign-up, files deleted minutes after.",
+      "blurb": "UPSC asks you to sign three times, one below the other, and upload all three as one JPEG between 20 KB and 100 KB. A small signature image is often under 20 KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "UPSC's instructions for uploading the photo and signature",
+        "url": "https://upsconline.nic.in/caf/assets/PDF/instruction-photo-signature-upload-upsc.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting the UPSC signature to 20 KB to 100 KB",
+        "paragraphs": [
+          "UPSC's instructions ask you to sign three times on plain white paper in black ink, one signature below the other, and to scan all three as a single image. The file is a JPEG between 20 KB and 100 KB, and the image dimensions are given as 350 to 500 pixels, without saying whether that is the width or the height.",
+          "This page crops the image to 450 x 500 pixels where you place the crop box, so both sides fall in that range whichever one is checked. It saves it at the best quality under 100 KB, and if that comes out under 20 KB it is padded up to it with an invisible comment inside the file. The signatures are exactly the same."
+        ],
+        "tips": [
+          "Leave a little space between the three signatures and keep them about the same width, so all three fit in the crop box.",
+          "Take the photo straight on, close around the signatures, in good light without shadows.",
+          "The instructions ask for the file to be named signature, so save it as signature.jpg before you upload it."
+        ]
+      }
+    },
+    {
+      "slug": "upsc-documents-pdf",
+      "kind": "pdf",
+      "group": "Forms and applications",
+      "linkLabel": "UPSC documents (PDF)",
+      "targetKb": 300,
+      "heading": "UPSC documents: certificates as PDFs of 50 KB to 300 KB",
+      "title": "UPSC documents",
+      "spec": [
+        "PDF",
+        "50 KB to 300 KB"
+      ],
+      "org": "the Union Public Service Commission (UPSC)",
+      "description": "Compress your caste, EWS, disability, matriculation or name-change certificate to a PDF under 300 KB for the UPSC application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "UPSC's application portal takes certificates as PDFs between 50 KB and 300 KB. A scanned certificate is often several megabytes, so it is compressed to fit under 300 KB.",
+      "source": {
+        "label": "UPSC's instructions for uploading documents",
+        "url": "https://upsconline.nic.in/caf/assets/PDF/Instructions%20for%20uploading%20documents-new-2.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting UPSC certificates under 300 KB",
+        "paragraphs": [
+          "In the Common Application Form on upsconline.nic.in, the certificates you upload are PDFs between 50 KB and 300 KB. That covers the caste certificate (the EWS certificate goes in the same place), the disability certificate, the matriculation certificate and the name-change affidavit or gazette notification. The instructions say a document is not uploaded if any other file name, format or size is used.",
+          "We lower the resolution of the scan step by step and keep the first step that fits under 300 KB, so the text stays as readable as the limit allows. Real text in a PDF is never blurred, only scanned images. This page does not make a PDF bigger, so a file already under 50 KB stays as it is."
+        ],
+        "tips": [
+          "Name each file as UPSC lists it: caste_certificate, disability_certificate, board_certificate or name_change.",
+          "A certificate downloaded as a PDF can be under 50 KB. If yours is, scan the printed certificate instead, which comes out larger.",
+          "The photo ID is uploaded as a JPEG between 20 KB and 200 KB, not as a PDF. The UPSC photo page fits that size too."
+        ]
+      }
+    },
+    {
+      "slug": "tnpsc-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "TNPSC photo",
+      "targetKb": 50,
+      "minKb": 20,
+      "pixels": {
+        "width": 130,
+        "height": 170
+      },
+      "heading": "TNPSC photo: 130 x 170 pixels, 20 KB to 50 KB",
+      "title": "TNPSC photo",
+      "spec": [
+        "JPEG",
+        "130 × 170 pixels",
+        "20 KB to 50 KB"
+      ],
+      "org": "the Tamil Nadu Public Service Commission (TNPSC)",
+      "description": "Resize your photo to 130 x 170 pixels and 20 KB to 50 KB for TNPSC One Time Registration and Group exam applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "TNPSC asks for the photograph as a JPEG of 3.5 x 4.5 cm (130 x 170 pixels) between 20 KB and 50 KB, with your name and the date printed at the bottom. An image that small is only a few KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "TNPSC's Instructions to Applicants (2025)",
+        "url": "https://www.tnpsc.gov.in/static_pdf/document/instructions-to-candidates_2025.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting a TNPSC photo to 130 x 170 and 20 KB to 50 KB",
+        "paragraphs": [
+          "TNPSC's Instructions to Applicants ask for a colour studio photo on a white background, 4.5 cm high and 3.5 cm wide, which they give as 170 x 130 pixels. Your name and the date the photo was taken must be printed at the bottom, and the date must be on or after the date of the notification. The file is a JPEG between 20 KB and 50 KB, saved as Photograph.jpg.",
+          "This page crops the photo to 130 x 170 pixels where you place the crop box and saves it at the best quality under 50 KB. A photo that small is usually under 20 KB, so it is padded up to the minimum with an invisible comment inside the file. The photo is exactly the same."
+        ],
+        "tips": [
+          "Get the name and date printed on the photo at the studio. This page does not add text.",
+          "Place the crop box so it keeps the name and date strip at the bottom: TNPSC wants your face to take about 3 cm of the 4.5 cm height and the strip the rest.",
+          "TNPSC refuses selfies and phone photos, so upload a scan or the studio's digital copy.",
+          "Save the result as Photograph.jpg before you upload it."
+        ]
+      }
+    },
+    {
+      "slug": "tnpsc-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "TNPSC signature",
+      "targetKb": 20,
+      "minKb": 10,
+      "pixels": {
+        "width": 230,
+        "height": 75
+      },
+      "heading": "TNPSC signature: 230 x 75 pixels, 10 KB to 20 KB",
+      "title": "TNPSC signature",
+      "spec": [
+        "JPEG",
+        "230 × 75 pixels",
+        "10 KB to 20 KB"
+      ],
+      "org": "the Tamil Nadu Public Service Commission (TNPSC)",
+      "description": "Resize your signature to 230 x 75 pixels and 10 KB to 20 KB for TNPSC One Time Registration and Group exam applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "TNPSC asks for the signature as a JPEG of 6.0 x 2.0 cm (230 x 75 pixels) between 10 KB and 20 KB. An image that small is only a few KB, so it is padded up to the minimum without changing it.",
+      "source": {
+        "label": "TNPSC's Instructions to Applicants (2025)",
+        "url": "https://www.tnpsc.gov.in/static_pdf/document/instructions-to-candidates_2025.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting a TNPSC signature to 230 x 75 and 10 KB to 20 KB",
+        "paragraphs": [
+          "TNPSC's Instructions to Applicants ask you to draw a box of 6.0 x 2.0 cm on white paper and sign inside it in blue or black ink. The image is cropped to just the box, which they give as 230 x 75 pixels, and saved as a JPEG between 10 KB and 20 KB named Signature.jpg.",
+          "This page crops the signature to 230 x 75 pixels where you place the crop box and saves it at the best quality under 20 KB. A signature that small is usually under 10 KB, so it is padded up to the minimum with an invisible comment inside the file. The signature is exactly the same."
+        ],
+        "tips": [
+          "Draw the box with a thin pen and sign inside it without touching the edges.",
+          "Photograph or scan it straight on in good light, then drag the crop box to the edges of the box you drew.",
+          "Save the result as Signature.jpg before you upload it."
+        ]
+      }
+    },
+    {
+      "slug": "uppsc-photo",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "UPPSC photo",
+      "targetKb": 50,
+      "pixels": {
+        "width": 394,
+        "height": 472
+      },
+      "heading": "UPPSC photo: 5 x 6 cm, under 50 KB",
+      "title": "UPPSC photo",
+      "spec": [
+        "JPEG",
+        "5 × 6 cm at 200 DPI",
+        "Under 50 KB"
+      ],
+      "org": "the Uttar Pradesh Public Service Commission (UPPSC)",
+      "description": "Resize your photo to 5 x 6 cm at 200 DPI and under 50 KB for UPPSC One Time Registration and exam applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "UPPSC asks for the photograph scanned at 200 DPI, 5 cm wide and 6 cm high, at most 50 KB. This page makes it 394 x 472 pixels, which is that size at 200 DPI.",
+      "source": {
+        "label": "UPPSC's guidelines for scanning the photograph and signature",
+        "url": "https://uppsc.up.nic.in/CMS/OTR_DOC/OTR_PHOTO_INSTRUCTION.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting a UPPSC photo to 5 x 6 cm and under 50 KB",
+        "paragraphs": [
+          "UPPSC's scanning guidelines ask for the photograph in true colour, 5 cm wide and 6 cm high, scanned at 200 DPI, with a file of no more than 50 KB. You upload it once in the One Time Registration, and it is used for UPPSC's exam applications.",
+          "At 200 DPI, 5 x 6 cm comes to 394 x 472 pixels. This page crops the photo to that size where you place the crop box and saves it at the best quality under 50 KB."
+        ],
+        "tips": [
+          "Use a recent passport-size photo on a light background, and crop close around your head and shoulders.",
+          "If you scan a printed photo, paste it on white paper and scan at 200 DPI, as the guidelines describe.",
+          "Each UPPSC advertisement can add its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      }
+    },
+    {
+      "slug": "uppsc-signature",
+      "kind": "image",
+      "group": "Forms and applications",
+      "linkLabel": "UPPSC signature",
+      "targetKb": 30,
+      "pixels": {
+        "width": 472,
+        "height": 236
+      },
+      "heading": "UPPSC signature: 6 x 3 cm, under 30 KB",
+      "title": "UPPSC signature",
+      "spec": [
+        "JPEG",
+        "6 × 3 cm at 200 DPI",
+        "Under 30 KB"
+      ],
+      "org": "the Uttar Pradesh Public Service Commission (UPPSC)",
+      "description": "Resize your signature to 6 x 3 cm at 200 DPI and under 30 KB for UPPSC One Time Registration and exam applications. Free, no sign-up, files deleted minutes after.",
+      "blurb": "UPPSC asks for the signature scanned at 200 DPI, 6 cm wide and 3 cm high, at most 30 KB. This page makes it 472 x 236 pixels, which is that size at 200 DPI.",
+      "source": {
+        "label": "UPPSC's guidelines for scanning the photograph and signature",
+        "url": "https://uppsc.up.nic.in/CMS/OTR_DOC/OTR_PHOTO_INSTRUCTION.pdf",
+        "checked": "2026-10-18"
+      },
+      "guide": {
+        "title": "Getting a UPPSC signature to 6 x 3 cm and under 30 KB",
+        "paragraphs": [
+          "UPPSC's scanning guidelines ask for the signature 6 cm wide and 3 cm high, scanned at 200 DPI, with a file of no more than 30 KB. The signature must be in full and in your own hand: initials and signatures in capital letters are not accepted.",
+          "At 200 DPI, 6 x 3 cm comes to 472 x 236 pixels. This page crops the signature to that size where you place the crop box and saves it at the best quality under 30 KB."
+        ],
+        "tips": [
+          "Sign in full with a dark pen on plain white paper, the same way you will sign at the exam.",
+          "The signature goes on your admit card, and a signature in the answer sheet that does not match it can disqualify you.",
+          "Take the photo close around the signature, then drag the crop box so it keeps all of it."
+        ]
+      }
+    },
+    {
       "slug": "neet-photo",
       "kind": "image",
       "group": "Forms and applications",
