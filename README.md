@@ -11,6 +11,33 @@ Accepts PDF, JPEG, PNG, WebP, TIFF, BMP, GIF (kept animated) and HEIC (iPhone ph
 The site is FitFileSize; the Python package, CLI and `FITPDF_*` settings keep
 the original name, `fitpdf`.
 
+## Use it from an AI assistant (MCP server)
+
+FitFileSize has an [MCP server](mcp/), `fitfilesize-mcp` on npm, so Claude,
+Cursor, VS Code and other MCP clients can fit a file for you:
+
+> "Make ~/Downloads/signature.jpg fit the IBPS signature rules"
+
+It has two tools: `fit_file` (a PDF or image, or up to 10 at once, to a size
+limit or a form preset, with optional exact pixels and minimum size) and
+`list_forms` (the form presets and their official sources). No account or API
+key. Needs Node.js 20.10 or newer.
+
+```bash
+claude mcp add fitfilesize -- npx -y fitfilesize-mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "fitfilesize": { "command": "npx", "args": ["-y", "fitfilesize-mcp"] }
+  }
+}
+```
+
+Setup for other clients, the tool arguments and privacy are in
+[mcp/README.md](mcp/README.md).
+
 ## How it works
 
 The same three steps regardless of what you feed it:
@@ -73,8 +100,8 @@ Every image keeps its format. A PNG, TIFF or BMP drops to 256 colours at full
 size first, then fewer pixels; a WebP steps size and quality down like a JPEG,
 saved as WebP. If nothing fits you get the smallest file, still in its own
 format. The one exception is an exact pixel size (the API's `width` and
-`height`, which the site's form pages use), which always produces the JPEG
-such forms require.
+`height`, which the site's form pages use), which produces the JPEG such
+forms require unless `keep_format` is set.
 
 Exit codes: 0 target hit, 2 floor reached (target not possible), 1 error.
 
