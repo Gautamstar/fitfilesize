@@ -3,18 +3,18 @@
   "name": "io.github.Gautamstar/fitfilesize",
   "title": "FitFileSize",
   "description": "Compress PDFs and images, iPhone HEIC too, to fit an upload limit or a form's rules.",
-  "websiteUrl": "https://fitfilesize.com",
+  "websiteUrl": "https://fitfilesize.com/claude.html",
   "repository": {
     "url": "https://github.com/Gautamstar/fitfilesize",
     "source": "github",
     "subfolder": "mcp"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "fitfilesize-mcp",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       }
