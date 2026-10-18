@@ -31,7 +31,7 @@ The `fitfilesize-mcp` package is an MCP server for Claude Desktop, Claude Code, 
 claude mcp add fitfilesize -- npx -y fitfilesize-mcp
 ```
 
-Other clients: `{"mcpServers": {"fitfilesize": {"command": "npx", "args": ["-y", "fitfilesize-mcp"]}}}`. Tools: `fit_file` (a path, or up to 10 paths, plus a limit like `200KB` or a form preset like `ibps-signature`) and `list_forms`. Form presets, with each form's size limit, minimum, pixels and official source, are also at https://fitfilesize.com/forms.json.
+Setup for each client: https://fitfilesize.com/claude.html. Other clients: `{"mcpServers": {"fitfilesize": {"command": "npx", "args": ["-y", "fitfilesize-mcp"]}}}`. Tools: `fit_file` (a path, or up to 10 paths, plus a limit like `200KB` or a form preset like `ibps-signature`) and `list_forms`. Form presets, with each form's size limit, minimum, pixels and official source, are also at https://fitfilesize.com/forms.json.
 
 ## Docs
 

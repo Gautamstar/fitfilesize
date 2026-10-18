@@ -167,7 +167,7 @@ const notFound = setHead(base.replace(/\s*<script type="module"[^>]*><\/script>/
 )
 writeFileSync(join(dist, '404.html'), notFound)
 
-const entries = ['/', ...pages.map((p) => `/${p.slug}`), '/privacy.html', '/terms.html']
+const entries = ['/', ...pages.map((p) => `/${p.slug}`), '/claude.html', '/privacy.html', '/terms.html']
 if (siteUrl) {
   const urls = entries
     .map((p) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${updated}</lastmod></url>`)
