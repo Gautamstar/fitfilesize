@@ -14,7 +14,7 @@ Let your AI assistant make a PDF or image fit an upload limit, or a form's exact
 
 ## Setup
 
-Needs Node.js 20.10 or newer.
+Needs Node.js 20.10 or newer. Step-by-step setup with copy buttons: [fitfilesize.com/claude.html](https://fitfilesize.com/claude.html).
 
 **Claude Code**
 
@@ -69,7 +69,7 @@ The form presets, each with its rules and the official source they come from. Th
 
 ## Privacy
 
-The file is sent to FitFileSize's server over HTTPS, compressed there, and deleted as soon as the result is saved on your computer. Requests name the package and its version (`fitfilesize-mcp/0.2.0`), nothing about you. Nothing else leaves your machine. See the [privacy page](https://fitfilesize.com/privacy.html). Uploads count against the site's free limit of 30 an hour.
+The file is sent to FitFileSize's server over HTTPS, compressed there, and deleted as soon as the result is saved on your computer. Requests name the package and its version (`fitfilesize-mcp/0.2.1`), nothing about you. Nothing else leaves your machine. See the [privacy page](https://fitfilesize.com/privacy.html). Uploads count against the site's free limit of 30 an hour.
 
 ## Development
 

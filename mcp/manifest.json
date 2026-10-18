@@ -2,14 +2,14 @@
   "manifest_version": "0.3",
   "name": "fitfilesize-mcp",
   "display_name": "FitFileSize",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Compress PDFs and images, iPhone HEIC too, to fit an upload limit or a form's rules.",
   "long_description": "Make a PDF or image on your computer fit an upload limit, like 200 KB, or a form's exact rules, like the US visa photo or IBPS and SSC uploads. Keeps the file's format and as much quality as the limit allows, and saves the result next to the original. Free, no account or API key. Files are sent to fitfilesize.com over HTTPS and deleted once the result is saved.",
   "author": {
     "name": "Gautamstar",
     "url": "https://github.com/Gautamstar"
   },
-  "homepage": "https://fitfilesize.com",
+  "homepage": "https://fitfilesize.com/claude.html",
   "documentation": "https://github.com/Gautamstar/fitfilesize/tree/main/mcp",
   "privacy_policies": ["https://fitfilesize.com/privacy.html"],
   "repository": {
