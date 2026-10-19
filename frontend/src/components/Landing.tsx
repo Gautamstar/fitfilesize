@@ -14,7 +14,14 @@
  * wrong trade for the text search engines and link previews read.
  */
 
-import { FAQ, LANDING_PAGES, keepUnits, pageSizeLabel, type LandingPage } from '../lib/landing'
+import {
+  FAQ,
+  PAGE_GROUPS,
+  keepUnits,
+  pageSizeLabel,
+  relatedLinks,
+  type LandingPage,
+} from '../lib/landing'
 
 /**
  * The three steps, as they go on this page. A page set up for a form or a
@@ -56,21 +63,6 @@ function steps(page?: LandingPage) {
   ]
 }
 
-const KIND_GROUP = { pdf: 'PDF', image: 'Photos and images' }
-
-// In the order the groups first appear in the page data.
-const SIZE_GROUPS = [...new Set(LANDING_PAGES.map(groupOf))].map((title) => ({
-  title,
-  // Size pages smallest first; form pages keep their order in the data.
-  pages: LANDING_PAGES.filter((p) => groupOf(p) === title).sort((a, b) =>
-    a.title || b.title ? 0 : a.targetKb - b.targetKb,
-  ),
-}))
-
-function groupOf(page: LandingPage): string {
-  return page.group ?? KIND_GROUP[page.kind]
-}
-
 /** "2026-09-26" as "26 September 2026", the same in every time zone. */
 function checkedOn(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number)
@@ -82,6 +74,7 @@ function checkedOn(iso: string): string {
 }
 
 export function Landing({ page }: { page?: LandingPage }) {
+  const related = relatedLinks(page)
   return (
     <div className="landing">
       {/* The one section that differs per page. Everything below is shared,
@@ -142,24 +135,45 @@ export function Landing({ page }: { page?: LandingPage }) {
       </section>
 
       <section className="band">
-        <h2 className="band-title">Common size limits</h2>
-        {SIZE_GROUPS.map((group) => (
-          <div key={group.title} className="size-group">
-            <p className="size-group-title">{group.title}</p>
-            <ul className="size-links">
-              {group.pages.map((p) => (
-                <li key={p.slug}>
-                  {/* Plain links, not client-side routing: each page is its own
-                      prerendered HTML with its own title, which is the point. */}
-                  <a href={`/${p.slug}`} aria-current={p.slug === page?.slug ? 'page' : undefined}>
-                    {p.linkLabel ?? pageSizeLabel(p)}
-                  </a>
-                </li>
+        {related.pages.length ? (
+          <>
+            <h2 className="band-title">{related.title}</h2>
+            {related.group ? <p className="size-group-title">{related.group}</p> : null}
+            <PageLinks pages={related.pages} />
+          </>
+        ) : null}
+        {/* Folded, but still in the HTML: the links are how a crawler finds
+            every landing page from any one. */}
+        <div className="faq all-pages">
+          <details className="faq-item">
+            <summary>All pages</summary>
+            <div className="all-pages-body">
+              {PAGE_GROUPS.map((group) => (
+                <div key={group.title} className="size-group">
+                  <p className="size-group-title">{group.title}</p>
+                  <PageLinks pages={group.pages} current={page?.slug} />
+                </div>
               ))}
-            </ul>
-          </div>
-        ))}
+            </div>
+          </details>
+        </div>
       </section>
     </div>
+  )
+}
+
+function PageLinks({ pages, current }: { pages: LandingPage[]; current?: string }) {
+  return (
+    <ul className="size-links">
+      {pages.map((p) => (
+        <li key={p.slug}>
+          {/* Plain links, not client-side routing: each page is its own
+              prerendered HTML with its own title, which is the point. */}
+          <a href={`/${p.slug}`} aria-current={p.slug === current ? 'page' : undefined}>
+            {p.linkLabel ?? pageSizeLabel(p)}
+          </a>
+        </li>
+      ))}
+    </ul>
   )
 }

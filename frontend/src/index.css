@@ -1690,6 +1690,22 @@ button:disabled {
   line-height: 1.6;
 }
 
+.all-pages {
+  margin-top: 16px;
+}
+.band-title + .size-links {
+  margin-bottom: 8px;
+}
+.all-pages-body {
+  padding: 0 20px 18px;
+}
+/* Its group names are paragraphs, which .faq-item p would pad. */
+.all-pages-body .size-group-title {
+  padding: 0;
+}
+.all-pages-body .size-links {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
 .size-group + .size-group {
   margin-top: 16px;
 }
