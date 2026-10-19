@@ -7,6 +7,7 @@ import {
   pageMinBytes,
   pageSizeLabel,
   pageTargetBytes,
+  relatedLinks,
 } from './landing'
 
 describe('pageForPath', () => {
@@ -102,5 +103,35 @@ describe('landing page guides', () => {
       expect(page.guide.paragraphs.length).toBeGreaterThan(0)
       expect(page.guide.tips.length).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('relatedLinks', () => {
+  const slugs = (slug: string) => relatedLinks(pageForPath(slug)).pages.map((p) => p.slug)
+
+  it('lists the other pages for the same organisation', () => {
+    expect(relatedLinks(pageForPath('upsc-photo')).title).toBe('More for UPSC')
+    expect(slugs('upsc-photo')).toEqual(['upsc-signature', 'upsc-documents-pdf'])
+  })
+
+  it('gives a page without siblings the sizes either side of it', () => {
+    expect(relatedLinks(pageForPath('compress-pdf-to-200kb')).title).toBe('Related pages')
+    expect(slugs('compress-pdf-to-200kb')).toEqual([
+      'compress-pdf-to-100kb',
+      'compress-pdf-to-150kb',
+      'compress-pdf-to-300kb',
+      'compress-pdf-to-400kb',
+    ])
+    expect(relatedLinks(pageForPath('compress-pdf-to-200kb')).group).toBe('PDF')
+    expect(slugs('compress-pdf-to-50kb')).toHaveLength(4)
+  })
+
+  it('never lists the page itself, and nothing on the home page', () => {
+    for (const page of LANDING_PAGES) {
+      const { pages } = relatedLinks(page)
+      expect(pages.length).toBeGreaterThan(0)
+      expect(pages).not.toContain(page)
+    }
+    expect(relatedLinks(undefined).pages).toEqual([])
   })
 })

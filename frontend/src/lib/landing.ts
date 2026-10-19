@@ -14,7 +14,7 @@ export interface LandingPage {
   slug: string
   kind: 'pdf' | 'image'
   /**
-   * Heading for this page's link under "Common size limits". Pages without
+   * Heading for this page's link in the list of all pages. Pages without
    * one are grouped by kind. Set it when the kind alone would list the same
    * size twice, as with "PNG" pages next to the JPG ones.
    */
@@ -25,7 +25,7 @@ export interface LandingPage {
   minKb?: number
   /** Exact pixel size a form requires, for image pages. */
   pixels?: { width: number; height: number }
-  /** Link text under "Common size limits" when the size alone is not the point. */
+  /** Link text in the list of all pages when the size alone is not the point. */
   linkLabel?: string
   /** Where a form's requirements come from, shown on the page. */
   source?: { label: string; url: string; checked: string }
@@ -94,4 +94,57 @@ export function pageSizeLabel(page: LandingPage): string {
  */
 export function keepUnits(text: string): string {
   return text.replace(/(\d) (KB|MB|dpi|pixels)\b/g, '$1\u00a0$2')
+}
+
+const KIND_GROUP = { pdf: 'PDF', image: 'Photos and images' }
+
+/** The heading a page's link sits under in the list of all pages. */
+export function groupOf(page: LandingPage): string {
+  return page.group ?? KIND_GROUP[page.kind]
+}
+
+/** Every page by group, in the order the groups first appear in the data. */
+export const PAGE_GROUPS = [...new Set(LANDING_PAGES.map(groupOf))].map((title) => ({
+  title,
+  // Size pages smallest first; form pages keep their order in the data.
+  pages: LANDING_PAGES.filter((p) => groupOf(p) === title).sort((a, b) =>
+    a.title || b.title ? 0 : a.targetKb - b.targetKb,
+  ),
+}))
+
+/** "the Union Public Service Commission (UPSC)" -> "UPSC", "the X" -> "X". */
+function orgName(org: string): string {
+  return org.match(/\(([^)]+)\)$/)?.[1] ?? org.replace(/^the /, '')
+}
+
+/**
+ * The few links shown open at the foot of a page; the full list stays folded
+ * away. A form page lists the other pages for the same organisation. Any
+ * other page gets up to four neighbours in its group: the sizes either side
+ * of it, or the forms next to it in the data.
+ */
+export function relatedLinks(page?: LandingPage): {
+  title: string
+  /** The group the neighbours come from, named over them; none for an organisation's pages. */
+  group?: string
+  pages: LandingPage[]
+} {
+  if (!page) return { title: '', pages: [] }
+  const siblings = LANDING_PAGES.filter(
+    (p) => page.org && p.org === page.org && p.slug !== page.slug,
+  )
+  if (page.org && siblings.length) {
+    return { title: `More for ${orgName(page.org)}`, pages: siblings }
+  }
+  const group = PAGE_GROUPS.find((g) => g.title === groupOf(page))?.pages ?? []
+  const at = group.findIndex((p) => p.slug === page.slug)
+  const pages: LandingPage[] = []
+  for (let step = 1; pages.length < 4 && step < group.length; step++) {
+    for (const p of [group[at - step], group[at + step]]) {
+      if (p && pages.length < 4) pages.push(p)
+    }
+  }
+  // Sizes read smallest first; forms keep their order in the data.
+  if (!page.title) pages.sort((a, b) => a.targetKb - b.targetKb)
+  return { title: 'Related pages', group: groupOf(page), pages }
 }
