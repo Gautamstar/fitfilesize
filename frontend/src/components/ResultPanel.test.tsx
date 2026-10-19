@@ -53,6 +53,23 @@ describe('ResultPanel', () => {
     expect(screen.getByRole('link', { name: 'Download' }).getAttribute('href')).toMatch(/\/download$/)
   })
 
+  it('says a file padded up to the minimum grew, not that it was left alone', () => {
+    setup({
+      filename: 'sign.jpg',
+      minBytes: 51_200,
+      result: done({
+        final_bytes: 51_200,
+        original_bytes: 15_000,
+        target_bytes: 200_000,
+        method: 'none',
+        warnings: ['padded to 50.0 KB to meet the minimum size; the picture itself is unchanged'],
+      }),
+    })
+    expect(screen.getByText('14.6 KB before, 50.0 KB after.')).toBeTruthy()
+    expect(screen.queryByText(/left it alone/)).toBeNull()
+    expect(screen.queryByText(/percent smaller/)).toBeNull()
+  })
+
   it('says when the file could not reach the limit', () => {
     setup({ result: done({ hit_target: false, final_bytes: 80_000, method: 'floor' }) })
     expect(screen.getByRole('heading', { name: 'As small as it goes' })).toBeTruthy()

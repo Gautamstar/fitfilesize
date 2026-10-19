@@ -125,9 +125,12 @@ export function ResultPanel({
       </div>
 
       <p className="result-detail" role="status">
-        {result.method === 'none'
-          ? 'Your file was already under that size, so we left it alone.'
-          : `${fmt(result.original_bytes)} before, ${fmt(result.final_bytes)} after: ${savedPct} percent smaller.`}
+        {/* Padded up to a form's minimum, the file grew: the note below says why. */}
+        {result.final_bytes > result.original_bytes
+          ? `${fmt(result.original_bytes)} before, ${fmt(result.final_bytes)} after.`
+          : result.method === 'none'
+            ? 'Your file was already under that size, so we left it alone.'
+            : `${fmt(result.original_bytes)} before, ${fmt(result.final_bytes)} after: ${savedPct} percent smaller.`}
       </p>
 
       {notes.length > 0 ? (
