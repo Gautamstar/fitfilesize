@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-18",
+  "updated": "2026-10-19",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
@@ -1183,6 +1183,39 @@
       }
     },
     {
+      "slug": "tnpsc-certificates-pdf",
+      "kind": "pdf",
+      "linkLabel": "TNPSC certificates (PDF)",
+      "targetKb": 200,
+      "heading": "TNPSC certificates: one PDF of up to 200 KB for each claim",
+      "title": "TNPSC certificates",
+      "spec": [
+        "PDF",
+        "200 KB or less for each claim"
+      ],
+      "org": "the Tamil Nadu Public Service Commission (TNPSC)",
+      "description": "Compress the certificates for your TNPSC application to a PDF of 200 KB or less for each claim. Free, no sign-up, files deleted minutes after.",
+      "blurb": "TNPSC asks for the certificates behind each claim in your application as one PDF of no more than 200 KB. A scan of a page or two is often several megabytes, so it is compressed to fit.",
+      "source": {
+        "label": "TNPSC's Instructions to Applicants (2025)",
+        "url": "https://www.tnpsc.gov.in/static_pdf/document/instructions-to-candidates_2025.pdf",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting TNPSC certificates under 200 KB",
+        "paragraphs": [
+          "TNPSC's Instructions to Applicants say the certificates supporting every claim in the online application are uploaded with it, as one PDF file of not more than 200 KB for each claim, with one page or several. That covers the certificates for age, education, community and any other claim you make.",
+          "We lower the resolution of the scan step by step and keep the first step that fits under 200 KB, so the text stays as readable as the limit allows. Real text in a PDF is never blurred, only scanned images."
+        ],
+        "tips": [
+          "Put all the pages for one claim in one PDF, then compress that PDF here.",
+          "At the later on-screen certificate verification, TNPSC asks for PDFs of 300 KB to 500 KB scanned at 200 DPI. Pick that limit under Use a different limit when you get there.",
+          "If a certificate is a photo, save it as a PDF first (most phones can print to PDF)."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
       "slug": "uppsc-photo",
       "kind": "image",
       "group": "Forms and applications",
@@ -1257,6 +1290,397 @@
           "Take the photo close around the signature, then drag the crop box so it keeps all of it."
         ]
       }
+    },
+    {
+      "slug": "bpsc-signature",
+      "kind": "image",
+      "linkLabel": "BPSC signature",
+      "targetKb": 20,
+      "pixels": {
+        "width": 200,
+        "height": 300
+      },
+      "heading": "BPSC signature: under 20 KB, 150 to 220 pixels wide and 250 to 320 high",
+      "title": "BPSC signature",
+      "spec": [
+        "150 to 220 × 250 to 320 pixels",
+        "Under 20 KB"
+      ],
+      "org": "the Bihar Public Service Commission (BPSC)",
+      "description": "Resize your Hindi and English signatures to under 20 KB, 150 to 220 pixels wide and 250 to 320 high, for the BPSC One Time Registration. Free, no sign-up, files deleted minutes after.",
+      "blurb": "BPSC's registration takes a picture of your Hindi and English signatures under 20 KB, 150 to 220 pixels wide and 250 to 320 pixels high. This page makes it 200 x 300 pixels, inside both ranges.",
+      "source": {
+        "label": "BPSC's user manual for online registration",
+        "url": "https://bpsconline.bihar.gov.in/downloads/User_Manual.pdf",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting a BPSC signature under 20 KB",
+        "paragraphs": [
+          "In the BPSC One Time Registration on bpsconline.bihar.gov.in, the photo step takes a live photo with your webcam, and you upload a picture of your Hindi and English signatures. BPSC's user manual says the picture should be less than 20 KB, with a width between 150 and 220 pixels and a height between 250 and 320 pixels. That is taller than it is wide.",
+          "This page crops the picture to 200 x 300 pixels where you place the crop box, which is inside both ranges, and saves it at the best quality under 20 KB."
+        ],
+        "tips": [
+          "Signing one above the other on white paper fits the tall shape: the Hindi signature, then the English one below it.",
+          "If the form asks for each signature as its own picture, make each one on this page.",
+          "Your photo is not uploaded from a file: the registration captures it live, so sit in good light facing the webcam."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "kerala-psc-photo",
+      "kind": "image",
+      "linkLabel": "Kerala PSC photo",
+      "targetKb": 30,
+      "pixels": {
+        "width": 150,
+        "height": 200
+      },
+      "heading": "Kerala PSC photo: 150 x 200 pixels, 30 KB or less",
+      "title": "Kerala PSC photo",
+      "spec": [
+        "JPEG",
+        "150 × 200 pixels",
+        "30 KB or less"
+      ],
+      "org": "the Kerala Public Service Commission (Kerala PSC)",
+      "description": "Resize your photo to 150 x 200 pixels and 30 KB or less for your Kerala PSC One Time Registration (Thulasi) profile. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Kerala PSC asks for the profile photo as a JPEG of 150 pixels wide by 200 high, no more than 30 KB, with your name and the date printed at the bottom.",
+      "source": {
+        "label": "Kerala PSC's instructions regarding the photograph",
+        "url": "https://www.keralapsc.gov.in/sites/default/files/inline-files/photo_0.pdf",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting a Kerala PSC photo to 150 x 200 and 30 KB",
+        "paragraphs": [
+          "Kerala PSC's instructions ask for the photograph as a JPEG 200 pixels high and 150 pixels wide, of no more than 30 KB. Since the start of 2025, a new profile needs a photo taken within the last six months, with your name and the date it was taken printed clearly at the bottom. Once accepted, the photo stays valid for 10 years.",
+          "This page crops the photo to 150 x 200 pixels where you place the crop box and saves it at the best quality under 30 KB."
+        ],
+        "tips": [
+          "Get the name and date printed on the photo at the studio. This page does not add text.",
+          "Place the crop box so it keeps the name and date at the bottom, and your face clear above it.",
+          "The photo is uploaded once to your profile and used for every post you apply for."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "kerala-psc-signature",
+      "kind": "image",
+      "linkLabel": "Kerala PSC signature",
+      "targetKb": 30,
+      "pixels": {
+        "width": 150,
+        "height": 100
+      },
+      "heading": "Kerala PSC signature: 150 x 100 pixels, 30 KB or less",
+      "title": "Kerala PSC signature",
+      "spec": [
+        "JPEG",
+        "150 × 100 pixels",
+        "30 KB or less"
+      ],
+      "org": "the Kerala Public Service Commission (Kerala PSC)",
+      "description": "Resize your signature to 150 x 100 pixels and 30 KB or less for your Kerala PSC One Time Registration (Thulasi) profile. Free, no sign-up, files deleted minutes after.",
+      "blurb": "Kerala PSC asks for the signature as a JPEG of 150 x 100 pixels, no more than 30 KB.",
+      "source": {
+        "label": "Kerala PSC's One Time Registration instructions",
+        "url": "https://www.keralapsc.gov.in/sites/default/files/inline-files/otr.pdf",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting a Kerala PSC signature to 150 x 100 and 30 KB",
+        "paragraphs": [
+          "Kerala PSC's One Time Registration instructions ask for the signature image at 150 x 100 pixels and no more than 30 KB, as a JPEG. It goes into your profile with the photo, and is used for every post you apply for.",
+          "This page crops the signature to 150 x 100 pixels where you place the crop box and saves it at the best quality under 30 KB."
+        ],
+        "tips": [
+          "Sign with a dark pen on plain white paper, and photograph or scan it in good light.",
+          "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "appsc-photo",
+      "kind": "image",
+      "linkLabel": "APPSC photo",
+      "targetKb": 50,
+      "heading": "APPSC photo: JPEG, 3.5 x 4.5 cm, under 50 KB",
+      "title": "APPSC photo",
+      "spec": [
+        "JPEG",
+        "3.5 × 4.5 cm",
+        "Under 50 KB"
+      ],
+      "org": "the Andhra Pradesh Public Service Commission (APPSC)",
+      "description": "Compress your photo to a JPEG under 50 KB for the APPSC One Time Profile Registration (OTPR). Free, no sign-up, files deleted minutes after.",
+      "blurb": "APPSC's registration form takes the photograph as a JPEG of 3.5 x 4.5 cm, under 50 KB, with your name and the date printed on it.",
+      "source": {
+        "label": "APPSC's One Time Profile Registration form",
+        "url": "https://otpr-psc.ap.gov.in/OTPRForms/OneTimeProfileRegistration_Form.aspx",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting an APPSC photo under 50 KB",
+        "paragraphs": [
+          "APPSC's One Time Profile Registration form asks for the photograph as a JPG or JPEG, 3.5 cm wide and 4.5 cm high, and refuses a file of 50 KB or more. It can be in colour or black and white, taken without a cap or goggles (glasses are fine), and your name and the date it was taken must be printed on the photo itself. Polaroid photos are not accepted.",
+          "The form sets no pixel size, so this page keeps the photo as large as fits under 50 KB. It reduces the size step by step and stops at the first step that fits."
+        ],
+        "tips": [
+          "Get the name and date printed on the photo at the studio. This page does not add text.",
+          "Crop the photo to passport shape, close around your head and shoulders, with the name and date strip kept in.",
+          "The form takes JPG or JPEG files only."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "appsc-signature",
+      "kind": "image",
+      "linkLabel": "APPSC signature",
+      "targetKb": 30,
+      "heading": "APPSC signature: JPEG, 3.5 x 1.5 cm, under 30 KB",
+      "title": "APPSC signature",
+      "spec": [
+        "JPEG",
+        "3.5 × 1.5 cm",
+        "Under 30 KB"
+      ],
+      "org": "the Andhra Pradesh Public Service Commission (APPSC)",
+      "description": "Compress your signature to a JPEG under 30 KB for the APPSC One Time Profile Registration (OTPR). Free, no sign-up, files deleted minutes after.",
+      "blurb": "APPSC's registration form takes the signature as a JPEG of 3.5 x 1.5 cm, under 30 KB.",
+      "source": {
+        "label": "APPSC's One Time Profile Registration form",
+        "url": "https://otpr-psc.ap.gov.in/OTPRForms/OneTimeProfileRegistration_Form.aspx",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting an APPSC signature under 30 KB",
+        "paragraphs": [
+          "APPSC's One Time Profile Registration form asks for the signature as a JPG or JPEG, 3.5 cm wide and 1.5 cm high, and refuses a file of 30 KB or more.",
+          "The form sets no pixel size, so this page keeps the signature as large as fits under 30 KB. It reduces the size step by step and stops at the first step that fits."
+        ],
+        "tips": [
+          "Sign with a dark pen on plain white paper, and crop close around the signature so it has the long, low shape of 3.5 x 1.5 cm.",
+          "Photograph or scan it straight on, in good light without shadows.",
+          "The form takes JPG or JPEG files only."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "tgpsc-photo",
+      "kind": "image",
+      "linkLabel": "TGPSC photo",
+      "targetKb": 200,
+      "minKb": 100,
+      "heading": "TGPSC photo: JPG or PNG, 100 KB to 200 KB",
+      "title": "TGPSC photo",
+      "spec": [
+        "JPG or PNG",
+        "100 KB to 200 KB"
+      ],
+      "org": "the Telangana Public Service Commission (TGPSC)",
+      "description": "Compress your passport-size photo to 100 KB to 200 KB for a TGPSC (Telangana) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "TGPSC's 2026 notifications ask for a recent colour passport-size photo between 100 KB and 200 KB, as a JPG or PNG. A phone photo is several megabytes, so it is compressed to fit.",
+      "source": {
+        "label": "TGPSC Notification No. 01/G/RB/2026 (2 June 2026)",
+        "url": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJL05PVElGTi1BRUUtQ0lWSUwtUm5CMjAyNjA2MDIxNjI5NTYucGRmr95v17a0y2d8i13v",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting a TGPSC photo to 100 KB to 200 KB",
+        "paragraphs": [
+          "TGPSC's 2026 recruitment notifications ask for a recent colour passport-size photograph, taken no more than 3 months before the last date of the application, as a JPG or PNG file between 100 KB and 200 KB. That minimum is high: a small, cropped photo can be under it.",
+          "This page keeps the photo as large as fits under 200 KB. If a JPEG comes out under 100 KB, it is padded up to it with an invisible comment inside the file, so the photo is exactly the same."
+        ],
+        "tips": [
+          "Upload a JPG: only a JPEG can be padded up to the 100 KB minimum. A PNG keeps its format.",
+          "Crop the photo close around your head and shoulders, against a plain light background.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "tgpsc-signature",
+      "kind": "image",
+      "linkLabel": "TGPSC signature",
+      "targetKb": 30,
+      "minKb": 20,
+      "heading": "TGPSC signature: JPG or PNG, 20 KB to 30 KB",
+      "title": "TGPSC signature",
+      "spec": [
+        "JPG or PNG",
+        "20 KB to 30 KB"
+      ],
+      "org": "the Telangana Public Service Commission (TGPSC)",
+      "description": "Compress your signature to 20 KB to 30 KB for a TGPSC (Telangana) application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "TGPSC's 2026 notifications ask for the scanned signature between 20 KB and 30 KB, as a JPG or PNG. A clean signature is often under 20 KB, so a JPEG is padded up to the minimum without changing it.",
+      "source": {
+        "label": "TGPSC Notification No. 01/G/RB/2026 (2 June 2026)",
+        "url": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJL05PVElGTi1BRUUtQ0lWSUwtUm5CMjAyNjA2MDIxNjI5NTYucGRmr95v17a0y2d8i13v",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting a TGPSC signature to 20 KB to 30 KB",
+        "paragraphs": [
+          "TGPSC's 2026 recruitment notifications ask for a scanned specimen signature as a JPG or PNG file between 20 KB and 30 KB. The range is narrow, so a signature has to land between the two.",
+          "This page keeps the signature as large as fits under 30 KB. If a JPEG comes out under 20 KB, it is padded up to it with an invisible comment inside the file, so the signature is exactly the same."
+        ],
+        "tips": [
+          "Upload a JPG: only a JPEG can be padded up to the 20 KB minimum. A PNG keeps its format.",
+          "Sign with a dark pen on plain white paper and crop close around the signature.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "hppsc-photo",
+      "kind": "image",
+      "linkLabel": "HPPSC photo",
+      "targetKb": 40,
+      "pixels": {
+        "width": 110,
+        "height": 140
+      },
+      "heading": "HPPSC photo: 110 x 140 pixels, 40 KB or less",
+      "title": "HPPSC photo",
+      "spec": [
+        "JPEG",
+        "110 × 140 pixels",
+        "40 KB or less"
+      ],
+      "org": "the Himachal Pradesh Public Service Commission (HPPSC)",
+      "description": "Resize your photo to 110 x 140 pixels and 40 KB or less for an HPPSC (Himachal Pradesh) online application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "HPPSC asks for the scanned photograph at 110 pixels wide by 140 high, no more than 40 KB, as a .jpg.",
+      "source": {
+        "label": "HPPSC's frequently asked questions",
+        "url": "https://hppsc.hp.gov.in/Home/FAQs",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting an HPPSC photo to 110 x 140 and 40 KB",
+        "paragraphs": [
+          "HPPSC's answers for online applicants say the scanned photograph should be 140 pixels high and 110 pixels wide, as a .jpg of no more than 40 KB. Colour and black and white are both accepted, as long as the photo is clear. You register once, and the profile is used for every post you apply for.",
+          "This page crops the photo to 110 x 140 pixels where you place the crop box and saves it at the best quality under 40 KB."
+        ],
+        "tips": [
+          "Crop close around your head and shoulders, so your face is clear at this small size.",
+          "Use a recent passport-size photo against a plain light background.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "hppsc-signature",
+      "kind": "image",
+      "linkLabel": "HPPSC signature",
+      "targetKb": 40,
+      "pixels": {
+        "width": 140,
+        "height": 110
+      },
+      "heading": "HPPSC signature: 140 x 110 pixels, 40 KB or less",
+      "title": "HPPSC signature",
+      "spec": [
+        "JPEG",
+        "140 × 110 pixels",
+        "40 KB or less"
+      ],
+      "org": "the Himachal Pradesh Public Service Commission (HPPSC)",
+      "description": "Resize your signature to 140 x 110 pixels and 40 KB or less for an HPPSC (Himachal Pradesh) online application. Free, no sign-up, files deleted minutes after.",
+      "blurb": "HPPSC asks for the scanned signature at 140 pixels wide by 110 high, no more than 40 KB, signed in black ink on white paper.",
+      "source": {
+        "label": "HPPSC's frequently asked questions",
+        "url": "https://hppsc.hp.gov.in/Home/FAQs",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting an HPPSC signature to 140 x 110 and 40 KB",
+        "paragraphs": [
+          "HPPSC's answers for online applicants say to sign on white paper with a black ink pen and scan it, with the image 110 pixels high and 140 pixels wide, as a .jpg of no more than 40 KB.",
+          "This page crops the signature to 140 x 110 pixels where you place the crop box and saves it at the best quality under 40 KB."
+        ],
+        "tips": [
+          "Sign with a black pen on plain white paper, a little smaller than usual so it fits the near-square shape.",
+          "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "apsc-photo",
+      "kind": "image",
+      "linkLabel": "APSC photo",
+      "targetKb": 200,
+      "minKb": 50,
+      "heading": "APSC photo: 50 KB to 200 KB",
+      "title": "APSC photo",
+      "spec": [
+        "50 KB to 200 KB"
+      ],
+      "org": "the Assam Public Service Commission (APSC)",
+      "description": "Compress your photo to between 50 KB and 200 KB for the APSC (Assam) One Time Registration. Free, no sign-up, files deleted minutes after.",
+      "blurb": "APSC's One Time Registration takes the photo between 50 KB and 200 KB, taken no more than 3 months ago. A phone photo is several megabytes, so it is compressed to fit.",
+      "source": {
+        "label": "APSC Advertisement No. 05/2025",
+        "url": "https://apsc.nic.in/advt_2025/Advt_No_05_2025_JE_PWRD_22012025.pdf",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting an APSC photo to 50 KB to 200 KB",
+        "paragraphs": [
+          "APSC's advertisements say the One Time Registration on apscrecruitment.in takes a photo of at least 50 KB and at most 200 KB, not older than 3 months, along with your signature and other details. You then apply for each post from the same registration.",
+          "APSC sets no pixel size, so this page keeps the photo as large as fits under 200 KB. If a JPEG comes out under 50 KB, it is padded up to it with an invisible comment inside the file, so the photo is exactly the same."
+        ],
+        "tips": [
+          "Upload a JPG photo: only a JPEG can be padded up to the 50 KB minimum.",
+          "Crop close around your head and shoulders, against a plain light background.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
+    },
+    {
+      "slug": "apsc-signature",
+      "kind": "image",
+      "linkLabel": "APSC signature",
+      "targetKb": 200,
+      "minKb": 50,
+      "heading": "APSC signature: 50 KB to 200 KB",
+      "title": "APSC signature",
+      "spec": [
+        "50 KB to 200 KB"
+      ],
+      "org": "the Assam Public Service Commission (APSC)",
+      "description": "Compress your signature to between 50 KB and 200 KB for the APSC (Assam) One Time Registration. Free, no sign-up, files deleted minutes after.",
+      "blurb": "APSC's One Time Registration takes the signature between 50 KB and 200 KB. A signature is usually far under 50 KB, so a JPEG is padded up to the minimum without changing it.",
+      "source": {
+        "label": "APSC Advertisement No. 05/2025",
+        "url": "https://apsc.nic.in/advt_2025/Advt_No_05_2025_JE_PWRD_22012025.pdf",
+        "checked": "2026-10-19"
+      },
+      "guide": {
+        "title": "Getting an APSC signature to 50 KB to 200 KB",
+        "paragraphs": [
+          "APSC's advertisements give the same range for the signature as for the photo in the One Time Registration: at least 50 KB and at most 200 KB. For a signature, the minimum is the hard part, since a clean signature image is often 10 KB to 30 KB.",
+          "This page keeps the signature as large as fits under 200 KB. If a JPEG comes out under 50 KB, it is padded up to it with an invisible comment inside the file, so the signature is exactly the same."
+        ],
+        "tips": [
+          "Upload a JPG: only a JPEG can be padded up to the 50 KB minimum. A PNG keeps its format.",
+          "Sign with a dark pen on plain white paper and crop close around the signature.",
+          "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
+        ]
+      },
+      "group": "Forms and applications"
     },
     {
       "slug": "neet-photo",
