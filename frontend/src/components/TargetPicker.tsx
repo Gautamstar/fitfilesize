@@ -151,9 +151,15 @@ export function TargetPicker({
   // A form's exact pixel size changes the file whatever its size, so its own
   // limit stays on offer even for a file already under it.
   const formPixels = kind === 'image' && Boolean(initialResize) && initialTarget !== undefined
+  // So does a form's minimum for a file under it: the file does not fit yet,
+  // it needs padding up, and only a JPEG result can be padded.
+  const underMin =
+    kind === 'image' && initialTarget !== undefined && originalBytes < (minBytes ?? 0)
+  const paddable = jpegFile || heic || (Boolean(resize) && !kept)
+  const keepFormLimit = formPixels || underMin
   // A HEIC always becomes a JPEG, usually two to three times its size, so a
   // limit above the HEIC itself still means something.
-  const hi = formPixels
+  const hi = keepFormLimit
     ? Math.max(originalBytes, initialTarget as number)
     : heic
       ? Math.max(originalBytes * 3, initialTarget ?? 0)
@@ -174,7 +180,8 @@ export function TargetPicker({
   // size moves the slider's range, and a position would then point at a
   // different size. A preset or chip stays exactly its limit this way.
   const [chosen, setChosen] = useState(() => {
-    if (initialTarget && (initialTarget < originalBytes || formPixels || heic)) return initialTarget
+    if (initialTarget && (initialTarget < originalBytes || keepFormLimit || heic))
+      return initialTarget
     const fourMB = 4 * 1024 * 1024
     const def =
       fourMB > effectiveFloor && fourMB < originalBytes ? fourMB : Math.round(originalBytes * 0.6)
@@ -190,7 +197,7 @@ export function TargetPicker({
   }
 
   const alreadyFits =
-    !formPixels && !heic && initialTarget !== undefined && initialTarget >= originalBytes
+    !keepFormLimit && !heic && initialTarget !== undefined && initialTarget >= originalBytes
 
   // Only limits this file can use: under its size, and at or over its floor
   // (for the format it comes back in, so a BMP screenshot is not offered
@@ -456,8 +463,20 @@ export function TargetPicker({
         </p>
       ) : null}
 
+      {underMin && !resize ? (
+        <p className="already-fits">
+          <strong>
+            Your file is {fmt(originalBytes)}, under the{' '}
+            {fmtLimit(Math.round((minBytes ?? 0) / 1024) * 1000)} minimum.
+          </strong>{' '}
+          {paddable
+            ? 'Compress pads it up to the minimum without changing the picture.'
+            : 'Only a JPEG can be padded up to it, so upload the picture as a JPG.'}
+        </p>
+      ) : null}
+
       <p className="target-value">{fmtLimit(target)}</p>
-      {minBytes && kind === 'image' && target > minBytes ? (
+      {minBytes && kind === 'image' && target > minBytes && !(underMin && !resize) ? (
         <p className="target-min">
           This form also needs at least {fmtLimit(Math.round(minBytes / 1024) * 1000)}. If the file
           comes out smaller, we pad it up to that without changing the picture.
@@ -465,7 +484,7 @@ export function TargetPicker({
       ) : null}
       {/* The hint compares the limit with the file as it is; at a set pixel
           size the file is rebuilt, and the comparison says nothing. */}
-      {resize ? null : <p className="target-hint">{hint}</p>}
+      {resize || underMin ? null : <p className="target-hint">{hint}</p>}
 
       {form ? (
         <>

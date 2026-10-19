@@ -202,6 +202,42 @@ describe('TargetPicker on a form page', () => {
   })
 })
 
+describe('TargetPicker with a file under the form minimum', () => {
+  const underMin = (filename: string) => {
+    const onCompress = vi.fn()
+    render(
+      <TargetPicker
+        filename={filename}
+        meta="15.0 KB, 800 x 300"
+        originalBytes={15_000}
+        floor={5_000}
+        kind="image"
+        onCompress={onCompress}
+        onCancel={() => {}}
+        initialTarget={200_000}
+        minBytes={51_200}
+        form={{ name: 'APSC signature' }}
+      />,
+    )
+    return onCompress
+  }
+
+  it('says it is under the minimum and keeps the form limit, not "already fits"', () => {
+    const onCompress = underMin('sign.jpg')
+    expect(screen.queryByText(/already under/)).toBeNull()
+    expect(screen.getByText(/under the 50 KB minimum/)).toBeTruthy()
+    expect(screen.getByText(/pads it up to the minimum/)).toBeTruthy()
+    expect(screen.getByText('200 KB', { selector: '.target-value' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Compress' }))
+    expect(onCompress.mock.calls.at(-1)?.[0]).toBe(200_000)
+  })
+
+  it('says a PNG cannot be padded', () => {
+    underMin('sign.png')
+    expect(screen.getByText(/Only a JPEG can be padded/)).toBeTruthy()
+  })
+})
+
 describe('TargetPicker with a PNG at a pixel size', () => {
   it('says before Compress that the result is a JPEG on a page that asks for one', () => {
     setup('image', { width: 200, height: 230, fit: 'crop' }, { filename: 'scan.png' })
