@@ -69,7 +69,7 @@ function setHead(html, { title, description, extra = [] }) {
   return out
 }
 
-function renderPage({ path, title, description }) {
+function renderPage({ path, title, description, pageFaq }) {
   const url = siteUrl ? siteUrl + path : ''
   const image = siteUrl ? `${siteUrl}/og.png` : ''
   const extra = [
@@ -100,7 +100,7 @@ function renderPage({ path, title, description }) {
     jsonLd({
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      mainEntity: faq.map(({ q, a }) => ({
+      mainEntity: (pageFaq?.length ? pageFaq : faq).map(({ q, a }) => ({
         '@type': 'Question',
         name: q,
         acceptedAnswer: { '@type': 'Answer', text: a },
@@ -139,6 +139,7 @@ for (const page of pages) {
       path: `/${page.slug}`,
       title: pageTitle(page),
       description: page.description,
+      pageFaq: page.faq,
     }),
   )
 }

@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-19",
+  "updated": "2026-10-27",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
@@ -543,7 +543,21 @@
           "The picture itself has rules too, such as the background, your expression and glasses. Check them on the State Department page before you take it.",
           "If the upload still complains, check that it is a JPEG. A PNG or HEIC from a phone is converted here, but a renamed file is not."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "How big should my head be in a 600 x 600 DS-160 photo?",
+          "a": "The State Department wants your head, measured from the bottom of the chin to the top of the head, to take up 50% to 69% of the photo's height. In a 600 x 600 image that is about 300 to 414 pixels. Place the crop box here so your head fills that share before you compress."
+        },
+        {
+          "q": "Can I wear glasses in my US visa photo?",
+          "a": "No, in most cases. Eyeglasses are no longer allowed in new visa photos. The only exception is when they cannot be removed for medical reasons, such as after eye surgery, and then you must provide a medical statement signed by a health professional. Take the glasses off before the photo is taken."
+        },
+        {
+          "q": "Can this page make my DS-160 photo background white?",
+          "a": "No. This page crops, resizes and compresses the photo, and leaves the background as it is. The State Department asks for a plain white or off-white background and a photo taken within the last 6 months, so take a new photo against a white wall if yours does not meet that."
+        }
+      ]
     },
     {
       "slug": "indian-evisa-passport-pdf",
@@ -576,7 +590,21 @@
           "If your passport page is a JPG, save it as a PDF first (most phones can print to PDF), then compress it here.",
           "Keep one page per file. The form asks for the bio page on its own."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "How long must my passport be valid for an Indian e-Visa?",
+          "a": "Your passport needs at least six months of validity on the day you apply, and at least two blank pages for the immigration officer's stamp. Check the expiry date printed on the bio page before you scan it, since that is the page you upload."
+        },
+        {
+          "q": "What details must show on the passport page I upload for the e-Visa?",
+          "a": "Upload the photo page with your personal details readable: name, date of birth, nationality and expiry date. The site warns that an application may be rejected if uploaded documents are not clear. After compressing, open the PDF and zoom in to check that every line of text can still be read."
+        },
+        {
+          "q": "What other documents does the Indian e-Visa ask for besides the passport?",
+          "a": "It depends on the visa type. An e-Business Visa asks for a copy of your business card, and an e-Medical Visa for a letter from the Indian hospital on its letterhead. These are PDFs with the same 10 KB to 300 KB limit, and every document must be in English."
+        }
+      ]
     },
     {
       "slug": "indian-evisa-photo",
@@ -615,7 +643,21 @@
           "The form also asks for a full face, front view, eyes open, without glasses, on a plain light background, with no shadows and no border.",
           "A photo taken for a printed visa is fine to use; photograph or scan it in good light."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "How should my face be framed in the Indian e-Visa photo?",
+          "a": "The form asks you to centre your head in the frame and show the full head, from the top of your hair to the bottom of your chin, facing the camera. When you place the crop box here, leave a little space above your hair so the top of your head is not cut off."
+        },
+        {
+          "q": "Can I change my e-Visa photo after I submit the application?",
+          "a": "Check it carefully first, because you are responsible for the photo and details you submit. Submitted applications are checked, and if an image is not appropriate you may get an email asking you to re-upload it, usually within 24 hours. The re-upload option is at the bottom of the e-Visa page."
+        },
+        {
+          "q": "Does the Indian e-Visa accept a PNG or HEIC photo?",
+          "a": "The form takes JPEG only. Because this page makes a JPEG at an exact pixel size, a PNG or HEIC you drop here comes out as a JPEG. If the result is under the 10 KB minimum, it is padded up to it with an invisible comment and the picture stays the same."
+        }
+      ]
     },
     {
       "slug": "passport-seva-embassy-documents-pdf",
@@ -649,7 +691,21 @@
           "The portal allows 12 upload attempts in all, so check each file's size here before you upload it.",
           "Applying in India instead? The photograph is taken at the Passport Seva Kendra, so no photo upload is needed."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Where do I upload documents on the Passport Seva portal for an embassy application?",
+          "a": "After you submit the form, choose Upload Supporting Documents from the pop-up, or open My Application, select the three-dot menu and pick Upload Supporting Documents. Then select the category and sub category, choose your PDF and click Upload. The portal confirms with \"Document has been uploaded successfully!\""
+        },
+        {
+          "q": "What happens if I use up all 12 upload attempts on Passport Seva?",
+          "a": "The portal shows an error that no more documents can be uploaded, and the guidelines say that form should be ignored: you have to fill in and submit a new application. Deleting and re-uploading a file counts towards the 12, so compress each document to size before the first upload."
+        },
+        {
+          "q": "What photo size do Indian embassies want for a passport application?",
+          "a": "The embassy guidelines ask for a colour photo of 630 x 810 pixels on a white background, with your face taking up 80 to 85% of it, unaltered by software. The photo and signature count among the 5 documents you can upload. This page is for the PDF documents."
+        }
+      ]
     },
     {
       "slug": "ibps-photo",
@@ -688,7 +744,21 @@
           "Use a recent photo, face centred, on a light background. If your face is off to one side, drag the crop box over it.",
           "Each recruitment publishes its own notification. If a form states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Can I wear glasses or religious headwear in my IBPS photo?",
+          "a": "Religious headwear is allowed as long as it does not cover your face. Caps, hats and dark glasses are not accepted. If you wear ordinary glasses, make sure there are no reflections and your eyes can be clearly seen, and take the photo against a light-coloured, preferably white, background."
+        },
+        {
+          "q": "Why won't the IBPS form let me go past the photo upload?",
+          "a": "The IBPS form does not let you move to the next stage until the photograph and signature meet the specifications, and it shows an error message if the file size or format is wrong. The photo must be a JPG or JPEG between 20 KB and 50 KB, so a file under 20 KB is refused as well as one over 50 KB."
+        },
+        {
+          "q": "What happens if I upload my IBPS photo in the wrong place?",
+          "a": "IBPS says that if the photo is not uploaded in the photo space and the signature in the signature space, you will not be allowed to appear for the exam. Check the preview after uploading. You can edit the application and re-upload the photo, but only before you submit the online form."
+        }
+      ]
     },
     {
       "slug": "ibps-signature",
@@ -727,7 +797,21 @@
           "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
           "Each recruitment publishes its own notification. If a form states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Can I sign in capital letters on the IBPS form?",
+          "a": "No. IBPS does not accept a signature in capital letters. Sign in your usual handwriting with a black ink pen on white paper. The signature has to be your own, made by you and not by any other person, and it should be clearly visible rather than smudged or blurred."
+        },
+        {
+          "q": "Does my IBPS signature have to match the one I sign at the exam?",
+          "a": "Yes. At the exam you sign the attendance sheet or call letter, and if that signature does not match the one you uploaded, IBPS disqualifies you. Upload the signature you will actually use on exam day, signed the same way each time."
+        },
+        {
+          "q": "What else do I upload with my signature on the IBPS form?",
+          "a": "Besides the signature, the IBPS form has separate upload links for your photograph, left thumb impression, handwritten declaration and your 10th standard (SSC/SSLC) certificate, plus a further certificate if one applies to you. The certificates go up as A4 PDFs of up to 500 KB. Your application is not registered until all of them are uploaded."
+        }
+      ]
     },
     {
       "slug": "sbi-photo",
@@ -766,7 +850,21 @@
           "SBI also asks for a live photo taken with your webcam or phone during the application, besides this upload.",
           "SBI publishes a notice for each recruitment. If yours states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What is the SBI clerk photo size in KB?",
+          "a": "For the Junior Associate (clerical cadre) recruitment, SBI asks for a recent passport-style colour photo of 4.5 cm x 3.5 cm, 200 x 230 pixels preferred, between 20 KB and 50 KB, as a JPG or JPEG. Here it is cropped to 200 x 230 and padded up to 20 KB if it comes out smaller."
+        },
+        {
+          "q": "Do I need printed copies of my SBI application photo?",
+          "a": "Yes. SBI advises keeping about 8 copies of the same photo you upload, because they are needed later in the selection process. At the exam you bring your call letter with that photo pasted on it plus two more copies. Candidates without them are not allowed to appear."
+        },
+        {
+          "q": "Can I change my photo after saving the SBI application?",
+          "a": "Yes, while the form is still open. When you save a partly filled form, SBI gives you a provisional registration number and password, and you can reopen and edit it three times only. If the photo is unclear you may re-upload it. Once you submit the completed application, no change is allowed."
+        }
+      ]
     },
     {
       "slug": "sbi-signature",
@@ -805,7 +903,21 @@
           "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
           "SBI publishes a notice for each recruitment. If yours states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Will SBI accept a signature in capital letters?",
+          "a": "No. SBI's notice says a signature in capital letters is not accepted. Write it in black ink on white paper, the way you normally sign. It must be your own signature, signed by you and not by anyone else, and clearly visible in the uploaded image."
+        },
+        {
+          "q": "What happens if my SBI exam signature looks different from my upload?",
+          "a": "On exam day you sign the attendance sheet or call letter at the centre. SBI's notice states that if that signature does not match the one uploaded with your application, you are disqualified, so upload the signature you will reproduce at the exam."
+        },
+        {
+          "q": "How should I scan my signature for SBI?",
+          "a": "SBI suggests scanning at a minimum of 200 dpi in true colour, cropping to the edge of the signature, then cropping to the final size. Save it as JPG or JPEG, for example image01.jpg. If the size or format is wrong, the form shows an error message."
+        }
+      ]
     },
     {
       "slug": "sbi-thumb-impression",
@@ -844,7 +956,21 @@
           "Photograph it straight on in good light and crop close around the print first, so the square crop keeps all of it.",
           "If you do not have a left thumb, the notice allows your right thumb."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What is the SBI left thumb impression size in cm?",
+          "a": "SBI asks for 240 x 240 pixels at 200 DPI, which it states as 3 cm x 3 cm, between 20 KB and 50 KB, as a JPG or JPEG. Here the image is cropped square to 240 x 240 and padded up to 20 KB if it comes out under the minimum."
+        },
+        {
+          "q": "Does SBI check my thumb impression at the exam?",
+          "a": "SBI may capture your thumb impression or iris digitally at various stages for biometric verification, and any inconsistency leads to rejection of your candidature. The notice advises against applying mehandi, ink or chemicals on your hands, so the thumb you upload should be the one you can present later."
+        },
+        {
+          "q": "What if my uploaded SBI thumb impression is smudged?",
+          "a": "SBI says an unclear or smudged thumb impression may get your application rejected. After uploading, check the preview. If the print is not prominently visible, you can edit the application and upload a clearer image. Your application is not registered until the thumb impression is uploaded as specified."
+        }
+      ]
     },
     {
       "slug": "sbi-handwritten-declaration",
@@ -883,7 +1009,21 @@
           "Take the photo close around the text, then drag the crop box so it keeps every line.",
           "SBI publishes a notice for each recruitment. If yours states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What do I write in the SBI handwritten declaration?",
+          "a": "You write your name and date of birth, declare that the information in your application is correct, true and valid, promise to present supporting documents when required, and state that the signature, photograph and left thumb impression are yours. The IBPS declaration has no date of birth or that last line, so copy SBI's wording from the notice."
+        },
+        {
+          "q": "What size is the SBI handwritten declaration in cm?",
+          "a": "SBI asks for 800 x 400 pixels at 200 DPI, which it gives as 10 cm wide and 5 cm high, with a file size of 50 KB to 100 KB. Here your page is cropped to that 2 to 1 shape and padded up to 50 KB if it comes out smaller."
+        },
+        {
+          "q": "Can I upload the SBI declaration as a PDF?",
+          "a": "No. SBI wants the declaration as a JPG or JPEG image, like the photo and signature. If your phone saves photos as HEIC, or you have a PNG, this page saves the 800 x 400 result as a JPEG, because the form asks for JPEG at that exact size."
+        }
+      ]
     },
     {
       "slug": "rrb-signature",
@@ -922,7 +1062,21 @@
           "Take the photo close around the signature, then drag the crop box so it keeps all of it.",
           "Each notification sets its own rules. The RRB photo is captured live in the application, so there is no photo to upload."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Why would RRB reject my signature?",
+          "a": "CEN 09/2025 lists the grounds: a non-white background, ink other than black, block or capital letters, poor resolution or an unclear image, a signature that is partly cut off, a blank, a thumb impression instead of a signature, or someone else's signature. A rejection can happen at any stage of recruitment."
+        },
+        {
+          "q": "Where do I sign again after the RRB application?",
+          "a": "Your signature must match the ones taken at the exams, document verification, the medical examination and appointment. At the CBT you write a self-declaration, sign and put your left thumb impression on the e-call letter in front of the invigilator. Signing in capital letters there is rejected too."
+        },
+        {
+          "q": "Do I upload my RRB signature again before document verification?",
+          "a": "RRB advises candidates shortlisted for document verification to upload scanned copies of their photo and signature in true colour before their DV date, through the portal oirms-ir.gov.in/rrbdv. For the application itself, scan the signed paper at a minimum of 100 DPI."
+        }
+      ]
     },
     {
       "slug": "rrb-sc-st-certificate-pdf",
@@ -955,7 +1109,21 @@
           "If your certificate is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
           "The certificate must be the latest valid one as on the closing date of the application."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Do all SC/ST candidates upload a certificate on the RRB form?",
+          "a": "Only SC and ST candidates who want the free railway travel pass upload it. The pass is a free sleeper class pass, given with your e-call letter for the CBT, PET, document verification and medical examination as applicable, based on the caste certificate details in your online application."
+        },
+        {
+          "q": "How do I use the RRB free travel pass on the train?",
+          "a": "Your e-call letter contains the travel authority. Book the reservation by giving a self-attested photocopy of the e-call letter and your SC/ST certificate at the ticket counter. On the journey carry your original community certificate and an original proof of identity, or you are treated as travelling without a ticket."
+        },
+        {
+          "q": "Which SC/ST certificate format does RRB accept?",
+          "a": "CEN 09/2025 gives the format of the caste certificate for SC/ST candidates in Annexure-I. For the upload it must be a PDF only. At document verification, certificates must be in English or Hindi, and others need a self-attested translation. Misuse of the free travel facility can lead to rejection of your candidature."
+        }
+      ]
     },
     {
       "slug": "ssc-signature",
@@ -994,7 +1162,21 @@
           "Your photograph is not uploaded: the application form captures it live with your camera while you fill it in.",
           "Each SSC notice sets its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Why does SSC reject a signature as blurred or miniature?",
+          "a": "SSC rejects applications summarily if the signature is blurred or miniature, or does not meet the rule of a JPEG of 10 KB to 20 KB, about 6.0 x 2.0 cm. The exception is candidates who opted for Aadhaar-based authentication, whose applications are not rejected on this ground."
+        },
+        {
+          "q": "Is the SSC CHSL signature 6 x 2 cm or 4 x 2 cm?",
+          "a": "The CHSL 2026 notice gives both. Paragraph 9.6 says about 6.0 cm x 2.0 cm, while the application instructions later say about 4.0 cm x 2.0 cm. Both ask for a JPEG of 10 KB to 20 KB. This page uses 6.0 x 2.0 cm; for 4.0 x 2.0 cm, change it under Change size or pixels."
+        },
+        {
+          "q": "Can I change my SSC signature after submitting the form?",
+          "a": "Check it first through the Preview or Print option, since SSC asks you to confirm the photograph and signature meet the requirements before submitting. After you submit the corrected or final application, or the correction window closes, no change is allowed, and requests by post or email are rejected."
+        }
+      ]
     },
     {
       "slug": "upsc-photo",
@@ -1029,7 +1211,21 @@
           "The form also takes a live photo with your webcam or phone, and it must match this one. Use a recent photo that looks like you today.",
           "The instructions ask for the file to be named photo, so save it as photo.jpg before you upload it."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Can I wear glasses in my UPSC photo?",
+          "a": "UPSC does not accept a photo with your eyes hidden under coloured or dark glasses. Ordinary glasses are not on the refused list, but the instructions ask you to avoid glare on them, keep your eyes open and not covered by hair, and have no shadows on your face or the background."
+        },
+        {
+          "q": "How does the UPSC live photograph work, and what if it does not match?",
+          "a": "Every UPSC application needs a live photo taken during the form, either with your device's webcam or by scanning a QR code on screen with your phone. It is matched against the passport-size photo you upload. If the two do not match, you are not allowed to go further with the application."
+        },
+        {
+          "q": "Why does UPSC reject my photo?",
+          "a": "UPSC's sample photos show the reasons it rejects one: the face covers less than three quarters of the photo, the face is not looking straight at the camera or is misaligned, the photo is blurred, or the face is so close that it goes out of frame and the ear lobes are hidden. A grin, frown or raised eyebrows also goes against the instructions."
+        }
+      ]
     },
     {
       "slug": "upsc-signature",
@@ -1068,7 +1264,21 @@
           "Take the photo straight on, close around the signatures, in good light without shadows.",
           "The instructions ask for the file to be named signature, so save it as signature.jpg before you upload it."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Why does UPSC reject my signature image?",
+          "a": "UPSC checks that the image is clear, sharp and well lit, holds exactly three signatures one below the other, and is not rotated or upside down. The instructions say applications with a signature file that does not meet the specifications will be rejected, so check the image before you upload it."
+        },
+        {
+          "q": "Can I sign on ruled or coloured paper for the UPSC form?",
+          "a": "No. UPSC asks for plain white paper with no lines or colours, and black ink. If your only paper is ruled, use a blank sheet instead, because the lines stay in the photo of your signatures. This page does not remove lines or change the background."
+        },
+        {
+          "q": "Does a scribe upload a signature in the UPSC form?",
+          "a": "Yes, for the EPFO examination. UPSC's document list includes the scribe's signature as a JPEG of 20 KB to 100 KB named scribe_signature, uploaded in the EPFO Examination section, along with the scribe's photo as a JPEG of 20 KB to 200 KB named scribe_photo."
+        }
+      ]
     },
     {
       "slug": "upsc-documents-pdf",
@@ -1101,7 +1311,21 @@
           "A certificate downloaded as a PDF can be under 50 KB. If yours is, scan the printed certificate instead, which comes out larger.",
           "The photo ID is uploaded as a JPEG between 20 KB and 200 KB, not as a PDF. The UPSC photo page fits that size too."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Where in the UPSC form do I upload each certificate?",
+          "a": "Each certificate goes in its own profile of the Common Application Form: the name-change affidavit or gazette notification in the Identity Profile, the matriculation certificate in the Matriculation Profile, the caste certificate in the Social Category Profile, and the disability certificate in the Disability Profile."
+        },
+        {
+          "q": "Which extra documents does the UPSC EPFO exam ask for?",
+          "a": "For the EPFO examination, UPSC also asks for your bachelor's marksheet and degree certificate, and where they apply, a writing extremity certificate and an age relaxation certificate. Each is a PDF of 50 KB to 300 KB, named bachelor_marksheet, bachelor_certificate, writing_extremity_certificate and age_relaxation_certificate."
+        },
+        {
+          "q": "What size is the PwBD recommendation certificate for UPSC?",
+          "a": "The PwD or PwBD recommendation certificate is a PDF of 50 KB to 300 KB, uploaded in the Disability Profile next to the disability certificate. UPSC lists its file name as pw_recommendation, so rename the compressed PDF to that before you upload it."
+        }
+      ]
     },
     {
       "slug": "tnpsc-photo",
@@ -1141,7 +1365,21 @@
           "TNPSC refuses selfies and phone photos, so upload a scan or the studio's digital copy.",
           "Save the result as Photograph.jpg before you upload it."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Can I reuse my TNPSC One Time Registration photo for a new application?",
+          "a": "For the One Time Registration, TNPSC asks for a photo taken within the last 3 months. Each online application then needs a photo taken on or after the date of that post's notification, so a photo from an earlier registration or application is too old once a new notification comes out."
+        },
+        {
+          "q": "How do I upload a printed passport photo to TNPSC?",
+          "a": "If you only have a print, TNPSC says to paste it on plain white paper, scan it at 200 DPI, and crop the scan to show only the photograph. The whole sheet of paper must not be uploaded. On this page, place the crop box on the photo's edges, including the name and date strip."
+        },
+        {
+          "q": "Where does my TNPSC photo appear at the exam?",
+          "a": "In the exam room you get a pre-printed OMR answer sheet with your photograph, name, register number and exam details on it, as in your hall ticket. Check the photo and details before you use the sheet, and tell the invigilator at once if anything is wrong, since a used sheet is not replaced."
+        }
+      ]
     },
     {
       "slug": "tnpsc-signature",
@@ -1180,7 +1418,21 @@
           "Photograph or scan it straight on in good light, then drag the crop box to the edges of the box you drew.",
           "Save the result as Signature.jpg before you upload it."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Can I change my TNPSC signature after uploading it?",
+          "a": "Yes, before you submit. TNPSC says to use the edit option in the online application to upload the signature again, and to save it before the final submission. Details carried over from your One Time Registration are changed with Edit profile in the OTR first."
+        },
+        {
+          "q": "Where do I sign at the TNPSC exam?",
+          "a": "You sign in Part II on page 1 of the OMR answer sheet. Candidates with a benchmark disability also put a left thumb impression there if possible, and scribe users who cannot sign may give the thumb impression alone."
+        },
+        {
+          "q": "What resolution should the TNPSC signature scan be?",
+          "a": "TNPSC asks you to scan the paper with the signed box at 200 DPI, then crop it to just the box. An unclear image, or one in the wrong size or format, can lead to the online application being rejected, so scan in good light with the pen strokes sharp."
+        }
+      ]
     },
     {
       "slug": "tnpsc-certificates-pdf",
@@ -1213,7 +1465,21 @@
           "If a certificate is a photo, save it as a PDF first (most phones can print to PDF)."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "Can I re-upload a TNPSC certificate after submitting my application?",
+          "a": "Yes. You can check your uploaded certificates through your One Time Registration, and upload or re-upload them until two days before the hall tickets for that post are put online, which is twelve days before the exam. An application without the required documents, uploaded clearly and legibly by then, is rejected."
+        },
+        {
+          "q": "Do I upload my certificates again for every TNPSC application?",
+          "a": "Not within two years. TNPSC links uploaded certificates to your One Time Registration and keeps them for up to two years, showing them for you to confirm when you apply for another post. After two years you upload all of them again."
+        },
+        {
+          "q": "Can I upload my TNPSC certificates from an e-seva centre?",
+          "a": "Yes. TNPSC allows the certificates to be uploaded from any source, including e-seva centres. Whoever uploads them, each claim still goes in as one PDF of no more than 200 KB, so compress the PDF before you go if the scan is larger."
+        }
+      ]
     },
     {
       "slug": "uppsc-photo",
@@ -1251,7 +1517,21 @@
           "If you scan a printed photo, paste it on white paper and scan at 200 DPI, as the guidelines describe.",
           "Each UPPSC advertisement can add its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What is the UPPSC photo size in KB and pixels?",
+          "a": "UPPSC asks for the photo 5 cm wide and 6 cm high at 200 DPI, under 50 KB. The guidelines give the size in centimetres, and at 200 DPI that is 394 x 472 pixels, which is what this page makes."
+        },
+        {
+          "q": "Can I scan my UPPSC photo and signature on one sheet?",
+          "a": "Yes, that is the method UPPSC describes: paste the photo on white paper, sign in the signature space, scan the sheet, then crop the photo and the signature to their own sizes. Upload the same scan here for the photo and on the UPPSC signature page for the signature."
+        },
+        {
+          "q": "Is there a minimum file size for the UPPSC photo?",
+          "a": "UPPSC's scanning guidelines give only a maximum: the photo must be no more than 50 KB. So this page does not pad the photo up to any minimum."
+        }
+      ]
     },
     {
       "slug": "uppsc-signature",
@@ -1289,7 +1569,21 @@
           "The signature goes on your admit card, and a signature in the answer sheet that does not match it can disqualify you.",
           "Take the photo close around the signature, then drag the crop box so it keeps all of it."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What is the UPPSC signature size in KB?",
+          "a": "The UPPSC signature must be no more than 30 KB, 6 cm wide and 3 cm high, scanned at 200 DPI. That is a wide shape, twice as wide as it is tall, so sign across the space instead of in a narrow block."
+        },
+        {
+          "q": "Can someone else sign for me on the UPPSC form?",
+          "a": "No. UPPSC's guidelines say the signature must be signed only by the applicant. It is treated as proof of identity and must be genuine and in full, so nobody else can sign on your behalf."
+        },
+        {
+          "q": "Should the UPPSC signature be in colour or black and white?",
+          "a": "UPPSC's table asks for true colour for the signature as well as the photo, so scan or photograph it in colour instead of saving it as a black and white image. This page keeps the colours of the image you upload."
+        }
+      ]
     },
     {
       "slug": "bpsc-signature",
@@ -1326,7 +1620,21 @@
           "Your photo is not uploaded from a file: the registration captures it live, so sit in good light facing the webcam."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "Where do I upload the signature in the BPSC registration?",
+          "a": "It is Step 6, Photo and Signature, of the profile you create after registering, following your qualification and experience details. After it you save the profile, accept the terms and conditions, and click Submit and lock profile."
+        },
+        {
+          "q": "How do I change my BPSC signature after locking the profile?",
+          "a": "Go to the My Account tab and choose Update/Unlock Profile. BPSC sends an OTP to your registered email and mobile number, and after you enter it you can edit the profile, including the signature. Lock the profile again when you finish."
+        },
+        {
+          "q": "What does BPSC ask for in the live photo?",
+          "a": "Keep your face straight in front of the webcam with your eyes open, in good light against a light coloured background. Do not wear a cap, glasses, sunglasses, mask, muffler or helmet, and make sure no one else is in the frame. A live photo is captured again when you apply for a post."
+        }
+      ]
     },
     {
       "slug": "kerala-psc-photo",
@@ -1364,7 +1672,21 @@
           "The photo is uploaded once to your profile and used for every post you apply for."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "Can I wear a cap or goggles in my Kerala PSC photo?",
+          "a": "No. Kerala PSC asks for the uploaded photo to be taken without a cap or goggles, except headwear worn for religious custom. Your face and shoulders should be clear, against a white or light background, with your face centred and your eyes open."
+        },
+        {
+          "q": "What is the Kerala PSC profile photo size in pixels and KB?",
+          "a": "The photo is uploaded as a JPG 200 pixels high and 150 pixels wide, of no more than 30 KB, with your name and the date it was taken printed at the bottom. A Kerala PSC notification states that applications with photos not meeting these rules are rejected and cannot be appealed."
+        },
+        {
+          "q": "Do I need a printed photo at the Kerala PSC exam centre?",
+          "a": "Yes. You fix a passport-size photo, taken within the past six months, on the Identification Certificate. It should be 4.5 x 3.5 cm, colour or black and white, with a white or light background. Candidates who come without it, or with a photo of the wrong size, are not allowed to write the exam."
+        }
+      ]
     },
     {
       "slug": "kerala-psc-signature",
@@ -1402,7 +1724,17 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What size should the Kerala PSC signature be?",
+          "a": "Kerala PSC asks for the scanned signature at 150 x 100 pixels, clearly legible, and no larger than 30 KB, as a JPEG. The same signature stays in your One Time Registration profile and is used for the posts you apply for."
+        },
+        {
+          "q": "Where do I sign at the Kerala PSC exam?",
+          "a": "At the exam, you sign across the photo on your Identification Certificate in front of the Assistant Superintendent, so part of the signature is on the photo and part on the paper. You also sign beneath the declaration on it and against your name in the hall's address list."
+        }
+      ]
     },
     {
       "slug": "appsc-photo",
@@ -1436,7 +1768,21 @@
           "The form takes JPG or JPEG files only."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What is the APPSC photo size in KB and cm?",
+          "a": "APPSC's One Time Profile Registration form takes the photograph as a JPG or JPEG under 50 KB, sized 3.5 cm wide by 4.5 cm high. The form shows a sample photograph next to these rules so you can compare yours before uploading."
+        },
+        {
+          "q": "Do I need my photo scanned before starting the APPSC OTPR?",
+          "a": "Yes. APPSC asks you to have the scanned photograph and signature ready before you begin, along with your educational certificates for reference. What you enter in the OTPR form is treated as final and used as it is, so check the photo before you submit."
+        },
+        {
+          "q": "Where is the photo uploaded in the APPSC OTPR form?",
+          "a": "The photo is uploaded in the Photo & Signature Details section, which comes after the education and qualification details. The upload box under Photograph of the Candidate takes JPG or JPEG files only. After it come the notification alerts choice and the declaration."
+        }
+      ]
     },
     {
       "slug": "appsc-signature",
@@ -1470,7 +1816,21 @@
           "The form takes JPG or JPEG files only."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What is the APPSC signature size in KB?",
+          "a": "The APPSC registration form takes the signature as a JPG or JPEG under 30 KB, sized 3.5 cm wide by 1.5 cm high. A sample signature is shown beside the rule, which helps you judge the long, low shape before you upload."
+        },
+        {
+          "q": "Should I scan the whole page for my APPSC signature?",
+          "a": "No. APPSC's portal FAQ says to scan only the area holding the photograph or signature, and not the complete page. Crop close around your signature so it fills the image, which also keeps the file small."
+        },
+        {
+          "q": "Do I have to confirm my APPSC OTPR after uploading the signature?",
+          "a": "No further confirmation is needed. The OTPR form says a registration that goes through successfully is treated as confirmed. Note down the OTPR Reference ID it gives you, since APPSC asks you to use it for future correspondence."
+        }
+      ]
     },
     {
       "slug": "tgpsc-photo",
@@ -1504,7 +1864,21 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What is the TGPSC photo size in KB?",
+          "a": "TGPSC's 2026 notification asks for a recent colour passport-size photograph between 100 KB and 200 KB, in JPG or PNG format. It must be taken no more than 3 months before the last date of the application."
+        },
+        {
+          "q": "What if my photo on the TGPSC hall ticket is blurred?",
+          "a": "If the hall ticket photo is too small, blurred or defective, fix a passport-size photo in the space at the bottom of the hall ticket, get it attested by a Gazetted Officer, and give an undertaking. Hand a similar photo to the Chief Superintendent for the Nominal Roll."
+        },
+        {
+          "q": "Do I need a TGPSC ID before applying with my photo?",
+          "a": "Yes. If you have not registered before, fill the OTR form on tgpsc.gov.in to get a TGPSC ID. You then open the Online Application link, enter the TGPSC ID and date of birth, and log in with the OTP sent to your registered mobile number."
+        }
+      ]
     },
     {
       "slug": "tgpsc-signature",
@@ -1538,7 +1912,21 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What is the TGPSC signature size in KB?",
+          "a": "TGPSC asks for a scanned specimen signature of 20 KB to 30 KB, in JPG or PNG format. Both limits apply, so a very clean, small signature file can fall below the minimum as easily as a large scan goes over the maximum."
+        },
+        {
+          "q": "How is my signature used at the TGPSC exam?",
+          "a": "The invigilator checks your identity against the signature and photograph on the Nominal Roll and your Hall Ticket. You also sign the OMR Answer Sheet, have the invigilator sign it, and sign the Nominal Roll in the place given."
+        },
+        {
+          "q": "Can TGPSC fix a wrong signature after I submit?",
+          "a": "The notification says the Commission will not make any changes to a submitted application form. Check the preview, including the uploaded signature, before you click CONFIRM & SUBMIT, since the particulars are saved only after that button."
+        }
+      ]
     },
     {
       "slug": "hppsc-photo",
@@ -1576,7 +1964,21 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "Where do I upload my photo on the HPPSC portal?",
+          "a": "HPPSC's online application has a Photo & Signature Upload module, where the photograph and signature are uploaded as .jpg files. The photo should be 110 pixels wide by 140 pixels high and no more than 40 KB."
+        },
+        {
+          "q": "My photo is a .bmp or .tiff file. Will HPPSC accept it?",
+          "a": "HPPSC asks for a .jpg. Its FAQ says to open a photo in another format, such as .tiff or .bmp, in MS Paint or IrfanView and use Save As to save it as .jpg. Then bring the .jpg here to crop and compress it."
+        },
+        {
+          "q": "How do I get my HPPSC photo to the right pixel size?",
+          "a": "HPPSC's FAQ suggests cropping away the unneeded area and then resizing to the stated pixel size in an image editor. This page does both in one go: it crops to 110 x 140 pixels where you place the crop box, then saves under 40 KB."
+        }
+      ]
     },
     {
       "slug": "hppsc-signature",
@@ -1614,7 +2016,21 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What pixel size is the HPPSC signature?",
+          "a": "The HPPSC signature is 140 pixels wide by 110 pixels high, no more than 40 KB, as a .jpg. That is the photo's size turned on its side (the photo is 110 wide by 140 high), so check you have the signature page open and not the photo one."
+        },
+        {
+          "q": "Do I register again with HPPSC to apply for another post?",
+          "a": "No. If you have registered with HPPSC for any exam, you do not need to register again. Your saved profile, with the user ID and password, is used for later notifications, and you apply with the Click to Apply button against each post."
+        },
+        {
+          "q": "Can I change my HPPSC signature after submitting the application?",
+          "a": "HPPSC's FAQ says applications are final once submitted, and no changes can be made after that. Check that the uploaded signature is clear and complete before you submit."
+        }
+      ]
     },
     {
       "slug": "apsc-photo",
@@ -1647,7 +2063,21 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What is the APSC photo size in KB?",
+          "a": "APSC's One Time Registration takes the photo with a minimum size of 50 KB and a maximum of 200 KB. The photo must not be older than 3 months. The signature has the same 50 KB to 200 KB range."
+        },
+        {
+          "q": "Where do I upload my photo for APSC?",
+          "a": "Go to apscrecruitment.in and click Register Here to create an account, then log in. The photo is uploaded in the One Time Registration details, together with your personal information, educational qualification, work experience and signature."
+        },
+        {
+          "q": "Can I change my APSC photo after final submission?",
+          "a": "No. APSC does not allow editing after final submission, so check every field first. After the preview you can click Submit for final submission, or Cancel to go back and make corrections."
+        }
+      ]
     },
     {
       "slug": "apsc-signature",
@@ -1680,7 +2110,21 @@
           "Each notification can set its own rules. If yours states a different size, change it under Change size or pixels before you compress."
         ]
       },
-      "group": "Forms and applications"
+      "group": "Forms and applications",
+      "faq": [
+        {
+          "q": "What is the APSC signature size in KB?",
+          "a": "APSC asks for the signature with a minimum of 50 KB and a maximum of 200 KB, the same range as the photo. A scanned signature is often well under 50 KB, so the minimum is the limit most people need to reach."
+        },
+        {
+          "q": "What size do APSC certificate uploads need to be?",
+          "a": "Certificates and documents supporting your claims, such as date of birth, experience and qualifications, are uploaded as PDFs of no more than 2 MB that stay legible when printed. APSC suggests scanning them at 200 dpi in grey scale."
+        },
+        {
+          "q": "What happens after I submit my APSC signature in the OTR?",
+          "a": "Once your One Time Registration details are submitted, you can download them. To apply for a post, open Applicant Section, then Apply Section. The same registration, with its signature, is used for each post you apply for."
+        }
+      ]
     },
     {
       "slug": "neet-photo",
@@ -1714,7 +2158,21 @@
           "Use the same photo you will paste on the attendance sheet at the exam centre; the bulletin asks for the same one.",
           "The form also takes a live photo with your webcam or phone. That one is not uploaded from a file."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "How recent does my NEET photo need to be?",
+          "a": "The NEET (UG) 2026 Information Bulletin asks for a passport-size photograph taken on or after 1 January 2026. Upload only your own latest photo: NTA gives no chance to correct it later, and a photo of someone else is treated as unfair means."
+        },
+        {
+          "q": "Can I upload a Polaroid or computer-made photo for NEET?",
+          "a": "No. The bulletin says Polaroid and computer-generated photos are not acceptable, and a photo that looks de-shaped, hand-made or computer made gets the application rejected. Spectacles are allowed only if you wear them regularly. This page only resizes and compresses the photo you give it and does not change the background."
+        },
+        {
+          "q": "How many printed copies of my NEET photo should I keep?",
+          "a": "The bulletin advises keeping 6 to 8 passport-size and 4 to 6 postcard-size (4 x 6 inch) colour prints with a white background, as the same photo is used for the exam, counselling and admission. On exam day you also bring one postcard-size colour photo with a white background."
+        }
+      ]
     },
     {
       "slug": "neet-signature",
@@ -1748,7 +2206,21 @@
           "Crop close around the signature first, so it is not a small mark in a large white page.",
           "There is no correction window for the signature, so check it is legible before you upload it."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Does my scribe need to upload a signature for NEET?",
+          "a": "Yes, if you use a scribe. The NEET (UG) 2026 bulletin asks for the scribe's scanned signature in the same 10 KB to 100 KB range as yours, clearly legible. You can compress the scribe's signature on this page the same way as your own."
+        },
+        {
+          "q": "Do I have to sign anything at the NEET exam centre?",
+          "a": "Yes. The bulletin says you sign the Attendance Sheet twice: once right after the exam starts and again when you hand your Answer Sheet to the invigilator. You also put your thumb impression there, so sign the way you did on the uploaded file."
+        },
+        {
+          "q": "What else does NEET ask me to upload with the signature?",
+          "a": "In the same step you upload your photograph, your left and right hand fingers and thumb impressions as JPG or JPEG images, and your documents as PDFs. The bulletin says unclear finger and thumb impressions are rejected, so photograph them as carefully as the signature."
+        }
+      ]
     },
     {
       "slug": "neet-certificate-pdf",
@@ -1781,7 +2253,21 @@
           "If your document is a photo, save it as a PDF first (most phones can print to PDF), then compress it here.",
           "Scan flat and in good light, with the whole page in the frame, so it stays legible at a small size."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What do I upload for NEET if my Class 10 marks are in CGPA?",
+          "a": "The NEET (UG) 2026 bulletin asks for a conversion or equivalence certificate as well, as a separate PDF between 50 KB and 300 KB. Your Class 10 certificate or the equivalency certificate should also show your date of birth."
+        },
+        {
+          "q": "Which document does an NRI or OCI candidate upload for NEET?",
+          "a": "Candidates whose nationality is not Indian upload their NRI, OCI or foreigner certificate or other documentary proof as a PDF between 50 KB and 300 KB. It goes in alongside the Class 10 documents and address proofs, each as its own file."
+        },
+        {
+          "q": "What extra PDFs does a PwD candidate upload for NEET?",
+          "a": "Besides the PwD, PwBD or UDID certificate, the bulletin lists a certificate of physical limitation to write, an undertaking for using your own scribe, and the scribe's qualification certificate where they apply. Each is a clearly legible file between 50 KB and 300 KB."
+        }
+      ]
     },
     {
       "slug": "jee-main-photo",
@@ -1815,7 +2301,21 @@
           "Keep your details on Aadhaar up to date. NTA matches your photos against them.",
           "You also take a live photo during the application. That one comes from your webcam or phone, not from a file."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Can I upload a black and white photo for JEE Main?",
+          "a": "No. The JEE (Main) 2026 Information Bulletin asks for the passport-size photograph in colour, between 10 KB and 200 KB. The NEET (UG) bulletin allows black and white, so a photo you made for NEET may not suit JEE Main."
+        },
+        {
+          "q": "What background does the JEE Main live photo need?",
+          "a": "For the live photo taken with your webcam or phone while filling the form, the bulletin asks for a light-coloured background, proper lighting and 80% of your face visible, including ears and without a mask. If your computer has no webcam, scan the QR code on the form with a phone."
+        },
+        {
+          "q": "What if I do not verify my identity with Aadhaar for JEE Main?",
+          "a": "Then you also upload a scanned identity proof as a JPG or JPEG between 10 KB and 200 KB, clearly legible. That is the same range as the photo, so you can compress the identity proof on this page as well."
+        }
+      ]
     },
     {
       "slug": "jee-main-signature",
@@ -1849,7 +2349,21 @@
           "Photograph it straight on, not at an angle, and crop away the rest of the page.",
           "The same bulletin asks for the Class 10 certificate as a PDF of 50 KB to 300 KB. The NEET certificates page uses the same limits."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What is the JEE Main signature size in KB?",
+          "a": "The JEE (Main) 2026 bulletin asks for the signature as a clearly legible JPG or JPEG between 10 KB and 100 KB. That is half the 200 KB allowed for the photo, so a signature saved with photo settings may be too big."
+        },
+        {
+          "q": "Can I change my JEE Main signature after submitting the form?",
+          "a": "The bulletin says to upload your own signature correctly because the facility for correction will not be given later. Uploading someone else's signature, or a wrong or morphed one, is treated as unfair means."
+        },
+        {
+          "q": "Is my JEE Main signature checked at the exam centre?",
+          "a": "Yes. During entry, along with frisking and biometric registration, the invigilator cross-checks your admit card and matches your signature and photo. Sign on paper the same way you signed the uploaded image."
+        }
+      ]
     },
     {
       "slug": "gate-photo",
@@ -1888,7 +2402,21 @@
           "Use a plain white background, look straight at the camera, and avoid glare on glasses.",
           "This photo appears on your admit card and score card, and a live photo is also taken during registration."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "How old can my GATE 2027 photo be?",
+          "a": "The GATE 2027 Information Brochure asks for a latest photo that is not older than 3 months. A live photo is also captured during registration, so use a computer with a webcam or a phone with a 5 MP camera."
+        },
+        {
+          "q": "Can I wear glasses or a head covering in my GATE photo?",
+          "a": "Normal spectacles are allowed, but not with glare; if the glare cannot be avoided, take them off. Caps, hats, sunglasses and coloured glasses are not allowed. A head covering is accepted only for religious reasons, with your face visible from chin to forehead and edge to edge."
+        },
+        {
+          "q": "What happens if GATE rejects my photo?",
+          "a": "A photo that does not meet the brochure's rules can lead to rejection of the application, and the fee is not refunded. Applications are checked for photo clarity, and defects are sent to you by email, SMS or WhatsApp to fix within a set time, so check your status on the portal."
+        }
+      ]
     },
     {
       "slug": "gate-signature",
@@ -1927,7 +2455,21 @@
           "Drag the crop box tight around the signature so it fills most of the image.",
           "Sign the way you will at the exam: a signature that does not match can lead to disqualification."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Why does GATE reject my signature?",
+          "a": "The brochure shows signatures it does not accept: on a dark background, in all capital letters, digital signatures, initials only, ink other than blue or black, too small to read, with a background or other writing, or not signed horizontally. Sign your full signature on plain white paper."
+        },
+        {
+          "q": "Where does my GATE signature appear after I apply?",
+          "a": "It is printed on your admit card. The brochure says the admit card is valid only if your photograph and signature on it are clear, and you bring a printout of it on A4 paper, preferably in colour, to the exam with your original photo ID."
+        },
+        {
+          "q": "What pixel size is the GATE 2027 signature?",
+          "a": "The brochure allows 250 x 80 up to 580 x 180 pixels, with a height to width ratio from 1:2.75 to 1:3.75, and a file of up to 300 KB. This page crops to 480 x 160 pixels, which meets all three. Only you may sign it."
+        }
+      ]
     },
     {
       "slug": "cuet-photo",
@@ -1961,7 +2503,21 @@
           "Besides this upload, the form takes a live photo with your webcam or phone.",
           "NTA checks photos against your Aadhaar details, so keep your Aadhaar photo recent."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What is the CUET photo size in KB?",
+          "a": "The CUET (UG) 2026 Information Bulletin asks for the photograph as a clearly legible JPG or JPEG between 10 KB and 200 KB. This page compresses it under 200 KB, and if a JPEG comes out under 10 KB, it is padded up to the minimum without changing the picture."
+        },
+        {
+          "q": "Do I need a printed photo for the CUET exam?",
+          "a": "Yes. Bring an extra photograph, the same one you uploaded, to paste on the attendance sheet in the exam room. You also carry the printed admit card with the filled-in self declaration and an original photo ID such as Aadhaar, PAN card or passport."
+        },
+        {
+          "q": "Can NTA fix my CUET photo after I submit the form?",
+          "a": "The bulletin lists your photograph among the details you must make sure are correct and your own, and says NTA does not edit or alter any information after the application process is complete. Check the uploaded photo before you submit."
+        }
+      ]
     },
     {
       "slug": "cuet-signature",
@@ -1995,7 +2551,21 @@
           "Sign in dark ink on plain white paper and photograph it straight on, in good light.",
           "Crop away the rest of the page so the signature fills the image."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "What if the signature on my CUET admit card looks wrong?",
+          "a": "If your photograph or signature on the admit card or confirmation page does not match your details, contact the NTA help line between 10 AM and 5 PM. You still appear in the exam with the admit card you downloaded, and NTA corrects the record later."
+        },
+        {
+          "q": "What else goes in the same CUET upload step as the signature?",
+          "a": "The CUET (UG) form uploads the photograph (JPG or JPEG, 10 KB to 200 KB), the signature and, if it applies, the disability or UDID certificate as a PDF between 50 KB and 300 KB. Each file has its own size range, so compress them separately."
+        },
+        {
+          "q": "Can I upload a signature someone else made for CUET?",
+          "a": "No. The bulletin says to upload your own photograph, signature and certificates. Using someone else's signature, or uploading a wrong or morphed one, is treated as unfair means, so sign it yourself on plain paper."
+        }
+      ]
     },
     {
       "slug": "ircc-document-pdf",
@@ -2029,7 +2599,21 @@
           "Some IRCC forms set a lower limit, as low as 2 MB. If the upload page states one, choose that size instead.",
           "This page is for documents. IRCC photos must be the photographer's original file, not altered in any way, so upload those as they are."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Is the IRCC 4 MB limit per file or for the whole application?",
+          "a": "Per file. IRCC lists its limits as a size per file for each account type, 4 MB for most and 5 MB for the IRCC Portal. A 30-page PDF and a one-page PDF have the same limit, so a long multi-page document is the one most likely to need compressing."
+        },
+        {
+          "q": "My Word document is too big for IRCC. What should I do?",
+          "a": "IRCC suggests removing unnecessary images, then saving as a PDF with the Minimum size option under Optimize for in Word. If that PDF is still over the limit, compress it here to bring it under 4 MB."
+        },
+        {
+          "q": "Will compressing my IRCC PDF make the text hard to read?",
+          "a": "Text typed into the PDF is kept as text and stays sharp. Scanned pages are images, and their resolution is lowered step by step until the file fits. IRCC itself suggests saving images at 96 or 150 DPI to cut file size, so a lower resolution for scans is what it expects."
+        }
+      ]
     },
     {
       "slug": "discord-emoji-gif",
@@ -2067,7 +2651,21 @@
           "Short loops fit best. A few seconds at 128 x 128 usually fits with every frame kept.",
           "Choose Add a see-through border instead of cropping to keep the whole picture."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Who can upload a custom emoji to a Discord server?",
+          "a": "The server owner, or anyone whose role has the Create Expressions permission. To edit or remove emoji, a role also needs Manage Expressions. An admin sets both in Server Settings, under Roles, then Permissions. Without that permission, a GIF of any size is refused."
+        },
+        {
+          "q": "What can I name a Discord emoji?",
+          "a": "Emoji names must be at least 2 characters long and can use only letters, numbers and underscores, so a name like party_cat works and party-cat does not. You set the name when you upload the emoji in Server Settings, under the Emoji tab, or in Emoji Studio."
+        },
+        {
+          "q": "Can I use a PNG or WEBP for a Discord emoji instead of a GIF?",
+          "a": "Yes. Discord takes custom emoji as JPEG, PNG, GIF or WEBP, each smaller than 256 KB. A PNG you drop here is cropped to 128 x 128 and stays a PNG. Animated emoji are GIFs, and they use the extra slots that come with Nitro or Nitro Basic."
+        }
+      ]
     },
     {
       "slug": "discord-banner-gif",
@@ -2105,7 +2703,21 @@
           "Long clips are the hardest to fit. Trim the GIF to the loop you want before uploading.",
           "A still banner works the same way: drop a PNG or JPG instead."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Where do I change my profile banner on Discord?",
+          "a": "On desktop, open User Settings with the cogwheel at the bottom left, go to the Profiles tab and select Change Banner. On mobile, tap your avatar at the bottom right, then Edit Profile. Upload the GIF made here, then save your changes."
+        },
+        {
+          "q": "What happens if I press Skip on the Discord banner crop screen?",
+          "a": "After you upload a banner, Discord shows a crop step. Apply keeps the framing you set, and Skip crops the image with the default settings. A GIF cropped here to 680 x 240 already has the banner's shape and minimum size, so you set the framing here before you upload."
+        },
+        {
+          "q": "Can my Discord avatar be an animated GIF as well as my banner?",
+          "a": "Yes, with Nitro. Nitro subscribers can upload animated GIFs as their avatar, and the avatar accepts PNG and GIF files. The avatar is a different shape from the 680 x 240 banner, so this page's crop is for the banner only."
+        }
+      ]
     },
     {
       "slug": "compress-gif-for-discord",
@@ -2138,7 +2750,21 @@
           "With Nitro Basic, open Change size or pixels and pick 50 MB instead.",
           "To make the GIF smaller in pixels too, open Change size or pixels, then Exact size in pixels, and enter a width and height."
         ]
-      }
+      },
+      "faq": [
+        {
+          "q": "Why does Discord on Android say my GIF is too big?",
+          "a": "Discord now checks the file size before compressing it, on mobile as well as desktop. Discord says Android users may hit the limit more often than before, because files there tend to be larger. Compress the GIF to under 20 MB here first, then upload it from your phone."
+        },
+        {
+          "q": "Why does my GIF show as a download link in Discord?",
+          "a": "Discord's chat settings say that any image larger than 20 MB uploaded directly to Discord is shared as a download instead of being shown. Bringing the GIF under 20 MB here avoids that, and the GIF stays animated at its own pixel size."
+        },
+        {
+          "q": "Can I send several GIFs in one Discord message?",
+          "a": "Yes. If you attach several images or GIFs to one message, Discord sends them together and shows them as a mosaic. Compress each large GIF here one at a time, then attach them all with the plus sign in the text field and send."
+        }
+      ]
     },
     {
       "slug": "compress-gif-to-500kb",

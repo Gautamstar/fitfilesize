@@ -1690,6 +1690,33 @@ button:disabled {
   line-height: 1.6;
 }
 
+.all-pages-link {
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+.all-pages-link a {
+  color: var(--accent);
+}
+.size-figure {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 4px 0 20px;
+}
+.size-figure svg {
+  flex: none;
+}
+.size-figure rect {
+  fill: var(--page);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.size-figure figcaption {
+  color: var(--ink-secondary);
+  font-size: 15px;
+  font-weight: 500;
+}
 .all-pages {
   margin-top: 16px;
 }
