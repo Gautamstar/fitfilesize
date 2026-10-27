@@ -25,44 +25,23 @@ import {
 } from '../lib/landing'
 
 /**
- * The three steps, as they go on this page. A page set up for a form or a
- * size has its limit chosen already, so step 2 says so rather than asking
- * the visitor to pick what the page has picked.
+ * The three steps, shown on the home page. Landing pages leave them out: the
+ * page has its limit set already, and its own questions say the rest.
  */
-function steps(page?: LandingPage) {
-  const what = !page
-    ? 'A PDF or an image'
-    : page.kind === 'pdf'
-      ? 'Your PDF'
-      : page.group === 'Discord' || page.group === 'GIF'
-        ? 'Your GIF or image'
-        : 'Your photo or image'
-  const second = !page
-    ? {
-        title: 'Pick your limit',
-        body: 'Choose the size the form asks for. We start with a cleanup that changes nothing you can see.',
-      }
-    : page.spec
-      ? {
-          title: 'Check the settings',
-          body: `This page is set to the ${page.title ?? 'form'} rules. Change them only if yours are different.`,
-        }
-      : {
-          title: 'Check the limit',
-          body: `This page is set to ${pageSizeLabel(page)}. Pick another limit if yours is different.`,
-        }
-  return [
-    {
-      title: 'Drop your file',
-      body: `${what}. It goes over an encrypted connection and nowhere else.`,
-    },
-    second,
-    {
-      title: 'Download it',
-      body: 'We find the gentlest setting that still fits, and delete everything soon after.',
-    },
-  ]
-}
+const STEPS = [
+  {
+    title: 'Drop your file',
+    body: 'A PDF or an image. It goes over an encrypted connection and nowhere else.',
+  },
+  {
+    title: 'Pick your limit',
+    body: 'Choose the size the form asks for. We start with a cleanup that changes nothing you can see.',
+  },
+  {
+    title: 'Download it',
+    body: 'We find the gentlest setting that still fits, and delete everything soon after.',
+  },
+]
 
 /** "2026-09-26" as "26 September 2026", the same in every time zone. */
 function checkedOn(iso: string): string {
@@ -76,8 +55,6 @@ function checkedOn(iso: string): string {
 
 export function Landing({ page }: { page?: LandingPage }) {
   const related = relatedLinks(page)
-  // A form page's spec and own questions say what the steps would.
-  const form = Boolean(page?.source)
   // Other pages link to the full list on the home page; open it on arrival.
   const allPages = useRef<HTMLDetailsElement>(null)
   useEffect(() => {
@@ -120,11 +97,11 @@ export function Landing({ page }: { page?: LandingPage }) {
         </section>
       ) : null}
 
-      {form ? null : (
+      {page ? null : (
         <section className="band">
           <h2 className="band-title">How it works</h2>
           <ol className="steps-grid">
-            {steps(page).map((step, i) => (
+            {STEPS.map((step, i) => (
               <li key={step.title} className="step">
                 <span className="step-num">{i + 1}</span>
                 <h3 className="step-title">{step.title}</h3>

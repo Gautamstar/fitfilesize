@@ -40,7 +40,7 @@ export interface LandingPage {
   description: string
   blurb: string
   /**
-   * A form page's own questions, shown and marked up in place of the shared
+   * The page's own questions, shown and marked up in place of the shared
    * FAQ: pages that share most of their text are not all indexed.
    */
   faq?: FaqItem[]

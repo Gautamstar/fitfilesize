@@ -106,17 +106,17 @@ describe('landing page guides', () => {
   })
 })
 
-describe('form page questions', () => {
-  // Each form page carries its own questions in place of the shared FAQ, so
-  // that form pages do not share most of their text.
-  const forms = LANDING_PAGES.filter((p) => p.source)
-
-  it('gives every form page at least two of its own', () => {
-    for (const page of forms) expect(page.faq?.length ?? 0, page.slug).toBeGreaterThanOrEqual(2)
+describe('page questions', () => {
+  // Each landing page carries its own questions in place of the shared FAQ,
+  // so that pages do not share most of their text.
+  it('gives every page at least two of its own', () => {
+    for (const page of LANDING_PAGES) {
+      expect(page.faq?.length ?? 0, page.slug).toBeGreaterThanOrEqual(2)
+    }
   })
 
   it('never repeats a question on another page', () => {
-    const questions = forms.flatMap((p) => p.faq?.map((f) => f.q) ?? [])
+    const questions = LANDING_PAGES.flatMap((p) => p.faq?.map((f) => f.q) ?? [])
     expect(new Set(questions).size).toBe(questions.length)
   })
 })
