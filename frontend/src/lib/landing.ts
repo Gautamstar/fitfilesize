@@ -39,6 +39,11 @@ export interface LandingPage {
   org?: string
   description: string
   blurb: string
+  /**
+   * A form page's own questions, shown and marked up in place of the shared
+   * FAQ: pages that share most of their text are not all indexed.
+   */
+  faq?: FaqItem[]
   /** The page's own section: what fits at this size and how to get there. */
   guide: {
     title: string
@@ -54,6 +59,11 @@ export interface FaqItem {
 
 export const LANDING_PAGES = data.pages as LandingPage[]
 export const FAQ: FaqItem[] = data.faq
+
+/** The questions a page shows: its own when it has them, else the shared ones. */
+export function pageFaq(page?: LandingPage): FaqItem[] {
+  return page?.faq?.length ? page.faq : FAQ
+}
 
 /** The landing page for a URL path, ignoring a trailing slash. */
 export function pageForPath(pathname: string): LandingPage | undefined {
