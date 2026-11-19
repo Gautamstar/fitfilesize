@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-18",
+  "updated": "2026-11-19",
   "forms": [
     {
       "id": "us-visa-photo-ds160",
@@ -208,6 +208,290 @@
       "source": "https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/Notice_of_adv_chsl_2026.pdf",
       "checked": "2026-10-18",
       "page": "https://fitfilesize.com/ssc-signature"
+    },
+    {
+      "id": "upsc-photo",
+      "name": "UPSC photo (CSE, NDA, CDS, CAPF)",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "20 KB to 200 KB"
+      ],
+      "limit_bytes": 200000,
+      "min_bytes": 20480,
+      "source": "https://upsconline.nic.in/caf/assets/PDF/instruction-photo-signature-upload-upsc.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/upsc-photo"
+    },
+    {
+      "id": "upsc-signature",
+      "name": "UPSC signature (three signatures)",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "350 to 500 pixels",
+        "20 KB to 100 KB"
+      ],
+      "limit_bytes": 100000,
+      "min_bytes": 20480,
+      "width": 450,
+      "height": 500,
+      "source": "https://upsconline.nic.in/caf/assets/PDF/instruction-photo-signature-upload-upsc.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/upsc-signature"
+    },
+    {
+      "id": "upsc-documents-pdf",
+      "name": "UPSC documents",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "50 KB to 300 KB"
+      ],
+      "limit_bytes": 300000,
+      "source": "https://upsconline.nic.in/caf/assets/PDF/Instructions%20for%20uploading%20documents-new-2.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/upsc-documents-pdf"
+    },
+    {
+      "id": "tnpsc-photo",
+      "name": "TNPSC photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "130 × 170 pixels",
+        "20 KB to 50 KB"
+      ],
+      "limit_bytes": 50000,
+      "min_bytes": 20480,
+      "width": 130,
+      "height": 170,
+      "source": "https://www.tnpsc.gov.in/static_pdf/document/instructions-to-candidates_2025.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/tnpsc-photo"
+    },
+    {
+      "id": "tnpsc-signature",
+      "name": "TNPSC signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "230 × 75 pixels",
+        "10 KB to 20 KB"
+      ],
+      "limit_bytes": 20000,
+      "min_bytes": 10240,
+      "width": 230,
+      "height": 75,
+      "source": "https://www.tnpsc.gov.in/static_pdf/document/instructions-to-candidates_2025.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/tnpsc-signature"
+    },
+    {
+      "id": "tnpsc-certificates-pdf",
+      "name": "TNPSC certificates",
+      "kind": "pdf",
+      "requirements": [
+        "PDF",
+        "200 KB or less for each claim"
+      ],
+      "limit_bytes": 200000,
+      "source": "https://www.tnpsc.gov.in/static_pdf/document/instructions-to-candidates_2025.pdf",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/tnpsc-certificates-pdf"
+    },
+    {
+      "id": "uppsc-photo",
+      "name": "UPPSC photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "5 × 6 cm at 200 DPI",
+        "Under 50 KB"
+      ],
+      "limit_bytes": 50000,
+      "width": 394,
+      "height": 472,
+      "source": "https://uppsc.up.nic.in/CMS/OTR_DOC/OTR_PHOTO_INSTRUCTION.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/uppsc-photo"
+    },
+    {
+      "id": "uppsc-signature",
+      "name": "UPPSC signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "6 × 3 cm at 200 DPI",
+        "Under 30 KB"
+      ],
+      "limit_bytes": 30000,
+      "width": 472,
+      "height": 236,
+      "source": "https://uppsc.up.nic.in/CMS/OTR_DOC/OTR_PHOTO_INSTRUCTION.pdf",
+      "checked": "2026-10-18",
+      "page": "https://fitfilesize.com/uppsc-signature"
+    },
+    {
+      "id": "bpsc-signature",
+      "name": "BPSC signature",
+      "kind": "image",
+      "requirements": [
+        "150 to 220 × 250 to 320 pixels",
+        "Under 20 KB"
+      ],
+      "limit_bytes": 20000,
+      "width": 200,
+      "height": 300,
+      "source": "https://bpsconline.bihar.gov.in/downloads/User_Manual.pdf",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/bpsc-signature"
+    },
+    {
+      "id": "kerala-psc-photo",
+      "name": "Kerala PSC photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "150 × 200 pixels",
+        "30 KB or less"
+      ],
+      "limit_bytes": 30000,
+      "width": 150,
+      "height": 200,
+      "source": "https://www.keralapsc.gov.in/sites/default/files/inline-files/photo_0.pdf",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/kerala-psc-photo"
+    },
+    {
+      "id": "kerala-psc-signature",
+      "name": "Kerala PSC signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "150 × 100 pixels",
+        "30 KB or less"
+      ],
+      "limit_bytes": 30000,
+      "width": 150,
+      "height": 100,
+      "source": "https://www.keralapsc.gov.in/sites/default/files/inline-files/otr.pdf",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/kerala-psc-signature"
+    },
+    {
+      "id": "appsc-photo",
+      "name": "APPSC photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "3.5 × 4.5 cm",
+        "Under 50 KB"
+      ],
+      "limit_bytes": 50000,
+      "source": "https://otpr-psc.ap.gov.in/OTPRForms/OneTimeProfileRegistration_Form.aspx",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/appsc-photo"
+    },
+    {
+      "id": "appsc-signature",
+      "name": "APPSC signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "3.5 × 1.5 cm",
+        "Under 30 KB"
+      ],
+      "limit_bytes": 30000,
+      "source": "https://otpr-psc.ap.gov.in/OTPRForms/OneTimeProfileRegistration_Form.aspx",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/appsc-signature"
+    },
+    {
+      "id": "tgpsc-photo",
+      "name": "TGPSC photo",
+      "kind": "image",
+      "requirements": [
+        "JPG or PNG",
+        "100 KB to 200 KB"
+      ],
+      "limit_bytes": 200000,
+      "min_bytes": 102400,
+      "source": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJL05PVElGTi1BRUUtQ0lWSUwtUm5CMjAyNjA2MDIxNjI5NTYucGRmr95v17a0y2d8i13v",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/tgpsc-photo"
+    },
+    {
+      "id": "tgpsc-signature",
+      "name": "TGPSC signature",
+      "kind": "image",
+      "requirements": [
+        "JPG or PNG",
+        "20 KB to 30 KB"
+      ],
+      "limit_bytes": 30000,
+      "min_bytes": 20480,
+      "source": "https://websitenew.tgpsc.gov.in/preview/RElSRUNUUkVDUlVJVE1FTlROT1RJL05PVElGTi1BRUUtQ0lWSUwtUm5CMjAyNjA2MDIxNjI5NTYucGRmr95v17a0y2d8i13v",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/tgpsc-signature"
+    },
+    {
+      "id": "hppsc-photo",
+      "name": "HPPSC photo",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "110 × 140 pixels",
+        "40 KB or less"
+      ],
+      "limit_bytes": 40000,
+      "width": 110,
+      "height": 140,
+      "source": "https://hppsc.hp.gov.in/Home/FAQs",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/hppsc-photo"
+    },
+    {
+      "id": "hppsc-signature",
+      "name": "HPPSC signature",
+      "kind": "image",
+      "requirements": [
+        "JPEG",
+        "140 × 110 pixels",
+        "40 KB or less"
+      ],
+      "limit_bytes": 40000,
+      "width": 140,
+      "height": 110,
+      "source": "https://hppsc.hp.gov.in/Home/FAQs",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/hppsc-signature"
+    },
+    {
+      "id": "apsc-photo",
+      "name": "APSC photo",
+      "kind": "image",
+      "requirements": [
+        "50 KB to 200 KB"
+      ],
+      "limit_bytes": 200000,
+      "min_bytes": 51200,
+      "source": "https://apsc.nic.in/advt_2025/Advt_No_05_2025_JE_PWRD_22012025.pdf",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/apsc-photo"
+    },
+    {
+      "id": "apsc-signature",
+      "name": "APSC signature",
+      "kind": "image",
+      "requirements": [
+        "50 KB to 200 KB"
+      ],
+      "limit_bytes": 200000,
+      "min_bytes": 51200,
+      "source": "https://apsc.nic.in/advt_2025/Advt_No_05_2025_JE_PWRD_22012025.pdf",
+      "checked": "2026-10-19",
+      "page": "https://fitfilesize.com/apsc-signature"
     },
     {
       "id": "neet-photo",
