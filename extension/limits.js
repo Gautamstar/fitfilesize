@@ -19,15 +19,15 @@
   // is 5 MB", "Max. file size: 2MB".
   const GAP = String.raw`(?:\s+[a-z.]+){0,4}?\s*(?:is|of|:|-)?\s*`
   const MAX_BEFORE = new RegExp(
-    String.raw`(?:max(?:imum)?\.?${GAP}|(?:up\s*to|less\s+than(?:\s+or\s+equal\s+to)?|under|below|` +
-      String.raw`not\s+(?:more|greater)\s+than|no\s+more\s+than|(?:should|must|shall)\s+not\s+exceed|` +
-      String.raw`not\s+exceed(?:ing)?|within|limit(?:ed)?\s+(?:of|to)|<=?|≤)\s*[:\-]?\s*)${NUM}\s*${UNIT}`,
+    String.raw`(?:max(?:imum)?\.?${GAP}|(?:up\s*to|(?<!\bnot\s+(?:be\s+)?)less\s+than(?:\s+or\s+equal\s+to)?|` +
+      String.raw`under|below|not\s+(?:be\s+)?(?:more|greater)\s+than|no\s+more\s+than|` +
+      String.raw`not\s+(?:be\s+)?exceed(?:s|ing)?|within|limit(?:ed)?\s+(?:of|to)|<=?|≤)\s*[:\-]?\s*)${NUM}\s*${UNIT}`,
     'g',
   )
   const MAX_AFTER = new RegExp(String.raw`${NUM}\s*${UNIT}\s*(?:max(?:imum)?|or\s+less|and\s+below)\b`, 'g')
   const MIN_BEFORE = new RegExp(
     String.raw`(?:min(?:imum)?\.?${GAP}|(?:at\s+least|more\s+than|greater\s+than|` +
-      String.raw`not\s+less\s+than|no\s+less\s+than|>=?|≥)\s*[:\-]?\s*)${NUM}\s*${UNIT}`,
+      String.raw`not\s+(?:be\s+)?less\s+than|no\s+less\s+than|>=?|≥)\s*[:\-]?\s*)${NUM}\s*${UNIT}`,
     'g',
   )
   const MIN_AFTER = new RegExp(String.raw`${NUM}\s*${UNIT}\s*(?:min(?:imum)?|or\s+more)\b`, 'g')
@@ -71,6 +71,8 @@
    */
   function readLimits(raw) {
     const text = normalise(raw)
+    // "50 kb & 20 kb respectively": several fields' limits in one sentence.
+    if (/\brespectively\b/.test(text)) return null
     const mins = []
     const maxes = []
     const taken = []
