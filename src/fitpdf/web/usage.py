@@ -3,14 +3,16 @@
 Page views (Cairn) say who visited; these say who used the tool. Each row is
 a count for one day and one combination of:
 
-* event: ``upload`` (a file arrived) or ``download`` (a result was taken,
-  counted once per job however often it is fetched)
-* source: ``web`` (the site), ``mcp`` (the fitfilesize-mcp package) or
-  ``api`` (any other caller)
+* event: ``upload`` (a file arrived), ``download`` (a result was taken,
+  counted once per job however often it is fetched) or ``limited`` (a request
+  refused at the hourly limit)
+* source: ``web`` (the site), ``mcp`` (the fitfilesize-mcp package),
+  ``extension`` (the browser extension) or ``api`` (any other caller)
 * kind: ``pdf``, ``gif`` or ``image`` (any other image)
 * page: the landing page the site was on (``home`` for /), or ``-``
 * outcome: for downloads, ``fit`` or ``over`` (could not get under the
-  limit); ``-`` for uploads
+  limit); for refusals, the budget that ran out (``uploads`` or ``runs``);
+  ``-`` for uploads
 
 Nothing about the file or the visitor is kept: no name, size, address or
 content. Redis keeps nothing across a restart and job folders are swept, so
@@ -141,8 +143,15 @@ def report(data: list[tuple]) -> str:
         )
     pages: dict[str, list[int]] = {}
     for _day, event, _source, _kind, page, _outcome, n in data:
+        if event == "limited":
+            continue
         p = pages.setdefault(page, [0, 0])
         p[0 if event == "upload" else 1] += n
+    refused = [(day, [d.get(("limited", s), 0) for s in SOURCES]) for day, d in by_day.items()]
+    refused = [(day, n) for day, n in refused if sum(n)]
+    if refused:
+        lines += ["", "day         refused at the hourly limit (web/mcp/api/ext)"]
+        lines += [f"{day}  {sum(n):4} ({'/'.join(map(str, n))})" for day, n in refused]
     lines += ["", "page                                   uploads  downloads"]
     for page, (up, down) in sorted(pages.items(), key=lambda kv: -kv[1][0]):
         lines.append(f"{page:38} {up:7}  {down:9}")

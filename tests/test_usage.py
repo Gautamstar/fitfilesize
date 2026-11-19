@@ -128,8 +128,32 @@ def test_report_sums_days_and_pages(tmp_path):
     usage.record(db, "download", "web", "image", "neet-photo", "fit", today=d)
     usage.record(db, "upload", "mcp", "pdf", today=d)
     usage.record(db, "upload", "extension", "image", today=d)
+    usage.record(db, "limited", "extension", "-", outcome="uploads", today=d)
     text = usage.report(usage.rows(db, 7, today=d))
+    assert "2026-10-08     1 (0/0/0/1)" in text
     assert "2026-10-08     5 (3/1/0/1)" in text
     assert "1 (1/0/0/0)" in text
     assert "neet-photo" in text
     assert usage.report([]) == "No uploads or downloads recorded in this period."
+
+
+def test_a_refusal_at_the_hourly_limit_is_counted_by_source(tmp_path, photo_jpg):
+    settings = Settings(
+        data_dir=tmp_path / "data",
+        usage_db=tmp_path / "u.db",
+        allowed_origins=(SITE,),
+        uploads_per_hour=1,
+    )
+    r = fakeredis.FakeRedis()
+    q = Queue(settings.queue_name, connection=r, is_async=False)
+    app = create_app(settings=settings, redis_conn=r, queue=q, background_sweep=False)
+    ext = {"Origin": "chrome-extension://abcdef"}
+    with TestClient(app) as client, open(photo_jpg, "rb") as f:
+        body = f.read()
+        codes = [
+            client.post("/api/fit", files={"file": ("a.jpg", body, "image/jpeg")},
+                        data={"target": "10MB"}, headers=ext).status_code
+            for _ in range(2)
+        ]
+    assert codes == [200, 429]
+    assert _counts(settings)[("limited", "extension", "-", "-", "uploads")] == 1
