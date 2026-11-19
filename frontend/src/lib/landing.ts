@@ -37,6 +37,11 @@ export interface LandingPage {
   spec?: string[]
   /** Who sets the form's rules, for the "not affiliated" note. */
   org?: string
+  /**
+   * Left out of search: no sitemap entry and a noindex tag. The page still
+   * works for anyone who follows a link to it.
+   */
+  noindex?: boolean
   description: string
   blurb: string
   /**

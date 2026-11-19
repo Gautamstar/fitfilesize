@@ -69,10 +69,12 @@ function setHead(html, { title, description, extra = [] }) {
   return out
 }
 
-function renderPage({ path, title, description, pageFaq }) {
+function renderPage({ path, title, description, pageFaq, noindex }) {
   const url = siteUrl ? siteUrl + path : ''
   const image = siteUrl ? `${siteUrl}/og.png` : ''
   const extra = [
+    // Kept for visitors who follow a link, left out of search.
+    noindex && '<meta name="robots" content="noindex, follow" />',
     url && `<link rel="canonical" href="${url}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="${escapeHtml(siteName)}" />`,
@@ -140,6 +142,7 @@ for (const page of pages) {
       title: pageTitle(page),
       description: page.description,
       pageFaq: page.faq,
+      noindex: page.noindex,
     }),
   )
 }
@@ -168,7 +171,13 @@ const notFound = setHead(base.replace(/\s*<script type="module"[^>]*><\/script>/
 )
 writeFileSync(join(dist, '404.html'), notFound)
 
-const entries = ['/', ...pages.map((p) => `/${p.slug}`), '/claude.html', '/privacy.html', '/terms.html']
+const entries = [
+  '/',
+  ...pages.filter((p) => !p.noindex).map((p) => `/${p.slug}`),
+  '/claude.html',
+  '/privacy.html',
+  '/terms.html',
+]
 if (siteUrl) {
   const urls = entries
     .map((p) => `  <url><loc>${siteUrl}${p}</loc><lastmod>${updated}</lastmod></url>`)

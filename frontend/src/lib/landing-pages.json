@@ -1,8 +1,9 @@
 {
-  "updated": "2026-10-27",
+  "updated": "2026-11-19",
   "pages": [
     {
       "slug": "compress-pdf-to-50kb",
+      "noindex": true,
       "kind": "pdf",
       "targetKb": 50,
       "heading": "Compress a PDF to 50 KB",
@@ -37,6 +38,7 @@
     },
     {
       "slug": "compress-pdf-to-100kb",
+      "noindex": true,
       "kind": "pdf",
       "targetKb": 100,
       "heading": "Compress a PDF to 100 KB",
@@ -71,6 +73,7 @@
     },
     {
       "slug": "compress-pdf-to-150kb",
+      "noindex": true,
       "kind": "pdf",
       "targetKb": 150,
       "heading": "Compress a PDF to 150 KB",
@@ -105,6 +108,7 @@
     },
     {
       "slug": "compress-pdf-to-200kb",
+      "noindex": true,
       "kind": "pdf",
       "targetKb": 200,
       "heading": "Compress a PDF to 200 KB",
@@ -241,6 +245,7 @@
     },
     {
       "slug": "compress-pdf-to-1mb",
+      "noindex": true,
       "kind": "pdf",
       "targetKb": 1000,
       "heading": "Compress a PDF to 1 MB",
@@ -343,6 +348,7 @@
     },
     {
       "slug": "compress-pdf-to-10mb",
+      "noindex": true,
       "kind": "pdf",
       "targetKb": 10000,
       "heading": "Compress a PDF to 10 MB",
@@ -377,6 +383,7 @@
     },
     {
       "slug": "compress-jpg-to-20kb",
+      "noindex": true,
       "kind": "image",
       "targetKb": 20,
       "heading": "Compress a JPG to 20 KB",
@@ -445,6 +452,7 @@
     },
     {
       "slug": "compress-jpg-to-100kb",
+      "noindex": true,
       "kind": "image",
       "targetKb": 100,
       "heading": "Compress a JPG to 100 KB",
@@ -513,6 +521,7 @@
     },
     {
       "slug": "compress-jpg-to-200kb",
+      "noindex": true,
       "kind": "image",
       "targetKb": 200,
       "heading": "Compress a JPG to 200 KB",
@@ -547,6 +556,7 @@
     },
     {
       "slug": "compress-jpg-to-300kb",
+      "noindex": true,
       "kind": "image",
       "targetKb": 300,
       "heading": "Compress a JPG to 300 KB",
@@ -649,6 +659,7 @@
     },
     {
       "slug": "compress-png-to-100kb",
+      "noindex": true,
       "kind": "image",
       "group": "PNG",
       "targetKb": 100,
@@ -684,6 +695,7 @@
     },
     {
       "slug": "compress-png-to-500kb",
+      "noindex": true,
       "kind": "image",
       "group": "PNG",
       "targetKb": 500,
@@ -719,6 +731,7 @@
     },
     {
       "slug": "heic-to-jpg",
+      "noindex": true,
       "kind": "image",
       "group": "iPhone photos (HEIC)",
       "targetKb": 10000,
@@ -789,6 +802,7 @@
     },
     {
       "slug": "heic-to-jpg-200kb",
+      "noindex": true,
       "kind": "image",
       "group": "iPhone photos (HEIC)",
       "targetKb": 200,
@@ -859,6 +873,7 @@
     },
     {
       "slug": "us-visa-photo-ds160",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "US visa photo (DS-160)",
@@ -911,6 +926,7 @@
     },
     {
       "slug": "indian-evisa-passport-pdf",
+      "noindex": true,
       "kind": "pdf",
       "group": "Forms and applications",
       "linkLabel": "Indian e-Visa passport page (PDF)",
@@ -958,6 +974,7 @@
     },
     {
       "slug": "indian-evisa-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "Indian e-Visa photo",
@@ -1011,6 +1028,7 @@
     },
     {
       "slug": "passport-seva-embassy-documents-pdf",
+      "noindex": true,
       "kind": "pdf",
       "group": "Forms and applications",
       "linkLabel": "Passport Seva documents abroad (PDF)",
@@ -1112,6 +1130,7 @@
     },
     {
       "slug": "ibps-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "IBPS signature",
@@ -1165,6 +1184,7 @@
     },
     {
       "slug": "sbi-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "SBI photo",
@@ -1271,6 +1291,7 @@
     },
     {
       "slug": "sbi-thumb-impression",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "SBI thumb impression",
@@ -1377,6 +1398,7 @@
     },
     {
       "slug": "rrb-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "RRB signature",
@@ -1477,6 +1499,7 @@
     },
     {
       "slug": "ssc-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "SSC signature (CGL, CHSL, MTS, GD)",
@@ -1530,6 +1553,7 @@
     },
     {
       "slug": "upsc-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "UPSC photo (CSE, NDA, CDS, CAPF)",
@@ -1579,6 +1603,7 @@
     },
     {
       "slug": "upsc-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "UPSC signature (three signatures)",
@@ -1632,6 +1657,7 @@
     },
     {
       "slug": "upsc-documents-pdf",
+      "noindex": true,
       "kind": "pdf",
       "group": "Forms and applications",
       "linkLabel": "UPSC documents (PDF)",
@@ -1679,6 +1705,7 @@
     },
     {
       "slug": "tnpsc-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "TNPSC photo",
@@ -1733,6 +1760,7 @@
     },
     {
       "slug": "tnpsc-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "TNPSC signature",
@@ -1786,6 +1814,7 @@
     },
     {
       "slug": "tnpsc-certificates-pdf",
+      "noindex": true,
       "kind": "pdf",
       "linkLabel": "TNPSC certificates (PDF)",
       "targetKb": 200,
@@ -1833,6 +1862,7 @@
     },
     {
       "slug": "uppsc-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "UPPSC photo",
@@ -1885,6 +1915,7 @@
     },
     {
       "slug": "uppsc-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "UPPSC signature",
@@ -1937,6 +1968,7 @@
     },
     {
       "slug": "bpsc-signature",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "BPSC signature",
       "targetKb": 20,
@@ -1988,6 +2020,7 @@
     },
     {
       "slug": "kerala-psc-photo",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "Kerala PSC photo",
       "targetKb": 30,
@@ -2040,6 +2073,7 @@
     },
     {
       "slug": "kerala-psc-signature",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "Kerala PSC signature",
       "targetKb": 30,
@@ -2088,6 +2122,7 @@
     },
     {
       "slug": "appsc-photo",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "APPSC photo",
       "targetKb": 50,
@@ -2184,6 +2219,7 @@
     },
     {
       "slug": "tgpsc-photo",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "TGPSC photo",
       "targetKb": 200,
@@ -2232,6 +2268,7 @@
     },
     {
       "slug": "tgpsc-signature",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "TGPSC signature",
       "targetKb": 30,
@@ -2280,6 +2317,7 @@
     },
     {
       "slug": "hppsc-photo",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "HPPSC photo",
       "targetKb": 40,
@@ -2332,6 +2370,7 @@
     },
     {
       "slug": "hppsc-signature",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "HPPSC signature",
       "targetKb": 40,
@@ -2384,6 +2423,7 @@
     },
     {
       "slug": "apsc-photo",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "APSC photo",
       "targetKb": 200,
@@ -2431,6 +2471,7 @@
     },
     {
       "slug": "apsc-signature",
+      "noindex": true,
       "kind": "image",
       "linkLabel": "APSC signature",
       "targetKb": 200,
@@ -2478,6 +2519,7 @@
     },
     {
       "slug": "neet-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "NEET photo",
@@ -2526,6 +2568,7 @@
     },
     {
       "slug": "neet-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "NEET signature",
@@ -2574,6 +2617,7 @@
     },
     {
       "slug": "neet-certificate-pdf",
+      "noindex": true,
       "kind": "pdf",
       "group": "Forms and applications",
       "linkLabel": "NEET certificates (PDF)",
@@ -2621,6 +2665,7 @@
     },
     {
       "slug": "jee-main-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "JEE Main photo",
@@ -2669,6 +2714,7 @@
     },
     {
       "slug": "jee-main-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "JEE Main signature",
@@ -2717,6 +2763,7 @@
     },
     {
       "slug": "gate-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "GATE photo",
@@ -2770,6 +2817,7 @@
     },
     {
       "slug": "gate-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "GATE signature",
@@ -2823,6 +2871,7 @@
     },
     {
       "slug": "cuet-photo",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "CUET photo",
@@ -2871,6 +2920,7 @@
     },
     {
       "slug": "cuet-signature",
+      "noindex": true,
       "kind": "image",
       "group": "Forms and applications",
       "linkLabel": "CUET signature",
@@ -2919,6 +2969,7 @@
     },
     {
       "slug": "ircc-document-pdf",
+      "noindex": true,
       "kind": "pdf",
       "group": "Forms and applications",
       "linkLabel": "Canada IRCC documents (PDF)",
@@ -2967,6 +3018,7 @@
     },
     {
       "slug": "discord-emoji-gif",
+      "noindex": true,
       "kind": "image",
       "group": "Discord",
       "linkLabel": "Discord emoji",
@@ -3019,6 +3071,7 @@
     },
     {
       "slug": "discord-banner-gif",
+      "noindex": true,
       "kind": "image",
       "group": "Discord",
       "linkLabel": "Discord profile banner",
@@ -3071,6 +3124,7 @@
     },
     {
       "slug": "compress-gif-for-discord",
+      "noindex": true,
       "kind": "image",
       "group": "Discord",
       "linkLabel": "Discord message (20 MB)",
@@ -3118,6 +3172,7 @@
     },
     {
       "slug": "compress-gif-to-500kb",
+      "noindex": true,
       "kind": "image",
       "group": "GIF",
       "targetKb": 500,
@@ -3153,6 +3208,7 @@
     },
     {
       "slug": "compress-gif-to-1mb",
+      "noindex": true,
       "kind": "image",
       "group": "GIF",
       "targetKb": 1000,
@@ -3188,6 +3244,7 @@
     },
     {
       "slug": "compress-gif-to-2mb",
+      "noindex": true,
       "kind": "image",
       "group": "GIF",
       "targetKb": 2000,
@@ -3223,6 +3280,7 @@
     },
     {
       "slug": "compress-gif-to-5mb",
+      "noindex": true,
       "kind": "image",
       "group": "GIF",
       "targetKb": 5000,
@@ -3258,6 +3316,7 @@
     },
     {
       "slug": "compress-gif-to-10mb",
+      "noindex": true,
       "kind": "image",
       "group": "GIF",
       "targetKb": 10000,
