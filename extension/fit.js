@@ -2,10 +2,8 @@
  * The by-hand page: for drag-and-drop upload boxes and limits stated away from
  * the box. The person types the limit; the fitted file is downloaded.
  */
-const { formatSize, fittedName } = globalThis.FitFileSizeLimits
+const { formatSize, fittedName, aimMinimum } = globalThis.FitFileSizeLimits
 const MAX_SEND = 30 * 1000 * 1000
-// Forms that count 1024 bytes to a kilobyte ask for slightly more at the low end.
-const KIB = 1.024
 
 const $ = (id) => document.getElementById(id)
 let file = null
@@ -56,7 +54,7 @@ $('form').addEventListener('submit', async (event) => {
       mime: file.type,
       data: await base64(file),
       target: max,
-      minimum: min && (Math.ceil(min * KIB) < max ? Math.ceil(min * KIB) : min),
+      minimum: min && aimMinimum(min, max),
       width,
       height,
       keepFormat: !jpeg,

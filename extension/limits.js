@@ -143,7 +143,20 @@
     return `${stem}.${ext}`
   }
 
-  const api = { readLimits, wantsJpeg, formatSize, fittedName }
+  /**
+   * The minimum to aim for. A form that counts 1024 bytes to a kilobyte asks
+   * for 2.4% more than its number says, and a result that lands exactly on
+   * the line reads as borderline ("20 KB" for "20 KB to 50 KB"), so aim 5%
+   * inside when the range leaves room.
+   */
+  function aimMinimum(min, max) {
+    for (const aim of [Math.ceil(min * 1.05), Math.ceil(min * 1.024), min]) {
+      if (!max || aim < max) return aim
+    }
+    return min
+  }
+
+  const api = { readLimits, wantsJpeg, formatSize, fittedName, aimMinimum }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.FitFileSizeLimits = api
 })(typeof globalThis !== 'undefined' ? globalThis : this)
