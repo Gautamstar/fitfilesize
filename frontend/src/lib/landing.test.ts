@@ -106,6 +106,22 @@ describe('landing page guides', () => {
   })
 })
 
+describe('pages in search', () => {
+  // A new site with dozens of similar pages was mostly left out of Google's
+  // index, so only a small set is offered to search; the rest stay reachable.
+  it('offers only a small set of pages to search engines', () => {
+    const indexed = LANDING_PAGES.filter((p) => !p.noindex)
+    expect(indexed.length).toBeGreaterThan(0)
+    expect(indexed.length).toBeLessThanOrEqual(20)
+  })
+
+  it('keeps pages left out of search reachable by their address', () => {
+    for (const page of LANDING_PAGES.filter((p) => p.noindex)) {
+      expect(pageForPath(`/${page.slug}`), page.slug).toBe(page)
+    }
+  })
+})
+
 describe('page questions', () => {
   // Each landing page carries its own questions in place of the shared FAQ,
   // so that pages do not share most of their text.
