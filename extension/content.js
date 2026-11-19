@@ -3,7 +3,7 @@
  * next to it, offers to fit it; the file leaves the page only on "Fit it".
  */
 ;(function () {
-  const { readLimits, wantsJpeg } = globalThis.FitFileSizeLimits
+  const { readLimits, wantsJpeg, formatSize, fittedName } = globalThis.FitFileSizeLimits
   const MAX_SEND = 30 * 1000 * 1000
   const KINDS = /\.(pdf|jpe?g|png|webp|gif|heic|heif|tiff?|bmp)$/i
   const ANCESTORS = 6
@@ -91,14 +91,6 @@
     return parts.join(', ')
   }
 
-  function formatSize(n) {
-    if (n < 1e6) {
-      const kb = n / 1000
-      return `${kb < 10 ? Math.round(kb * 10) / 10 : Math.round(kb)} KB`
-    }
-    return `${Math.round(n / 1e5) / 10} MB`
-  }
-
   function offer(input, file, limits, problem, jpeg) {
     if (file.size > MAX_SEND) {
       toast(`${problem} Files over 30 MB are too large to fit here; try fitfilesize.com.`)
@@ -144,7 +136,7 @@
       return
     }
     const bytes = Uint8Array.from(atob(result.data), (c) => c.charCodeAt(0))
-    const fitted = new File([bytes], rename(file.name, result.mime), { type: result.mime })
+    const fitted = new File([bytes], fittedName(file.name, result.mime), { type: result.mime })
     const dt = new DataTransfer()
     dt.items.add(fitted)
     swapping = true
@@ -159,19 +151,6 @@
     toast(`Done: ${fitted.name} is ${formatSize(fitted.size)}${pixels}.`)
     const shown = host
     setTimeout(() => host === shown && close(), 8000)
-  }
-
-  const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
-    'image/tiff': 'tif', 'image/bmp': 'bmp', 'application/pdf': 'pdf' }
-
-  function rename(name, mime) {
-    const ext = EXT[mime]
-    if (!ext) return name
-    const stem = name.replace(/\.[^.]+$/, '')
-    const old = (name.match(/\.([^.]+)$/) || [])[1] || ''
-    // Keep "photo.jpeg" as it was; only a changed format gets a new extension.
-    if (old.toLowerCase().replace('jpeg', 'jpg').replace('tiff', 'tif') === ext) return name
-    return `${stem}.${ext}`
   }
 
   function base64(file) {

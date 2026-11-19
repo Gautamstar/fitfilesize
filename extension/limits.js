@@ -118,7 +118,30 @@
     return /\bjpe?g\b|image\/jpeg/.test(text) && !/\bpng\b|image\/png/.test(text)
   }
 
-  const api = { readLimits, wantsJpeg }
+  /** Bytes as the site writes them: 1000-based, "24 KB", "1.5 MB". */
+  function formatSize(n) {
+    if (n < 1e6) {
+      const kb = n / 1000
+      return `${kb < 10 ? Math.round(kb * 10) / 10 : Math.round(kb)} KB`
+    }
+    return `${Math.round(n / 1e5) / 10} MB`
+  }
+
+  const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif',
+    'image/tiff': 'tif', 'image/bmp': 'bmp', 'application/pdf': 'pdf' }
+
+  /** The fitted file's name: the original, with a new extension only if the format changed. */
+  function fittedName(name, mime) {
+    const ext = EXT[mime]
+    if (!ext) return name
+    const stem = name.replace(/\.[^.]+$/, '')
+    const old = (name.match(/\.([^.]+)$/) || [])[1] || ''
+    // Keep "photo.jpeg" as it was; only a changed format gets a new extension.
+    if (old.toLowerCase().replace('jpeg', 'jpg').replace('tiff', 'tif') === ext) return name
+    return `${stem}.${ext}`
+  }
+
+  const api = { readLimits, wantsJpeg, formatSize, fittedName }
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.FitFileSizeLimits = api
 })(typeof globalThis !== 'undefined' ? globalThis : this)

@@ -9,11 +9,16 @@
   .muted { color: #64748b; font-size: 12px; }
   label { display: flex; gap: 8px; align-items: center; margin: 10px 0; font-weight: 600; }
   a { color: #2451e0; }
+  button { font: inherit; font-weight: 600; width: 100%; margin-top: 8px; padding: 7px 12px; border-radius: 6px;
+    border: 1px solid #2451e0; background: #2451e0; color: #fff; cursor: pointer; }
+  button:hover { background: #1d43c2; }
 </style>
 </head>
 <body>
   <h1>FitFileSize</h1>
   <p>When you pick a file in an upload form that states a limit, like "20 KB to 50 KB" or "200 x 230 pixels", and the file breaks it, you get an offer to fit it.</p>
+  <button id="manual">Fit a file by hand</button>
+  <p class="muted">For drag-and-drop boxes, or a limit stated somewhere else on the page.</p>
   <label><input type="checkbox" id="enabled" /> Check files I pick</label>
   <p class="muted">Your file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server once it is fitted. <a href="https://fitfilesize.com/privacy.html" target="_blank">Privacy</a></p>
   <script src="popup.js"></script>

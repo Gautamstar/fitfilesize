@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { readLimits, wantsJpeg } = require('../limits.js')
+const { readLimits, wantsJpeg, formatSize, fittedName } = require('../limits.js')
 
 const limits = (min, max, width = null, height = null) => ({ min, max, width, height })
 
@@ -52,4 +52,17 @@ test('tells a JPEG-only form from one that takes PNG', () => {
   assert.equal(wantsJpeg('image/jpeg'), true)
   assert.equal(wantsJpeg('JPG or PNG, max 1 MB'), false)
   assert.equal(wantsJpeg('Max 1 MB'), false)
+})
+
+test('writes sizes the way the site does', () => {
+  assert.equal(formatSize(24169), '24 KB')
+  assert.equal(formatSize(8450), '8.5 KB')
+  assert.equal(formatSize(1500000), '1.5 MB')
+})
+
+test('renames a file only when its format changed', () => {
+  assert.equal(fittedName('photo.jpeg', 'image/jpeg'), 'photo.jpeg')
+  assert.equal(fittedName('scan.PDF', 'application/pdf'), 'scan.PDF')
+  assert.equal(fittedName('IMG_0042.HEIC', 'image/jpeg'), 'IMG_0042.jpg')
+  assert.equal(fittedName('logo.png', 'image/png'), 'logo.png')
 })

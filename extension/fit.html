@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fit a file</title>
+<link rel="icon" href="icons/32.png" />
+<style>
+  :root { --accent: #2451e0; --accent-hover: #1d43c2; --tint: #c9d5fb; --wash: #eef2fe;
+    --ink: #1e293b; --muted: #64748b; --line: #dbe2ef; --bg: #f8fafc; --card: #fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --accent: #7d9bff; --accent-hover: #98b0ff; --tint: #3a4a7a; --wash: rgba(125, 155, 255, .12);
+      --ink: #e2e8f0; --muted: #94a3b8; --line: #2c3650; --bg: #0f1420; --card: #161d2c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 520px; margin: 40px auto; padding: 0 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .drop { display: block; border: 2px dashed var(--tint); border-radius: 10px; padding: 22px; text-align: center;
+    cursor: pointer; background: var(--wash); }
+  .drop.over { border-color: var(--accent); }
+  .drop strong { color: var(--accent); }
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .file { margin-top: 8px; color: var(--muted); font-size: 14px; min-height: 1.5em; }
+  fieldset { border: 0; padding: 0; margin: 18px 0 0; }
+  legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row label { font-size: 14px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+  input[type=number], select { font: inherit; color: var(--ink); background: var(--card); width: 110px;
+    padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; }
+  select { width: auto; }
+  .check { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 14px; }
+  button, .download { font: inherit; font-weight: 600; margin-top: 20px; padding: 10px 18px; border-radius: 8px;
+    border: 0; background: var(--accent); color: #fff; cursor: pointer; text-decoration: none; display: inline-block; }
+  button:hover, .download:hover { background: var(--accent-hover); }
+  button:disabled { opacity: .6; cursor: default; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .status { margin-top: 16px; min-height: 1.5em; }
+  .status.error { color: #b42318; }
+  @media (prefers-color-scheme: dark) { .status.error { color: #f97066; } }
+  .note { color: var(--muted); font-size: 13px; margin-top: 18px; }
+  .note a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Fit a file</h1>
+  <p class="lead">Type the limit the form gives, then download the fitted file and upload that.</p>
+  <form class="card" id="form">
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.heic,.heif,.tif,.tiff,.bmp" />
+      <strong>Choose a file</strong> or drop it here
+      <div class="file" id="picked">PDF, JPG, PNG, WebP, GIF, HEIC, TIFF or BMP, up to 30 MB</div>
+    </label>
+
+    <fieldset>
+      <legend>Size limit</legend>
+      <div class="row">
+        <label>At most <input type="number" id="max" min="1" step="any" required placeholder="50" /></label>
+        <label>At least (optional) <input type="number" id="min" min="0" step="any" placeholder="20" /></label>
+        <label>Unit <select id="unit"><option value="1000">KB</option><option value="1000000">MB</option></select></label>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Exact pixels (optional, images only)</legend>
+      <div class="row">
+        <label>Width <input type="number" id="width" min="1" max="10000" step="1" placeholder="200" /></label>
+        <label>Height <input type="number" id="height" min="1" max="10000" step="1" placeholder="230" /></label>
+      </div>
+    </fieldset>
+
+    <label class="check"><input type="checkbox" id="jpeg" /> The form asks for JPG</label>
+
+    <button type="submit" id="go">Fit it</button>
+    <div class="status" id="status" role="status"></div>
+  </form>
+  <p class="note">The file is sent to fitfilesize.com and deleted from the server once it is fitted.
+    <a href="https://fitfilesize.com/privacy.html" target="_blank">Privacy</a></p>
+</main>
+<script src="limits.js"></script>
+<script src="fit.js"></script>
+</body>
+</html>
