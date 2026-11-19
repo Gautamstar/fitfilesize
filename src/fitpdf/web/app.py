@@ -473,6 +473,7 @@ def create_app(
             r, "uploads", limits.client_key(request, settings.client_ip_headers), limit
         )
         if quota.exceeded:
+            await run_in_threadpool(count_refusal, request, "uploads")
             return JSONResponse(
                 {"detail": _limit_message(limit, "files", quota)},
                 status_code=429,
@@ -557,6 +558,7 @@ def create_app(
             return
         quota = limits.hit(r, bucket, limits.client_key(request, settings.client_ip_headers), limit)
         if quota.exceeded:
+            count_refusal(request, bucket)
             raise HTTPException(429, _limit_message(limit, noun, quota), headers=_limit_headers(quota))
         response.headers.update(_limit_headers(quota))
 
@@ -752,6 +754,11 @@ def create_app(
             request.headers.get("origin"),
             settings.allowed_origins,
         )
+
+    def count_refusal(request: Request, bucket: str) -> None:
+        # Many people behind one address (a cyber cafe, an office) share one
+        # budget; this shows whether that is turning people away, and from where.
+        usage.record(settings.usage_db, "limited", caller(request), "-", outcome=bucket)
 
     @app.post("/api/upload", summary="Upload a file (step 1 of the step-by-step flow)")
     async def upload(

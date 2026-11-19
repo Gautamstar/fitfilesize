@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FitFileSize is installed</title>
+<link rel="icon" href="icons/32.png" />
+<style>
+  :root { --accent: #2451e0; --accent-hover: #1d43c2; --tint: #c9d5fb; --wash: #eef2fe;
+    --ink: #1e293b; --muted: #64748b; --line: #dbe2ef; --bg: #f8fafc; --card: #fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --accent: #7d9bff; --accent-hover: #98b0ff; --tint: #3a4a7a; --wash: rgba(125, 155, 255, .12);
+      --ink: #e2e8f0; --muted: #94a3b8; --line: #2c3650; --bg: #0f1420; --card: #161d2c; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 640px; margin: 40px auto 80px; padding: 0 16px; }
+  .brand { display: flex; gap: 10px; align-items: center; color: var(--accent); font-weight: 700; }
+  .brand img { width: 28px; height: 28px; }
+  h1 { font-size: 26px; margin: 18px 0 6px; }
+  h2 { font-size: 17px; margin: 32px 0 8px; }
+  .lead { color: var(--muted); margin: 0; }
+  ol { padding-left: 20px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-top: 12px; }
+  .field label { font-weight: 600; display: block; }
+  .hint { color: var(--muted); font-size: 14px; margin: 2px 0 10px; }
+  .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 0;
+    background: var(--accent); color: #fff; cursor: pointer; }
+  button:hover { background: var(--accent-hover); }
+  input[type=file] { font: inherit; color: var(--muted); max-width: 100%; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .holds { margin-top: 14px; display: flex; gap: 12px; align-items: center; min-height: 1.5em; font-size: 14px; }
+  .holds img { width: 60px; height: 69px; object-fit: cover; border: 1px solid var(--line); border-radius: 4px; }
+  .muted { color: var(--muted); font-size: 14px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><img src="icons/48.png" alt="" /> FitFileSize</div>
+  <h1>Upload limits, handled in the form</h1>
+  <p class="lead">When an upload box says something like "20 KB to 50 KB, 200 x 230 pixels" and your file breaks it, you get an offer to fit it right there.</p>
+
+  <h2>Try it</h2>
+  <div class="card field">
+    <label for="photo">Photograph</label>
+    <p class="hint">JPG only, 200 x 230 pixels, size 20 KB to 50 KB</p>
+    <div class="actions">
+      <input type="file" id="photo" accept=".jpg,.jpeg" />
+      <button type="button" id="sample">Use a sample photo</button>
+    </div>
+    <div class="holds" id="holds" aria-live="polite"></div>
+  </div>
+  <p class="muted">Pick a photo, or use the sample (it is 1200 x 1500 pixels and well over 50 KB). A box appears in the corner of the page; click "Fit it".</p>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>You pick a file in an upload box, as usual.</li>
+    <li>If the text next to the box states a limit and the file breaks it, a box offers to fit it. Nothing is sent until you click "Fit it".</li>
+    <li>The fitted file takes the place of yours in the upload box. Submit the form as usual.</li>
+  </ol>
+
+  <h2>Where it checks</h2>
+  <p>On government, exam and university sites (gov.in, nic.in, ac.in, IBPS, SBI, TCS iON). To have it check forms on every site, turn on "Also on all other sites" from the FitFileSize button in the toolbar.</p>
+  <p>For a drag-and-drop box, or a limit written somewhere else on the page, use "Fit a file by hand" from the same button: type the limit, then download the fitted file.</p>
+
+  <h2>Your files</h2>
+  <p>A file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server as soon as the fitted file is back. <a href="https://fitfilesize.com/privacy.html" target="_blank">Privacy</a></p>
+</main>
+<script src="limits.js"></script>
+<script src="content.js"></script>
+<script src="welcome.js"></script>
+</body>
+</html>

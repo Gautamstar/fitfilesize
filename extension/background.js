@@ -7,6 +7,38 @@ const API = 'https://api.fitfilesize.com'
 const POLL_MS = 2000
 const POLL_LIMIT_MS = 5 * 60 * 1000
 
+// The manifest runs the checker on government, exam and university sites.
+// Everywhere else only after the person allows all sites from the popup.
+const ALL_SITES = { origins: ['<all_urls>'] }
+const ALL_SITES_SCRIPT = 'all-sites'
+
+async function syncAllSites() {
+  const allowed = await chrome.permissions.contains(ALL_SITES)
+  const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [ALL_SITES_SCRIPT] })
+  if (allowed && !registered.length) {
+    const builtIn = chrome.runtime.getManifest().content_scripts[0]
+    await chrome.scripting.registerContentScripts([{
+      id: ALL_SITES_SCRIPT,
+      matches: ['<all_urls>'],
+      // The built-in sites already have it, and the website does this itself.
+      excludeMatches: [...builtIn.matches, '*://fitfilesize.com/*', '*://*.fitfilesize.com/*'],
+      js: builtIn.js,
+      allFrames: true,
+      runAt: 'document_idle',
+    }])
+  } else if (!allowed && registered.length) {
+    await chrome.scripting.unregisterContentScripts({ ids: [ALL_SITES_SCRIPT] })
+  }
+}
+
+chrome.permissions.onAdded.addListener(syncAllSites)
+chrome.permissions.onRemoved.addListener(syncAllSites)
+chrome.runtime.onStartup.addListener(syncAllSites)
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  syncAllSites()
+  if (reason === 'install') chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') })
+})
+
 chrome.runtime.onMessage.addListener((message, _sender, reply) => {
   if (message?.type !== 'fit') return false
   fit(message).then(reply, (error) => reply({ error: error.message }))
