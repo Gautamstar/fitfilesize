@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { readLimits, wantsJpeg, formatSize, fittedName } = require('../limits.js')
+const { readLimits, wantsJpeg, formatSize, fittedName, aimMinimum } = require('../limits.js')
 
 const limits = (min, max, width = null, height = null) => ({ min, max, width, height })
 
@@ -102,4 +102,10 @@ test('reads the wording real application forms use', () => {
   assert.equal(readLimits('obtain photo and signature in .jpeg format not exceeding 50 kb & 20 kb respectively'), null)
   assert.equal(readLimits('Image dimensions: Minimum140pixels(width)×60pixels (height)'), null)
   assert.equal(readLimits('Ideal pixel resolution for JPG: 320 x 240.'), null)
+})
+
+test('aims a little inside a minimum when the range leaves room', () => {
+  assert.equal(aimMinimum(20000, 50000), 21000)
+  assert.equal(aimMinimum(30000, 31000), 30720) // 5% would pass the maximum
+  assert.equal(aimMinimum(30000, 30500), 30000)
 })

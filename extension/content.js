@@ -3,7 +3,7 @@
  * next to it, offers to fit it; the file leaves the page only on "Fit it".
  */
 ;(function () {
-  const { readLimits, wantsJpeg, formatSize, fittedName } = globalThis.FitFileSizeLimits
+  const { readLimits, wantsJpeg, formatSize, fittedName, aimMinimum } = globalThis.FitFileSizeLimits
   const MAX_SEND = 30 * 1000 * 1000
   const KINDS = /\.(pdf|jpe?g|png|webp|gif|heic|heif|tiff?|bmp)$/i
   const ANCESTORS = 6
@@ -107,7 +107,7 @@
     let target = limits.max || Math.max(file.size, 2e6)
     let minimum = null
     if (limits.min) {
-      minimum = Math.ceil(limits.min * KIB) < target ? Math.ceil(limits.min * KIB) : limits.min
+      minimum = aimMinimum(limits.min, target)
     }
     let result
     try {
