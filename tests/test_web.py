@@ -1008,6 +1008,23 @@ def test_fit_takes_exact_pixels_in_one_call(web, photo_jpg):
     assert any("white border" in w for w in body["warnings"])
 
 
+def test_fit_keeps_a_png_at_exact_pixels_when_asked(web, photo_png):
+    client, _, _ = web
+    with open(photo_png, "rb") as f:
+        data = f.read()
+
+    def first_bytes(**extra):
+        res = client.post(
+            "/api/fit", files={"file": ("p.png", data, "image/png")},
+            data={"target": "200KB", "width": "120", "height": "120", **extra},
+        )
+        assert res.status_code == 200
+        return client.get(res.json()["download_url"].split("testserver", 1)[1]).content[:4]
+
+    assert first_bytes()[:2] == b"\xff\xd8"
+    assert first_bytes(keep_format="true") == b"\x89PNG"
+
+
 def test_fit_drops_the_upload_when_the_size_is_refused(web, image_pdf):
     client, _, settings = web
     with open(image_pdf, "rb") as f:

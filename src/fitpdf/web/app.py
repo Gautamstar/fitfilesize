@@ -972,6 +972,11 @@ def create_app(
             "whether it may come back as a JPEG. By default it keeps its format, and a run "
             "that cannot fit ends on its smallest version with needs_jpeg true.",
         ),
+        keep_format: bool = Form(
+            False,
+            description="With width and height: keep a PNG, WebP, TIFF or BMP in its own "
+            "format instead of the JPEG most forms that ask for pixels require.",
+        ),
     ):
         """Upload a file and compress it to fit under `target`.
 
@@ -1003,7 +1008,7 @@ def create_app(
         enforce(request, response, "runs", settings.runs_per_hour, "compressions")
         queue_run(
             job_id, require_input(job_id, job), target_bytes, resize, fit,
-            min_bytes=min_bytes, allow_jpeg=allow_jpeg,
+            min_bytes=min_bytes, allow_jpeg=allow_jpeg, keep_format=keep_format,
         )
 
         waited = 0.0

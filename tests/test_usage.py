@@ -117,6 +117,7 @@ def test_clean_page_and_source():
     assert usage.source_for("fitfilesize-mcp/0.2.0", None, ()) == "mcp"
     assert usage.source_for("Mozilla/5.0", SITE, (SITE,)) == "web"
     assert usage.source_for("Mozilla/5.0", "https://elsewhere.example", (SITE,)) == "api"
+    assert usage.source_for("Mozilla/5.0", "chrome-extension://abcdef", (SITE,)) == "extension"
 
 
 def test_report_sums_days_and_pages(tmp_path):
@@ -126,8 +127,9 @@ def test_report_sums_days_and_pages(tmp_path):
         usage.record(db, "upload", "web", "image", "neet-photo", today=d)
     usage.record(db, "download", "web", "image", "neet-photo", "fit", today=d)
     usage.record(db, "upload", "mcp", "pdf", today=d)
+    usage.record(db, "upload", "extension", "image", today=d)
     text = usage.report(usage.rows(db, 7, today=d))
-    assert "2026-10-08     4 (3/1/0)" in text
-    assert "1 (1/0/0)" in text
+    assert "2026-10-08     5 (3/1/0/1)" in text
+    assert "1 (1/0/0/0)" in text
     assert "neet-photo" in text
     assert usage.report([]) == "No uploads or downloads recorded in this period."
