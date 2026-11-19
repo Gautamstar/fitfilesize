@@ -57,12 +57,18 @@ def clean_page(page: str | None) -> str:
     return page if PAGE_RE.match(page) else "-"
 
 
+# An extension's requests carry its own origin, whatever page it runs on.
+EXTENSION_ORIGINS = ("chrome-extension://", "moz-extension://", "safari-web-extension://")
+
+
 def source_for(user_agent: str | None, origin: str | None, allowed: tuple[str, ...]) -> str:
-    """Who is calling: the MCP package, the site itself, or another API client."""
+    """Who is calling: the MCP package, the site, the browser extension, or another client."""
     if (user_agent or "").startswith("fitfilesize-mcp/"):
         return "mcp"
     if origin and origin in allowed:
         return "web"
+    if origin and origin.startswith(EXTENSION_ORIGINS):
+        return "extension"
     return "api"
 
 
@@ -111,11 +117,14 @@ def rows(db: Path, days: int, today: date | None = None) -> list[tuple]:
     return out
 
 
+SOURCES = ("web", "mcp", "api", "extension")
+
+
 def report(data: list[tuple]) -> str:
     """A plain-text summary: per day by source, then the pages files came from."""
     if not data:
         return "No uploads or downloads recorded in this period."
-    lines = ["day         uploads (web/mcp/api)   downloads (web/mcp/api)   fit / over"]
+    lines = ["day         uploads (web/mcp/api/ext)   downloads (web/mcp/api/ext)   fit / over"]
     by_day: dict[str, dict[tuple[str, str], int]] = {}
     for day, event, source, _kind, _page, outcome, n in data:
         d = by_day.setdefault(day, {})
@@ -123,11 +132,11 @@ def report(data: list[tuple]) -> str:
         if event == "download":
             d[("outcome", outcome)] = d.get(("outcome", outcome), 0) + n
     for day, d in by_day.items():
-        up = [d.get(("upload", s), 0) for s in ("web", "mcp", "api")]
-        down = [d.get(("download", s), 0) for s in ("web", "mcp", "api")]
+        up = [d.get(("upload", s), 0) for s in SOURCES]
+        down = [d.get(("download", s), 0) for s in SOURCES]
         lines.append(
-            f"{day}  {sum(up):4} ({up[0]}/{up[1]}/{up[2]})"
-            f"{'':12}{sum(down):4} ({down[0]}/{down[1]}/{down[2]})"
+            f"{day}  {sum(up):4} ({'/'.join(map(str, up))})"
+            f"{'':12}{sum(down):4} ({'/'.join(map(str, down))})"
             f"{'':14}{d.get(('outcome', 'fit'), 0)} / {d.get(('outcome', 'over'), 0)}"
         )
     pages: dict[str, list[int]] = {}

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "FitFileSize: fit files to upload limits",
+  "short_name": "FitFileSize",
+  "version": "0.1.0",
+  "description": "When an upload form states a limit like \"20 KB to 50 KB\" and your file breaks it, offers to fit it in one click.",
+  "homepage_url": "https://fitfilesize.com",
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icons/16.png", "32": "icons/32.png" }
+  },
+  "background": { "service_worker": "background.js" },
+  "permissions": ["storage"],
+  "host_permissions": ["https://api.fitfilesize.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "exclude_matches": ["*://fitfilesize.com/*", "*://*.fitfilesize.com/*"],
+      "js": ["limits.js", "content.js"],
+      "all_frames": true,
+      "run_at": "document_idle"
+    }
+  ]
+}
