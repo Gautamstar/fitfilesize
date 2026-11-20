@@ -15,9 +15,9 @@ Paste from here into the developer dashboard. Upload `dist/fitfilesize-extension
 **Description:**
 
 ```
-Fits your photo or PDF to the limit the form itself states, right inside the upload box. No popup, no download, no second upload.
+Fits your photo or PDF to the limit the form itself states, right inside the upload box. No separate tool, no download, no second upload.
 
-Application forms often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "PDF, max 100 KB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it, for SSC, IBPS, SBI, RRB, UPSC, NTA and state commission forms, university admissions and any other upload box that states a size.
+Application forms often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "PDF, max 100 KB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it.
 
 Your file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server as soon as the fitted file is back.
 
@@ -35,7 +35,7 @@ What it handles
 - Keeps the format: a PNG stays a PNG unless the form asks for JPG. HEIC photos are saved as JPEG.
 
 Where it checks
-On government, exam and university sites (gov.in, nic.in, ac.in, IBPS, SBI, TCS iON). Turn on "Also on all other sites" from the toolbar button to have it check forms everywhere.
+On government, exam and university websites. Turn on "Also on all other sites" from the toolbar button to have it check forms everywhere.
 
 For a drag-and-drop box, or a limit written somewhere else on the page, use "Fit a file by hand" from the toolbar button: type the limit, then download the fitted file.
 
