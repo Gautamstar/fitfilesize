@@ -51,6 +51,8 @@ Free to use.
 3. `3-by-hand.png`: fitting a file by hand
 4. `4-welcome.png`: the welcome page
 
+**Store icon** (128x128, 96x96 artwork with transparent padding): `store-icon-128.png`
+
 **Small promo tile** (440x280): `promo-tile-440x280.png`
 
 **Homepage URL:** https://fitfilesize.com
