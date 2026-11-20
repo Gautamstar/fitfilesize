@@ -15,6 +15,7 @@ import { Dropzone } from './components/Dropzone'
 import { FormFinder } from './components/FormFinder'
 import { FormSet } from './components/FormSet'
 import { ErrorPanel } from './components/ErrorPanel'
+import { ExtensionNote } from './components/ExtensionNote'
 import { Landing } from './components/Landing'
 import { LimitChips } from './components/LimitChips'
 import { Logo } from './components/Logo'
@@ -550,6 +551,10 @@ function App({ path }: AppProps) {
           Files are deleted automatically: your original 5 minutes after compression, the result
           after 10. Anything you upload but don't compress is gone within 30 minutes.
         </p>
+        {/* Added after hydration in a desktop Chromium browser. The footer is
+            the page's end, so appearing late moves nothing. The result panel
+            has its own line, so not twice. */}
+        {phase === 'result' ? null : <ExtensionNote where="page" />}
         <nav className="foot-links" aria-label="Site">
           <a href="/privacy.html">Privacy</a>
           <a href="/terms.html">Terms</a>
