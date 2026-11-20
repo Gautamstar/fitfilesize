@@ -92,7 +92,12 @@ Fit a file chosen in a web form's upload box to the file size (and, when stated,
 
 **Remote code:** No, I am not using remote code.
 
-**Data usage:** tick **Personally identifiable information** (a photo, signature or certificate the user chooses to fit can contain it). Leave every other type unticked: the page text is read only in the browser and never collected.
+**Data usage:** Google asks for anything the extension handles, even in the browser only or briefly, so tick:
+- **Personally identifiable information**: a photo, signature or certificate the user chooses to fit can show their face, name or ID numbers, and it is sent to the server.
+- **Location**: the server keeps the visitor's IP address for up to an hour to count the hourly limit (the privacy policy says so).
+- **Website content**: the extension reads the text next to an upload box (in the browser only), and the file itself is an image or document.
+
+Leave the rest unticked: it records no browsing history, clicks or keystrokes, and handles no health, payment, password or message data.
 
 Then tick all three certifications:
 - I do not sell or transfer user data to third parties, outside of the approved use cases
