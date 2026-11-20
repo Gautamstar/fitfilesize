@@ -1886,3 +1886,12 @@ button:disabled {
     transition: none !important;
   }
 }
+
+/* ---------- extension note ---------- */
+
+.ext-note {
+  margin: 14px 0 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}

@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { downloadUrl } from '../lib/api'
 import { fmt, fmtLimit, formatCountdown, outputFormat, savedPercent, sentence } from '../lib/format'
 import { useFocusOnMount } from '../hooks/useFocusOnMount'
+import { ExtensionNote } from './ExtensionNote'
 import { TIP_ENABLED, TipLink } from './TipLink'
 import type { SearchState } from '../hooks/useProgressStream'
 import { SearchLadder } from './SearchLadder'
@@ -185,6 +186,9 @@ export function ResultPanel({
           </button>
         )}
       </div>
+
+      {/* After a win, for browsers that can install the extension. */}
+      {result.hit_target ? <ExtensionNote where="result" /> : null}
 
       {/* Asked only after a win: the one moment the request is reasonable. */}
       {result.hit_target && TIP_ENABLED ? (
