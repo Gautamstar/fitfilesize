@@ -15,7 +15,11 @@ Paste from here into the developer dashboard. Upload `dist/fitfilesize-extension
 **Description:**
 
 ```
-Application forms often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "PDF, max 100 KB", and your photo straight from the phone is 3 MB. FitFileSize fixes that inside the form.
+Fits your photo or PDF to the limit the form itself states, right inside the upload box. No popup, no download, no second upload.
+
+Application forms often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "PDF, max 100 KB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it, for SSC, IBPS, SBI, RRB, UPSC, NTA and state commission forms, university admissions and any other upload box that states a size.
+
+Your file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server as soon as the fitted file is back.
 
 How it works
 1. Pick a file in an upload box, as usual.
