@@ -69,6 +69,18 @@ Fit a file chosen in a web form's upload box to the file size (and, when stated,
 
 **Permission justifications:**
 
+The dashboard has one **Host permission justification** box for all of them (the API, the content script sites and the optional all-sites permission). Paste this there:
+
+```
+api.fitfilesize.com is the extension's own server, which fits the file. A file is sent there only when the user clicks "Fit it", and is deleted as soon as the fitted file is back.
+
+The content script runs on gov.in, nic.in, ac.in, edu.in, ibps.in, digialm.com, sbi.co.in and bank.sbi: the government, exam, bank and university sites whose application forms state upload size limits. When the user picks a file, it reads the text next to that upload box to find the stated limit. It reads nothing else and sends nothing about the page anywhere.
+
+<all_urls> is optional and off by default. It is requested only if the user turns on "Also on all other sites" in the popup, so the same check works on upload forms on any site.
+```
+
+The separate texts below say the same thing per permission:
+
 - `storage`:
   ```
   Saves one setting: whether the extension checks the files the user picks.
@@ -90,7 +102,7 @@ Fit a file chosen in a web form's upload box to the file size (and, when stated,
   Requested only if the user turns on "Also on all other sites" in the popup, so the same check works on forms on any site. Off by default.
   ```
 
-**Remote code:** No, I am not using remote code.
+**Remote code** (if the form asks): No, I am not using remote code.
 
 **Data usage:** Google asks for anything the extension handles, even in the browser only or briefly, so tick:
 - **Personally identifiable information**: a photo, signature or certificate the user chooses to fit can show their face, name or ID numbers, and it is sent to the server.
