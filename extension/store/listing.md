@@ -50,10 +50,13 @@ Free to use.
 2. `2-done.png`: the fitted photo in the form
 3. `3-by-hand.png`: fitting a file by hand
 4. `4-welcome.png`: the welcome page
+5. `5-popup.png`: the toolbar popup (on/off, all sites, fitting by hand)
 
 **Store icon** (128x128, 96x96 artwork with transparent padding): `store-icon-128.png`
 
 **Small promo tile** (440x280): `promo-tile-440x280.png`
+
+**Marquee promo image** (1400x560, optional; used only if Google features the extension): `marquee-1400x560.png`
 
 **Homepage URL:** https://fitfilesize.com
 
