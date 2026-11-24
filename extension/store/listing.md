@@ -17,7 +17,7 @@ Paste from here into the developer dashboard. Upload `dist/fitfilesize-extension
 ```
 Fits your photo or PDF to the limit the form itself states, right inside the upload box. No separate tool, no download, no second upload.
 
-Application forms often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "PDF, max 100 KB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it.
+Application forms, job sites and visa portals often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "CV, max 2 MB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it.
 
 Your file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server as soon as the fitted file is back.
 
@@ -35,7 +35,7 @@ What it handles
 - Keeps the format: a PNG stays a PNG unless the form asks for JPG. HEIC photos are saved as JPEG.
 
 Where it checks
-On government, exam and university websites. Turn on "Also on all other sites" from the toolbar button to have it check forms everywhere.
+On any site you turn on: click the toolbar button while on the site and turn on "Check forms on this site". Government, exam and university websites are checked from the start, and "Also on all other sites" turns it on everywhere.
 
 For a drag-and-drop box, or a limit written somewhere else on the page, use "Fit a file by hand" from the toolbar button: type the limit, then download the fitted file.
 
@@ -50,7 +50,7 @@ Free to use.
 2. `2-done.png`: the fitted photo in the form
 3. `3-by-hand.png`: fitting a file by hand
 4. `4-welcome.png`: the welcome page
-5. `5-popup.png`: the toolbar popup (on/off, all sites, fitting by hand)
+5. `5-popup.png`: the toolbar popup (on/off, this site, all sites, fitting by hand)
 
 **Store icon** (128x128, 96x96 artwork with transparent padding): `store-icon-128.png`
 
@@ -79,7 +79,7 @@ api.fitfilesize.com is the extension's own server, which fits the file. A file i
 
 The content script runs on gov.in, nic.in, ac.in, edu.in, ibps.in, digialm.com, sbi.co.in and bank.sbi: the government, exam, bank and university sites whose application forms state upload size limits. When the user picks a file, it reads the text next to that upload box to find the stated limit. It reads nothing else and sends nothing about the page anywhere.
 
-<all_urls> is optional and off by default. It is requested only if the user turns on "Also on all other sites" in the popup, so the same check works on upload forms on any site.
+Other sites are optional and off by default (optional host permission <all_urls>). The popup requests one site at a time when the user turns on "Check forms on this site", or every site when the user turns on "Also on all other sites". activeTab lets the popup read the current tab's address, only when the user opens it, to offer that one site.
 ```
 
 The separate texts below say the same thing per permission:
@@ -90,7 +90,11 @@ The separate texts below say the same thing per permission:
   ```
 - `scripting`:
   ```
-  Used only when the user turns on "Also on all other sites": it registers the same file checker on other sites after the user grants that permission, and removes it when the permission is withdrawn.
+  Used only for sites the user turns on from the popup: it registers the same file checker on those sites after the user grants the permission (and adds it to pages already open there), and removes it when the permission is withdrawn.
+  ```
+- `activeTab`:
+  ```
+  When the user opens the popup, it reads the current tab's address to offer "Check forms on this site" for that one site. Nothing is read until the popup is opened.
   ```
 - Host permission `https://api.fitfilesize.com/*`:
   ```
@@ -102,7 +106,7 @@ The separate texts below say the same thing per permission:
   ```
 - Optional host permission `<all_urls>`:
   ```
-  Requested only if the user turns on "Also on all other sites" in the popup, so the same check works on forms on any site. Off by default.
+  Requested one site at a time when the user turns on "Check forms on this site" in the popup, or for every site when the user turns on "Also on all other sites". Off by default.
   ```
 
 **Remote code** (if the form asks): No, I am not using remote code.

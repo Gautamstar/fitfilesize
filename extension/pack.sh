@@ -7,5 +7,5 @@ version=$(node -p "require('./manifest.json').version")
 out="../dist/fitfilesize-extension-$version.zip"
 mkdir -p ../dist
 rm -f "$out"
-zip -q -r "$out" manifest.json background.js content.js limits.js fit.html fit.js popup.html popup.js welcome.html welcome.js icons
+zip -q -r "$out" manifest.json background.js content.js limits.js sites.js fit.html fit.js popup.html popup.js welcome.html welcome.js icons
 echo "$out"

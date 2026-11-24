@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "FitFileSize: Resize Photo and PDF to KB Limit",
   "short_name": "FitFileSize",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "When an upload form states a limit like \"20 KB to 50 KB\" and your file breaks it, offers to fit it in one click.",
   "homepage_url": "https://fitfilesize.com",
   "icons": {
@@ -23,7 +23,8 @@
   },
   "permissions": [
     "storage",
-    "scripting"
+    "scripting",
+    "activeTab"
   ],
   "host_permissions": [
     "https://api.fitfilesize.com/*"

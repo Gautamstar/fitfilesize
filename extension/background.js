@@ -7,35 +7,61 @@ const API = 'https://api.fitfilesize.com'
 const POLL_MS = 2000
 const POLL_LIMIT_MS = 5 * 60 * 1000
 
-// The manifest runs the checker on government, exam and university sites.
-// Everywhere else only after the person allows all sites from the popup.
-const ALL_SITES = { origins: ['<all_urls>'] }
-const ALL_SITES_SCRIPT = 'all-sites'
+importScripts('sites.js')
+const { sitesPlan, EVERY_SITE } = globalThis.FitFileSizeSites
 
-async function syncAllSites() {
-  const allowed = await chrome.permissions.contains(ALL_SITES)
-  const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [ALL_SITES_SCRIPT] })
-  if (allowed && !registered.length) {
-    const builtIn = chrome.runtime.getManifest().content_scripts[0]
-    await chrome.scripting.registerContentScripts([{
-      id: ALL_SITES_SCRIPT,
-      matches: ['<all_urls>'],
-      // The built-in sites already have it, and the website does this itself.
-      excludeMatches: [...builtIn.matches, '*://fitfilesize.com/*', '*://*.fitfilesize.com/*'],
-      js: builtIn.js,
-      allFrames: true,
-      runAt: 'document_idle',
-    }])
-  } else if (!allowed && registered.length) {
-    await chrome.scripting.unregisterContentScripts({ ids: [ALL_SITES_SCRIPT] })
+// The manifest runs the checker on government, exam and university sites.
+// Anywhere else only after the person allows that site, or every site, from
+// the popup; Chrome's own prompt grants it.
+const SITES_SCRIPT = 'more-sites'
+const OLD_SCRIPTS = ['all-sites'] // 0.1.0 registered only the every-site script
+
+let syncing = Promise.resolve()
+/** Registers the checker on exactly the sites allowed now. Calls run one after another. */
+function syncSites() {
+  syncing = syncing.then(syncNow, syncNow).catch(() => {})
+  return syncing
+}
+
+async function syncNow() {
+  const builtIn = chrome.runtime.getManifest().content_scripts[0]
+  const { origins = [] } = await chrome.permissions.getAll()
+  const plan = sitesPlan(origins, builtIn.matches)
+  const ids = [SITES_SCRIPT, ...OLD_SCRIPTS]
+  const registered = await chrome.scripting.getRegisteredContentScripts({ ids })
+  if (registered.length) await chrome.scripting.unregisterContentScripts({ ids: registered.map((s) => s.id) })
+  if (plan) {
+    await chrome.scripting.registerContentScripts([
+      { id: SITES_SCRIPT, ...plan, js: builtIn.js, allFrames: true, runAt: 'document_idle' },
+    ])
   }
 }
 
-chrome.permissions.onAdded.addListener(syncAllSites)
-chrome.permissions.onRemoved.addListener(syncAllSites)
-chrome.runtime.onStartup.addListener(syncAllSites)
+/**
+ * A registered script reaches only pages loaded from now on, so pages already
+ * open on a site just allowed get it straight away (content.js runs once per
+ * page however often it is added).
+ */
+async function checkOpenPages({ origins = [] }) {
+  const every = origins.some((o) => EVERY_SITE.includes(o))
+  const sites = origins.filter((o) => !EVERY_SITE.includes(o))
+  const tabs = every
+    ? await chrome.tabs.query({ active: true })
+    : sites.length ? await chrome.tabs.query({ url: sites }) : []
+  const js = chrome.runtime.getManifest().content_scripts[0].js
+  for (const tab of tabs) {
+    chrome.scripting.executeScript({ target: { tabId: tab.id, allFrames: true }, files: js }).catch(() => {})
+  }
+}
+
+chrome.permissions.onAdded.addListener(async (added) => {
+  await syncSites().catch(() => {})
+  checkOpenPages(added)
+})
+chrome.permissions.onRemoved.addListener(() => syncSites())
+chrome.runtime.onStartup.addListener(() => syncSites())
 chrome.runtime.onInstalled.addListener(({ reason }) => {
-  syncAllSites()
+  syncSites()
   if (reason === 'install') chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html') })
 })
 
