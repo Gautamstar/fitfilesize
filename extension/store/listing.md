@@ -17,7 +17,7 @@ Paste from here into the developer dashboard. Upload `dist/fitfilesize-extension
 ```
 Fits your photo or PDF to the limit the form itself states, right inside the upload box. No separate tool, no download, no second upload.
 
-Application forms, job sites and visa portals often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "CV, max 2 MB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it.
+Application forms, job sites and visa portals often say "Photograph: 20 KB to 50 KB, 200 x 230 pixels" or "CV (PDF), max 2 MB", and your photo straight from the phone is 3 MB. FitFileSize reads that limit from the form and fits your file to it.
 
 Your file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server as soon as the fitted file is back.
 
@@ -128,7 +128,7 @@ Then tick all three certifications:
 ## Test instructions (for the reviewer)
 
 ```
-No account is needed. After installing, a welcome page opens with a demo upload field ("JPG only, 200 x 230 pixels, size 20 KB to 50 KB"). Click "Use a sample photo": a box appears at the bottom right saying the file breaks the limit. Click "Fit it"; within a few seconds the field holds a 200 x 230 pixel JPEG of about 21 KB. The toolbar button's popup has "Fit a file by hand", which opens a page where any file can be fitted to a typed limit.
+No account is needed. After installing, a welcome page opens with a demo upload field (JPG, 200 x 230 pixels, 20 KB to 50 KB). Click "Use a sample photo", then "Fit it" in the box at the bottom right: the field then holds a 200 x 230 JPEG of about 21 KB. On any other site, open the toolbar popup and turn on "Check forms on this site" (Chrome asks for that site only). The popup's "Fit a file by hand" fits any file to a typed limit.
 ```
 
 ## Distribution tab
