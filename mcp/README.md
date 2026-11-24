@@ -69,7 +69,7 @@ The form presets, each with its rules and the official source they come from. Th
 
 ## Privacy
 
-The file is sent to FitFileSize's server over HTTPS, compressed there, and deleted as soon as the result is saved on your computer. Requests name the package and its version (`fitfilesize-mcp/0.2.1`), nothing about you. Nothing else leaves your machine. See the [privacy page](https://fitfilesize.com/privacy.html). Uploads count against the site's free limit of 30 an hour.
+The file is sent to FitFileSize's server over HTTPS, compressed there, and deleted as soon as the result is saved on your computer. Requests name the package and its version (`fitfilesize-mcp/0.3.0`), nothing about you. Nothing else leaves your machine. See the [privacy page](https://fitfilesize.com/privacy.html). Uploads count against the site's free limit of 30 an hour.
 
 ## Development
 
