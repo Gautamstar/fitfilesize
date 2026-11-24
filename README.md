@@ -13,6 +13,8 @@ the original name, `fitpdf`.
 
 ## Use it from an AI assistant (MCP server)
 
+[![Gautamstar/fitfilesize MCP server](https://glama.ai/mcp/servers/Gautamstar/fitfilesize/badges/score.svg)](https://glama.ai/mcp/servers/Gautamstar/fitfilesize)
+
 FitFileSize has an [MCP server](mcp/), `fitfilesize-mcp` on npm, so Claude,
 Cursor, VS Code and other MCP clients can fit a file for you:
 
