@@ -16,6 +16,7 @@ test('reads a maximum in its usual phrasings', () => {
     'Max. file size: 2MB',
     'Maximum upload size is 2 MB',
     'File size should not exceed 2 MB',
+    'Photo size not to exceed 2 MB',
     'Upload photo (JPG, less than 2mb)',
     'up to 2 MB',
     'less than or equal to 2 MB',
