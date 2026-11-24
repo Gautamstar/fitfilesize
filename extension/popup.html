@@ -7,6 +7,7 @@
   h1 { font-size: 15px; margin: 0 0 6px; color: #2451e0; }
   p { margin: 6px 0; }
   .muted { color: #64748b; font-size: 12px; }
+  #host { word-break: break-all; }
   label { display: flex; gap: 8px; align-items: center; margin: 10px 0 2px; font-weight: 600; }
   .sites { margin: 0 0 6px 24px; }
   a { color: #2451e0; }
@@ -21,10 +22,15 @@
   <button id="manual">Fit a file by hand</button>
   <p class="muted">For drag-and-drop boxes, or a limit stated somewhere else on the page.</p>
   <label><input type="checkbox" id="enabled" /> Check files I pick</label>
-  <p class="muted sites">On government, exam and university sites (gov.in, nic.in, ac.in, IBPS, SBI, TCS iON).</p>
+  <p class="muted sites">From the start on government, exam and university sites (gov.in, nic.in, ac.in, IBPS, SBI, TCS iON), and on any site you turn on below.</p>
+  <div id="site" hidden>
+    <label><input type="checkbox" id="this-site" /> <span>Check forms on <span id="host"></span></span></label>
+    <p class="muted sites" id="site-note">Chrome asks for permission to read pages on this one site. It is used only to find the limit next to an upload box.</p>
+  </div>
   <label><input type="checkbox" id="all" /> Also on all other sites</label>
-  <p class="muted sites">Chrome asks for permission to read pages on every site. It is used only to find the limit next to an upload box.</p>
+  <p class="muted sites">Chrome asks for permission to read pages on every site.</p>
   <p class="muted">Your file is sent to fitfilesize.com only when you click "Fit it", and is deleted from the server once it is fitted. <a href="https://fitfilesize.com/privacy.html" target="_blank">Privacy</a></p>
+  <script src="sites.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

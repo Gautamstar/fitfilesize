@@ -3,6 +3,9 @@
  * next to it, offers to fit it; the file leaves the page only on "Fit it".
  */
 ;(function () {
+  // Added again when the person allows a site with the page already open.
+  if (globalThis.__fitFileSizeWatching) return
+  globalThis.__fitFileSizeWatching = true
   const { readLimits, wantsJpeg, formatSize, fittedName, aimMinimum } = globalThis.FitFileSizeLimits
   const MAX_SEND = 30 * 1000 * 1000
   const KINDS = /\.(pdf|jpe?g|png|webp|gif|heic|heif|tiff?|bmp)$/i
