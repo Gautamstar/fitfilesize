@@ -21,7 +21,7 @@
   const MAX_BEFORE = new RegExp(
     String.raw`(?:max(?:imum)?\.?${GAP}|(?:up\s*to|(?<!\bnot\s+(?:be\s+)?)less\s+than(?:\s+or\s+equal\s+to)?|` +
       String.raw`under|below|not\s+(?:be\s+)?(?:more|greater)\s+than|no\s+more\s+than|` +
-      String.raw`not\s+(?:be\s+)?exceed(?:s|ing)?|within|limit(?:ed)?\s+(?:of|to)|<=?|≤)\s*[:\-]?\s*)${NUM}\s*${UNIT}`,
+      String.raw`not\s+(?:be\s+|to\s+)?exceed(?:s|ing)?|within|limit(?:ed)?\s+(?:of|to)|<=?|≤)\s*[:\-]?\s*)${NUM}\s*${UNIT}`,
     'g',
   )
   const MAX_AFTER = new RegExp(String.raw`${NUM}\s*${UNIT}\s*(?:max(?:imum)?|or\s+less|and\s+below)\b`, 'g')
